@@ -96,7 +96,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   uint32_t hex_color = 0x000339FC;
   led_set_HEX(hex_color);
-
+  led_render();
   /* USER CODE END 2 */
 
   /* Infinite loop */
