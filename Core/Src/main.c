@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "neopixel.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -43,6 +44,7 @@
 CAN_HandleTypeDef hcan1;
 
 TIM_HandleTypeDef htim1;
+DMA_HandleTypeDef hdma_tim1_ch2;
 
 /* USER CODE BEGIN PV */
 
@@ -71,6 +73,9 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
+
+
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -95,8 +100,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   uint32_t hex_color = 0x000339FC;
-  led_set_HEX(hex_color);
-  led_render();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -104,6 +108,13 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+//	  led_set_HEX(3, hex_color);
+//	  led_render();
+
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_SET);
+	  HAL_Delay(1000);
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_RESET);
+	  HAL_Delay(1000);
 
     /* USER CODE BEGIN 3 */
   }

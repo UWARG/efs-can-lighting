@@ -1,7 +1,7 @@
 // Peripheral usage
-#include "stm32f0xx_hal.h"
-extern TIM_HandleTypeDef htim2;
-extern DMA_HandleTypeDef hdma_tim2_ch1;
+#include "stm32l4xx_hal.h"
+extern TIM_HandleTypeDef htim1;
+extern DMA_HandleTypeDef hdma_tim1_ch2;
 
 #include "neopixel.h"
 #include "hex_to_rgb_conversion.h"
@@ -9,9 +9,14 @@ extern DMA_HandleTypeDef hdma_tim2_ch1;
 #define PWM_HI (38)
 #define PWM_LO (19)
 
+//timer macros
+#define TIM htim1
+#define TIM_CHANNEL TIM_CHANNEL_2
+#define HDMA_TIM_CH hdma_tim1_ch2
+
 // LED parameters
-// #define NUM_BPP (3) // WS2812B
-#define NUM_BPP (4) // SK6812
+ #define NUM_BPP (3) // WS2812B
+//#define NUM_BPP (4) // SK6812
 #define NUM_PIXELS (8)
 #define NUM_BYTES (NUM_BPP * NUM_PIXELS)
 
@@ -69,11 +74,11 @@ void led_set_all_RGBW(uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
 
 // Shuttle the data to the LEDs!
 void led_render() {
-  if(wr_buf_p != 0 || hdma_tim2_ch1.State != HAL_DMA_STATE_READY) {
+  if(wr_buf_p != 0 || HDMA_TIM_CH.State != HAL_DMA_STATE_READY) {
     // Ongoing transfer, cancel!
     for(uint8_t i = 0; i < WR_BUF_LEN; ++i) wr_buf[i] = 0;
     wr_buf_p = 0;
-    HAL_TIM_PWM_Stop_DMA(&htim2, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Stop_DMA(&TIM, TIM_CHANNEL);
     return;
   }
   // Ooh boi the first data buffer half (and the second!)
@@ -99,7 +104,7 @@ void led_render() {
   }
 #endif // End SK6812 WS2812B case differentiation
 
-  HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_1, (uint32_t *)wr_buf, WR_BUF_LEN);
+  HAL_TIM_PWM_Start_DMA(&TIM, TIM_CHANNEL, (uint32_t *)wr_buf, WR_BUF_LEN);
   wr_buf_p = 2; // Since we're ready for the next buffer
 }
 
@@ -157,6 +162,6 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
   } else {
     // We're done. Lean back and until next time!
     wr_buf_p = 0;
-    HAL_TIM_PWM_Stop_DMA(&htim2, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Stop_DMA(&TIM, TIM_CHANNEL);
   }
 }
