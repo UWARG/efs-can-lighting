@@ -2,6 +2,6 @@
 ../Core/Src/ws2812.c:31:6:led_set_RGB	1
 ../Core/Src/ws2812.c:45:6:led_set_RGBW	1
 ../Core/Src/ws2812.c:52:6:led_set_all_RGBW	2
-../Core/Src/ws2812.c:57:6:led_render	11
+../Core/Src/ws2812.c:57:6:led_render	8
 ../Core/Src/ws2812.c:92:6:HAL_TIM_PWM_PulseFinishedHalfCpltCallback	8
 ../Core/Src/ws2812.c:120:6:HAL_TIM_PWM_PulseFinishedCallback	8
