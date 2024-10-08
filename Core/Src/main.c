@@ -96,7 +96,8 @@ int main(void)
 	uint8_t angle = 0;
 	const uint8_t angle_difference = 11;
 
-
+	int rotate_lo = 8;
+	int rotate_hi = 16;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -122,23 +123,59 @@ int main(void)
     /* USER CODE BEGIN 3 */
 //		led_set_RGB(0, 0, 0, 0);
 //		led_set_RGB(1, 0, 0, 0);
-		led_set_RGB(0, 50, 0, 0);
-		led_set_RGB(1, 50, 0, 0);
-		led_set_RGB(2, 50, 0, 0);
-		led_render();
+//		led_set_RGB(0, 50, 0, 0);
+//		led_set_RGB(1, 50, 0, 0);
+//		led_set_RGB(2, 50, 0, 0);
+//		led_render();
+//
+//		HAL_Delay(1000);
+//		led_set_RGB(0, 0, 50, 0);
+//	    led_set_RGB(1, 0, 50, 0);
+//		led_set_RGB(2, 0, 50, 0);
+//		led_render();
+//		HAL_Delay(1000);
+//
+//		led_set_RGB(0, 0, 0, 50);
+//		led_set_RGB(1, 0, 0, 50);
+//		led_set_RGB(2, 0, 0, 50);
+//		led_render();
+//		HAL_Delay(1000);
+
+
+		// Every loop, try sending out a certain number of bytes.
+		uint8_t num_led = 6;
+		num_led += 1; // +1 because we need 24 bits of 0 at the start
+		uint8_t buff_base = num_led*24; // TWO LED hehe
+		uint8_t out_buf[buff_base+16]; // One LED for now
+		uint8_t setval = PWM_LO;
+		for (int i= 0; i < 24; i++) {
+			out_buf[i] = 0; // set the fisrt 24 bits to 0
+			for (int j= 1; j < num_led; j++) {
+			if ((i < rotate_hi) && (i >= rotate_lo) && ((i%8) < 2)) {
+				out_buf[i+j*24] = PWM_HI;
+//				out_buf[i+24] = PWM_HI;
+			} else {
+				out_buf[i+j*24] = PWM_LO;
+//				out_buf[i+24] = PWM_LO;
+			}
+			}
+		}
+
+		for (int i=buff_base; i < buff_base+16; i++) {
+			out_buf[i] = 0;
+		}
+
+		HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t *) out_buf, buff_base+16);
 
 		HAL_Delay(1000);
-		led_set_RGB(0, 0, 50, 0);
-	    led_set_RGB(1, 0, 50, 0);
-		led_set_RGB(2, 0, 50, 0);
-		led_render();
-		HAL_Delay(1000);
+		rotate_lo += 8;
+		rotate_hi += 8;
 
-		led_set_RGB(0, 0, 0, 50);
-		led_set_RGB(1, 0, 0, 50);
-		led_set_RGB(2, 0, 0, 50);
-		led_render();
-		HAL_Delay(1000);
+		if (rotate_lo == 24) {
+			rotate_lo = 0;
+			rotate_hi = 8;
+		}
+
 	}
   /* USER CODE END 3 */
 }

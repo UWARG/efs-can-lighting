@@ -11,10 +11,6 @@
 extern TIM_HandleTypeDef htim1;
 extern DMA_HandleTypeDef hdma_tim1_ch2;
 
-// Constants
-#define PWM_HI (38)
-#define PWM_LO (19)
-
 // LED color buffer
 uint8_t rgb_arr[NUM_BYTES];
 
@@ -55,94 +51,79 @@ void led_set_all_RGBW(uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
 
 // Shuttle the data to the LEDs!
 void led_render() {
-//  if(wr_buf_p != 0 || hdma_tim1_ch2.State != HAL_DMA_STATE_READY) {
-//    // Ongoing transfer, cancel!
-//    for(uint8_t i = 0; i < WR_BUF_LEN; ++i) wr_buf[i] = 0;
-//    wr_buf_p = 0;
-//    HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
-//    return;
-//  }
-  // Ooh boi the first data buffer half (and the second!)
-#if (NUM_BPP == 4) // SK6812
-  for(uint_fast8_t i = 0; i < 8; ++i) {
-    wr_buf[i     ] = PWM_LO << (((rgb_arr[0] << i) & 0x80) > 0);
-    wr_buf[i +  8] = PWM_LO << (((rgb_arr[1] << i) & 0x80) > 0);
-    wr_buf[i + 16] = PWM_LO << (((rgb_arr[2] << i) & 0x80) > 0);
-    wr_buf[i + 24] = PWM_LO << (((rgb_arr[3] << i) & 0x80) > 0);
-    wr_buf[i + 32] = PWM_LO << (((rgb_arr[4] << i) & 0x80) > 0);
-    wr_buf[i + 40] = PWM_LO << (((rgb_arr[5] << i) & 0x80) > 0);
-    wr_buf[i + 48] = PWM_LO << (((rgb_arr[6] << i) & 0x80) > 0);
-    wr_buf[i + 56] = PWM_LO << (((rgb_arr[7] << i) & 0x80) > 0);
-  }
-#else // WS2812B
   for(uint_fast8_t i = 0; i < NUM_PIXELS; ++i) {
-    wr_buf[i     ] = PWM_LO << (((rgb_arr[0] << i) & 0x80) > 0);
-    wr_buf[i +  8] = PWM_LO << (((rgb_arr[1] << i) & 0x80) > 0);
-    wr_buf[i + 16] = PWM_LO << (((rgb_arr[2] << i) & 0x80) > 0);
-    wr_buf[i + 24] = PWM_LO << (((rgb_arr[3] << i) & 0x80) > 0);
-    wr_buf[i + 32] = PWM_LO << (((rgb_arr[4] << i) & 0x80) > 0);
-    wr_buf[i + 40] = PWM_LO << (((rgb_arr[5] << i) & 0x80) > 0);
+	  // For every pixel, yeet
+//    wr_buf[i     ] = PWM_LO << (((rgb_arr[0]) & 0x80) > 0);
+//    wr_buf[i +  8] = PWM_LO << (((rgb_arr[1]) & 0x80) > 0);
+//    wr_buf[i + 16] = PWM_LO << (((rgb_arr[2]) & 0x80) > 0);
+	wr_buf[i     ] = PWM_LO << 0x80;
+	wr_buf[i +  8] = PWM_LO << 0x80;
+	wr_buf[i + 16] = PWM_LO << 0x80;
+    wr_buf[i + 24] = PWM_LO << (((rgb_arr[3]) & 0x80) > 0);
+    wr_buf[i + 32] = PWM_LO << (((rgb_arr[4]) & 0x80) > 0);
+    wr_buf[i + 40] = PWM_LO << (((rgb_arr[5]) & 0x80) > 0);
   }
-#endif // End SK6812 WS2812B case differentiation
 
   HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t *)wr_buf, WR_BUF_LEN);
 //  wr_buf_p = 2; // Since we're ready for the next buffer
 }
 
-void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
-  // DMA buffer set from LED(wr_buf_p) to LED(wr_buf_p + 1)
-  if(wr_buf_p < NUM_PIXELS) {
-    // We're in. Fill the even buffer
-#if (NUM_BPP == 4) // SK6812
-    for(uint_fast8_t i = 0; i < 8; ++i) {
-      wr_buf[i     ] = PWM_LO << (((rgb_arr[4 * wr_buf_p    ] << i) & 0x80) > 0);
-      wr_buf[i +  8] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 1] << i) & 0x80) > 0);
-      wr_buf[i + 16] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 2] << i) & 0x80) > 0);
-      wr_buf[i + 24] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 3] << i) & 0x80) > 0);
-    }
-#else // WS2812B
-    for(uint_fast8_t i = 0; i < 8; ++i) {
-      wr_buf[i     ] = PWM_LO << (((rgb_arr[3 * wr_buf_p    ] << i) & 0x80) > 0);
-      wr_buf[i +  8] = PWM_LO << (((rgb_arr[3 * wr_buf_p + 1] << i) & 0x80) > 0);
-      wr_buf[i + 16] = PWM_LO << (((rgb_arr[3 * wr_buf_p + 2] << i) & 0x80) > 0);
-    }
-#endif // End SK6812 WS2812B case differentiation
-    wr_buf_p++;
-  } else if (wr_buf_p < NUM_PIXELS + 2) {
-    // Last two transfers are resets. SK6812: 64 * 1.25 us = 80 us == good enough reset
-  	//                               WS2812B: 48 * 1.25 us = 60 us == good enough reset
-    // First half reset zero fill
-    for(uint8_t i = 0; i < WR_BUF_LEN / 2; ++i) wr_buf[i] = 0;
-    wr_buf_p++;
-  }
-}
+//void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
+//  // DMA buffer set from LED(wr_buf_p) to LED(wr_buf_p + 1)
+//  if(wr_buf_p < NUM_PIXELS) {
+//    // We're in. Fill the even buffer
+//#if (NUM_BPP == 4) // SK6812
+//    for(uint_fast8_t i = 0; i < 8; ++i) {
+//      wr_buf[i     ] = PWM_LO << (((rgb_arr[4 * wr_buf_p    ] << i) & 0x80) > 0);
+//      wr_buf[i +  8] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 1] << i) & 0x80) > 0);
+//      wr_buf[i + 16] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 2] << i) & 0x80) > 0);
+//      wr_buf[i + 24] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 3] << i) & 0x80) > 0);
+//    }
+//#else // WS2812B
+//    for(uint_fast8_t i = 0; i < 8; ++i) {
+//      wr_buf[i     ] = PWM_LO << (((rgb_arr[3 * wr_buf_p    ] << i) & 0x80) > 0);
+//      wr_buf[i +  8] = PWM_LO << (((rgb_arr[3 * wr_buf_p + 1] << i) & 0x80) > 0);
+//      wr_buf[i + 16] = PWM_LO << (((rgb_arr[3 * wr_buf_p + 2] << i) & 0x80) > 0);
+//    }
+//#endif // End SK6812 WS2812B case differentiation
+//    wr_buf_p++;
+//  } else if (wr_buf_p < NUM_PIXELS + 2) {
+//    // Last two transfers are resets. SK6812: 64 * 1.25 us = 80 us == good enough reset
+//  	//                               WS2812B: 48 * 1.25 us = 60 us == good enough reset
+//    // First half reset zero fill
+//    for(uint8_t i = 0; i < WR_BUF_LEN / 2; ++i) wr_buf[i] = 0;
+//    wr_buf_p++;
+//  }
+//}
 //
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
-  // DMA buffer set from LED(wr_buf_p) to LED(wr_buf_p + 1)
-  if(wr_buf_p < NUM_PIXELS) {
-    // We're in. Fill the odd buffer
-#if (NUM_BPP == 4) // SK6812
-    for(uint_fast8_t i = 0; i < 8; ++i) {
-      wr_buf[i + 32] = PWM_LO << (((rgb_arr[4 * wr_buf_p    ] << i) & 0x80) > 0);
-      wr_buf[i + 40] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 1] << i) & 0x80) > 0);
-      wr_buf[i + 48] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 2] << i) & 0x80) > 0);
-      wr_buf[i + 56] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 3] << i) & 0x80) > 0);
-    }
-#else // WS2812B
-    for(uint_fast8_t i = 0; i < 8; ++i) {
-      wr_buf[i + 24] = PWM_LO << (((rgb_arr[3 * wr_buf_p    ] << i) & 0x80) > 0);
-      wr_buf[i + 32] = PWM_LO << (((rgb_arr[3 * wr_buf_p + 1] << i) & 0x80) > 0);
-      wr_buf[i + 40] = PWM_LO << (((rgb_arr[3 * wr_buf_p + 2] << i) & 0x80) > 0);
-    }
-#endif // End SK6812 WS2812B case differentiation
-    wr_buf_p++;
-  } else if (wr_buf_p < NUM_PIXELS + 2) {
-    // Second half reset zero fill
-    for(uint8_t i = WR_BUF_LEN / 2; i < WR_BUF_LEN; ++i) wr_buf[i] = 0;
-    ++wr_buf_p;
-  } else {
-    // We're done. Lean back and until next time!
-    wr_buf_p = 0;
-    HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
-  }
+//  // DMA buffer set from LED(wr_buf_p) to LED(wr_buf_p + 1)
+//  if(wr_buf_p < NUM_PIXELS) {
+//    // We're in. Fill the odd buffer
+//#if (NUM_BPP == 4) // SK6812
+//    for(uint_fast8_t i = 0; i < 8; ++i) {
+//      wr_buf[i + 32] = PWM_LO << (((rgb_arr[4 * wr_buf_p    ] << i) & 0x80) > 0);
+//      wr_buf[i + 40] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 1] << i) & 0x80) > 0);
+//      wr_buf[i + 48] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 2] << i) & 0x80) > 0);
+//      wr_buf[i + 56] = PWM_LO << (((rgb_arr[4 * wr_buf_p + 3] << i) & 0x80) > 0);
+//    }
+//#else // WS2812B
+//    for(uint_fast8_t i = 0; i < 8; ++i) {
+//      wr_buf[i + 24] = PWM_LO << (((rgb_arr[3 * wr_buf_p    ] << i) & 0x80) > 0);
+//      wr_buf[i + 32] = PWM_LO << (((rgb_arr[3 * wr_buf_p + 1] << i) & 0x80) > 0);
+//      wr_buf[i + 40] = PWM_LO << (((rgb_arr[3 * wr_buf_p + 2] << i) & 0x80) > 0);
+//    }
+//#endif // End SK6812 WS2812B case differentiation
+//    wr_buf_p++;
+//  } else if (wr_buf_p < NUM_PIXELS + 2) {
+//    // Second half reset zero fill
+//    for(uint8_t i = WR_BUF_LEN / 2; i < WR_BUF_LEN; ++i) wr_buf[i] = 0;
+//    ++wr_buf_p;
+//  } else {
+//    // We're done. Lean back and until next time!
+//    wr_buf_p = 0;
+//    HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
+//  }
+
+	HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
 }
