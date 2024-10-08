@@ -151,7 +151,7 @@ int main(void)
 		for (int i= 0; i < 24; i++) {
 			out_buf[i] = 0; // set the fisrt 24 bits to 0
 			for (int j= 1; j < num_led; j++) {
-			if ((i < rotate_hi) && (i >= rotate_lo) && ((i%8) < 2)) {
+			if ((i < rotate_hi) && (i >= rotate_lo) && ((i%8) >5)) {
 				out_buf[i+j*24] = PWM_HI;
 //				out_buf[i+24] = PWM_HI;
 			} else {
