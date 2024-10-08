@@ -19,7 +19,7 @@ extern DMA_HandleTypeDef hdma_tim1_ch2;
 uint8_t rgb_arr[NUM_BYTES];
 
 // LED write buffer
-#define WR_BUF_LEN (NUM_BPP * 8)
+#define WR_BUF_LEN (NUM_BPP * NUM_PIXELS * 8)
 uint8_t wr_buf[WR_BUF_LEN];
 uint_fast8_t wr_buf_p = 0;
 
@@ -55,13 +55,13 @@ void led_set_all_RGBW(uint8_t r, uint8_t g, uint8_t b, uint8_t w) {
 
 // Shuttle the data to the LEDs!
 void led_render() {
-  if(wr_buf_p != 0 || hdma_tim1_ch2.State != HAL_DMA_STATE_READY) {
-    // Ongoing transfer, cancel!
-    for(uint8_t i = 0; i < WR_BUF_LEN; ++i) wr_buf[i] = 0;
-    wr_buf_p = 0;
-    HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
-    return;
-  }
+//  if(wr_buf_p != 0 || hdma_tim1_ch2.State != HAL_DMA_STATE_READY) {
+//    // Ongoing transfer, cancel!
+//    for(uint8_t i = 0; i < WR_BUF_LEN; ++i) wr_buf[i] = 0;
+//    wr_buf_p = 0;
+//    HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
+//    return;
+//  }
   // Ooh boi the first data buffer half (and the second!)
 #if (NUM_BPP == 4) // SK6812
   for(uint_fast8_t i = 0; i < 8; ++i) {
@@ -75,7 +75,7 @@ void led_render() {
     wr_buf[i + 56] = PWM_LO << (((rgb_arr[7] << i) & 0x80) > 0);
   }
 #else // WS2812B
-  for(uint_fast8_t i = 0; i < 8; ++i) {
+  for(uint_fast8_t i = 0; i < NUM_PIXELS; ++i) {
     wr_buf[i     ] = PWM_LO << (((rgb_arr[0] << i) & 0x80) > 0);
     wr_buf[i +  8] = PWM_LO << (((rgb_arr[1] << i) & 0x80) > 0);
     wr_buf[i + 16] = PWM_LO << (((rgb_arr[2] << i) & 0x80) > 0);
@@ -86,7 +86,7 @@ void led_render() {
 #endif // End SK6812 WS2812B case differentiation
 
   HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t *)wr_buf, WR_BUF_LEN);
-  wr_buf_p = 2; // Since we're ready for the next buffer
+//  wr_buf_p = 2; // Since we're ready for the next buffer
 }
 
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
@@ -116,7 +116,7 @@ void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
     wr_buf_p++;
   }
 }
-
+//
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
   // DMA buffer set from LED(wr_buf_p) to LED(wr_buf_p + 1)
   if(wr_buf_p < NUM_PIXELS) {
