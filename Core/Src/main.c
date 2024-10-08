@@ -95,29 +95,50 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	uint8_t angle = 0;
 	const uint8_t angle_difference = 11;
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
 		// Demo code for 8 LEDs
-		for (uint8_t i = 0; i < 6 /* Change that to your amount of LEDs */;
-				i++) {
-			// Calculate color
-			uint32_t rgb_color = hsl_to_rgb(angle + (i * angle_difference), 255,
-					127);
-			// Set color
-			led_set_RGB(i, (rgb_color >> 16) & 0xFF, (rgb_color >> 8) & 0xFF,
-					rgb_color & 0xFF);
-		}
-		// Write to LED
-		++angle;
-		led_render();
-		// Some delay
-		HAL_Delay(10);
+//		for (uint8_t i = 0; i < NUM_PIXELS /* Change that to your amount of LEDs */;
+//				i++) {
+//			// Calculate color
+//			uint32_t rgb_color = hsl_to_rgb(angle + (i * angle_difference), 255,
+//					127);
+//			// Set color
+//			led_set_RGB(i, (rgb_color >> 16) & 0xFF, (rgb_color >> 8) & 0xFF,
+//					rgb_color & 0xFF);
+//		}
+//		// Write to LED
+//		++angle;
+//		led_render();
+//		// Some delay
+//		HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+//		led_set_RGB(0, 0, 0, 0);
+//		led_set_RGB(1, 0, 0, 0);
+		led_set_RGB(0, 50, 0, 0);
+		led_set_RGB(1, 50, 0, 0);
+		led_set_RGB(2, 50, 0, 0);
+		led_render();
+
+		HAL_Delay(1000);
+		led_set_RGB(0, 0, 50, 0);
+	    led_set_RGB(1, 0, 50, 0);
+		led_set_RGB(2, 0, 50, 0);
+		led_render();
+		HAL_Delay(1000);
+
+		led_set_RGB(0, 0, 0, 50);
+		led_set_RGB(1, 0, 0, 50);
+		led_set_RGB(2, 0, 0, 50);
+		led_render();
+		HAL_Delay(1000);
 	}
   /* USER CODE END 3 */
 }

@@ -60,8 +60,8 @@ all: main-build
 main-build: efs-can-lighting.elf secondary-outputs
 
 # Tool invocations
-efs-can-lighting.elf efs-can-lighting.map: $(OBJS) $(USER_OBJS) /Users/anthony/WARG/efs-can-lighting/STM32L431KCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "efs-can-lighting.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/anthony/WARG/efs-can-lighting/STM32L431KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="efs-can-lighting.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+efs-can-lighting.elf efs-can-lighting.map: $(OBJS) $(USER_OBJS) C:\Users\Anni\Documents\efs-can-lighting\STM32L431KCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "efs-can-lighting.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Anni\Documents\efs-can-lighting\STM32L431KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="efs-can-lighting.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

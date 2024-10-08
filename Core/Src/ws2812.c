@@ -15,11 +15,6 @@ extern DMA_HandleTypeDef hdma_tim1_ch2;
 #define PWM_HI (38)
 #define PWM_LO (19)
 
-// LED parameters
-#define NUM_BPP (3) // 3 for WS2812B, 4 for SK6812
-#define NUM_PIXELS (8)
-#define NUM_BYTES (NUM_BPP * NUM_PIXELS)
-
 // LED color buffer
 uint8_t rgb_arr[NUM_BYTES];
 
@@ -64,7 +59,7 @@ void led_render() {
     // Ongoing transfer, cancel!
     for(uint8_t i = 0; i < WR_BUF_LEN; ++i) wr_buf[i] = 0;
     wr_buf_p = 0;
-    HAL_TIM_PWM_Stop_DMA(&htim1, TIM_CHANNEL_2);
+    HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
     return;
   }
   // Ooh boi the first data buffer half (and the second!)
@@ -90,7 +85,7 @@ void led_render() {
   }
 #endif // End SK6812 WS2812B case differentiation
 
-  HAL_TIM_PWM_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t *)wr_buf, WR_BUF_LEN);
+  HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t *)wr_buf, WR_BUF_LEN);
   wr_buf_p = 2; // Since we're ready for the next buffer
 }
 
@@ -148,6 +143,6 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
   } else {
     // We're done. Lean back and until next time!
     wr_buf_p = 0;
-    HAL_TIM_PWM_Stop_DMA(&htim1, TIM_CHANNEL_2);
+    HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
   }
 }
