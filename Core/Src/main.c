@@ -19,18 +19,18 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "can.h"
-#include "dma.h"
 #include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32l4xx_hal.h"
 #include "ws2812.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+extern TIM_HandleTypeDef htim1;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -89,30 +89,32 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_CAN1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 	uint8_t angle = 0;
 	const uint8_t angle_difference = 11;
+
+//	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
 		// Demo code for 8 LEDs
-		for (uint8_t i = 0; i < 6 /* Change that to your amount of LEDs */;
-				i++) {
-			// Calculate color
-			uint32_t rgb_color = hsl_to_rgb(angle + (i * angle_difference), 255,
-					127);
-			// Set color
-			led_set_RGB(i, (rgb_color >> 16) & 0xFF, (rgb_color >> 8) & 0xFF,
-					rgb_color & 0xFF);
-		}
-		// Write to LED
-		++angle;
-		led_render();
+//		for (uint8_t i = 0; i < 6 /* Change that to your amount of LEDs */;
+//				i++) {
+//			// Calculate color
+//			uint32_t rgb_color = hsl_to_rgb(angle + (i * angle_difference), 255,
+//					127);
+//			// Set color
+//			led_set_RGB(i, (rgb_color >> 16) & 0xFF, (rgb_color >> 8) & 0xFF,
+//					rgb_color & 0xFF);
+//		}
+//		// Write to LED
+//		++angle;
+//		led_render();
 		// Some delay
 		HAL_Delay(10);
     /* USER CODE END WHILE */
