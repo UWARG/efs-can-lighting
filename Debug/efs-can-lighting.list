@@ -461,7 +461,7 @@ int main(void)
  80003ee:	2301      	movs	r3, #1
  80003f0:	61bb      	str	r3, [r7, #24]
  80003f2:	e02b      	b.n	800044c <main+0x10c>
-			if ((i < rotate_hi) && (i >= rotate_lo) && ((i%8) < 2)) {
+			if ((i < rotate_hi) && (i >= rotate_lo) && ((i%8) >5)) {
  80003f4:	69fa      	ldr	r2, [r7, #28]
  80003f6:	6a3b      	ldr	r3, [r7, #32]
  80003f8:	429a      	cmp	r2, r3
@@ -476,8 +476,8 @@ int main(void)
  800040c:	f002 0207 	and.w	r2, r2, #7
  8000410:	bf58      	it	pl
  8000412:	4253      	negpl	r3, r2
- 8000414:	2b01      	cmp	r3, #1
- 8000416:	dc0b      	bgt.n	8000430 <main+0xf0>
+ 8000414:	2b05      	cmp	r3, #5
+ 8000416:	dd0b      	ble.n	8000430 <main+0xf0>
 				out_buf[i+j*24] = PWM_HI;
  8000418:	69ba      	ldr	r2, [r7, #24]
  800041a:	4613      	mov	r3, r2
