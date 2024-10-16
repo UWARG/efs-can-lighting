@@ -282,10 +282,6 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer) {
     break;
   }
 	// Specific efs-can-lighting functionality
-	case UAVCAN_EQUIPMENT_INDICATION_BEEPCOMMAND_ID: {
-	  handle_beep_command(canard_instance, transfer);
-	  break;
-	}
 	case UAVCAN_EQUIPMENT_INDICATION_LIGHTSCOMMAND_ID:
 	  handle_lights_command(canard_instance, transfer);
 	}
@@ -313,10 +309,6 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
     return true;
   }
 	// Specific efs-can-lighting functionality
-	case UAVCAN_EQUIPMENT_INDICATION_BEEPCOMMAND_ID: {
-	  *out_data_type_signature = UAVCAN_EQUIPMENT_INDICATION_BEEPCOMMAND_ID;
-	  return true;
-	}
 	case UAVCAN_EQUIPMENT_INDICATION_LIGHTSCOMMAND_ID:
 	  *out_data_type_signature = UAVCAN_EQUIPMENT_INDICATION_LIGHTSCOMMAND_ID;
 	  return true;
@@ -358,10 +350,46 @@ void process1HzTasks(uint64_t timestamp_usec) {
     send_NodeStatus();
 }
 
-// TODO: implement these
-void handle_beep_command(CanardInstance *ins, CanardRxTransfer *transfer) {}
-void handle_lights_command(CanardInstance *ins, CanardRxTransfer *transfer) {}
+int16_t constraint_int16(int16_t value, int16_t min, int16_t max) {
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
 
+// TODO: implement these
+void handle_lights_command(CanardInstance *ins, CanardRxTransfer *transfer) {
+  uavcan_equipment_idnication_LightsCommand req;
+  if (uavcan_equipment_indication_LightsCommand_decode(transfer, &req)) {
+    return;
+  }
+  for (uint8_t i = 0; i < req.commands.len; i++) {
+    uavcan_equipment_indication_SingleLightCommand &cmd = req.commands.data[i];
+    // green needs extra scaling so that it is in the same format as red and blue
+    uint8_t red = cmd.color.red << 3U;
+    uint8_t green = (cmd.color.green >> 1U) << 3U;
+    uint8_t blue = cmd.color.blue << 3U;
+
+    // TODO: properly find brightness, depends on whether we want to use LED_NOTIFY or not
+    int8_t brightness = 99;
+
+    if (brightness != 100 && brightness >= 0) {
+      const float scale = brightness * 0.01;
+      red = constrain_int16(red * scale, 0, 255);
+      green = constrain_int16(green * scale, 0, 255);
+      blue = constrain_int16(blue * scale, 0, 255);
+    }
+    set_rgb_led(red, green, blue);
+  }
+}
+
+void set_rgb_led(uint8_t red, uint8_t green, uint8_t blue) {
+  printf("set led to r=%u g=%u b=%u\n", red, green, blue);
+  // TODO: set the leds :)
+}
 
 /* USER CODE END 0 */
 
