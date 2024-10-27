@@ -125,5 +125,9 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 //    HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
 //  }
 
-	HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
+//	HAL_TIMEx_PWMN_Stop_DMA(&htim1, TIM_CHANNEL_2);
+////	HAL_Delay(100);
+//	TIM2->CCR2 = TIM2->ARR;
+////	TIM2->ARR = 100;
+//	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 }
