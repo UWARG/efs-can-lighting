@@ -1,3 +1,10 @@
+/*
+ * hex_to_rgb_conversion.c
+ *
+ *  Created on: Oct 29, 2024
+ *      Author: mihirgupta
+ */
+
 #include "hex_to_rgb_conversion.h"
 
 uint8_t get_red_from_hex(uint32_t hex_value) {
