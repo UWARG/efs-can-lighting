@@ -139,6 +139,7 @@ void led_render_RGB() {
 					BUFF_SIZE);
 }
 
+
 //void led_render_cycle(uint32_t color_code) {
 //	for (int i = 0; i < NUM_LEDS; i++) {
 //		led_set_RGB_index(i, color_code);

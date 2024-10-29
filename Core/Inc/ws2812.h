@@ -36,7 +36,6 @@ void led_set_RGB_index(uint8_t index, uint32_t color_code);
 void led_set_RGB_cycle(uint32_t color_code);
 void led_set_all_RGBs(uint32_t color_code);
 void led_render_RGB();
-void led_render_cycle(uint32_t color_code);
 
 
 #endif /* INC_WS2812_H_ */
