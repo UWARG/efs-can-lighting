@@ -97,16 +97,17 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	uint8_t angle = 0;
 	const uint8_t angle_difference = 11;
+	led_buffer_init();
+//
+//	int rotate_lo = 8;
+//	int rotate_hi = 16;
 
-	int rotate_lo = 8;
-	int rotate_hi = 16;
-
-	uint8_t num_led = 6; // Number of LED's we have
+//	uint8_t num_led = 6; // Number of LED's we have
 	uint8_t led_in_cycle = 0;	// This is a value that we use to keep track of which LED is on during the cycle.
-	num_led += 1; // +1 because we need 24 bits of 0 at the start
-	uint8_t buff_base = num_led * 24; // Each LED has 24 Bits (8 for each of RGB)
-	uint8_t out_buf[buff_base + 24]; // We add 24 to the end so that we have 24 (one LED) bits of 0
-	uint8_t setval = PWM_LO;
+//	num_led += 1; // +1 because we need 24 bits of 0 at the start
+//	uint8_t buff_base = num_led * 24; // Each LED has 24 Bits (8 for each of RGB)
+//	uint8_t out_buf[buff_base + 24]; // We add 24 to the end so that we have 24 (one LED) bits of 0
+//	uint8_t setval = PWM_LO;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -150,93 +151,107 @@ int main(void)
 //		led_render();
 //		HAL_Delay(1000);
 		// Every loop, we set the bytes that we want to send out directly
-# ifdef ROTATE_LED
-		for (int i= 0; i < 24; i++) {
-			out_buf[i] = 0; // set the fisrt 24 bits to 0
-			for (int j= 1; j < num_led; j++) {
-			if ((i < rotate_hi) && (i >= rotate_lo) && ((i%8) >5)) {
-				out_buf[i+j*24] = PWM_HI;
-//				out_buf[i+24] = PWM_HI;
-			} else {
-				out_buf[i+j*24] = PWM_LO;
-//				out_buf[i+24] = PWM_LO;
-			}
-			}
-		}
+//# ifdef ROTATE_LED
+//		for (int i= 0; i < 24; i++) {
+//			out_buf[i] = 0; // set the fisrt 24 bits to 0
+//			for (int j= 1; j < num_led; j++) {
+//			if ((i < rotate_hi) && (i >= rotate_lo) && ((i%8) >5)) {
+//				out_buf[i+j*24] = PWM_HI;
+////				out_buf[i+24] = PWM_HI;
+//			} else {
+//				out_buf[i+j*24] = PWM_LO;
+////				out_buf[i+24] = PWM_LO;
+//			}
+//			}
+//		}
+//
+//		rotate_lo += 8;
+//		rotate_hi += 8;
+//
+//		if (rotate_lo == 24) {
+//			rotate_lo = 0;
+//			rotate_hi = 8;
+//		}
+//# endif
 
-		rotate_lo += 8;
-		rotate_hi += 8;
+//#ifdef CYCLE_ONE_LED_ON
+//		uint8_t led_that_should_be_on = led_in_cycle;
+//		/**
+//		 * Cycles one LED on for each cycle
+//		 */
+//
+//		// This for loop is kinda busted, the nesting can go either way.
+//		// Right now, it iterates through every individual position of the 24-bit colours
+//		// Recall j=0 is the dead LED
+//		// We are only assigning J=1-6, where num_led = 6+1 (dead LED accounted for at the0th index)
+////		for (int i = 0; i < 24; i++) {
+////			out_buf[i] = 0;
+////			for (int j = 1; j < num_led; j++) {
+////				if (j == led_in_cycle) {
+////					// This LED needs to be on
+////					if ((i % 8) > 5) {
+////						out_buf[i + j * 24] = PWM_HI;
+////					} else {
+////						out_buf[i + j * 24] = PWM_LO;
+////					}
+//////				} else if (j == (led_in_cycle + 1)) { // Only use this if you want goofiness
+////					// Basically forces the next "led" in sequence to be a flat line, instead of a neopixel command
+//////					out_buf[i+j*24] = 0;
+////				} else {
+////					// This LED needs to be off
+////					out_buf[i + j * 24] = PWM_LO;
+////				}
+////			}
+////		}
+//
+//
+//		led_buffer_init();
+//		led_set_RGB_index(led_in_cycle, 0x000404);
+//
+//
+////
+////		// Add 1 and wrap around if it's too large
+//		led_in_cycle += 1;
+//		if (led_in_cycle > 6) {
+//			led_in_cycle = 1;
+//		}
+//#endif
 
-		if (rotate_lo == 24) {
-			rotate_lo = 0;
-			rotate_hi = 8;
-		}
-# endif
+//
+//#ifdef CONSTANT_COLOR
+//		for (int i= 0; i < 24; i++) {
+//			out_buf[i] = 0; // set the fisrt 24 bits to 0
+//			for (int j= 1; j < num_led; j++) {
+//				if ((i%8) == 6 && i > 7) {
+//					//Just set the first bit of red and blue bytes high to get purple.
+//					out_buf[i+j*24] = PWM_HI;
+//		//				out_buf[i+24] = PWM_HI;
+//				} else {
+//					out_buf[i+j*24] = PWM_LO;
+//		//			out_buf[i+24] = PWM_LO;
+//				}
+//			}
+//		}
+//#endif
 
-#ifdef CYCLE_ONE_LED_ON
-		uint8_t led_that_should_be_on = led_in_cycle;
-		/**
-		 * Cycles one LED on for each cycle
-		 */
-
-		// This for loop is kinda busted, the nesting can go either way.
-		// Right now, it iterates through every individual position of the 24-bit colours
-		// Recall j=0 is the dead LED
-		// We are only assigning J=1-6, where num_led = 6+1 (dead LED accounted for at the0th index)
-		for (int i = 0; i < 24; i++) {
-			out_buf[i] = 0;
-			for (int j = 1; j < num_led; j++) {
-				if (j == led_in_cycle) {
-					// This LED needs to be on
-					if ((i % 8) > 5) {
-						out_buf[i + j * 24] = PWM_HI;
-					} else {
-						out_buf[i + j * 24] = PWM_LO;
-					}
-//				} else if (j == (led_in_cycle + 1)) { // Only use this if you want goofiness
-					// Basically forces the next "led" in sequence to be a flat line, instead of a neopixel command
-//					out_buf[i+j*24] = 0;
-				} else {
-					// This LED needs to be off
-					out_buf[i + j * 24] = PWM_LO;
-				}
-			}
-		}
-
-		// Add 1 and wrap around if it's too large
-		led_in_cycle += 1;
-		if (led_in_cycle > 6) {
-			led_in_cycle = 1;
-		}
-#endif
-
-
-#ifdef CONSTANT_COLOR
-		for (int i= 0; i < 24; i++) {
-			out_buf[i] = 0; // set the fisrt 24 bits to 0
-			for (int j= 1; j < num_led; j++) {
-				if ((i%8) == 6 && i > 7) {
-					//Just set the first bit of red and blue bytes high to get purple.
-					out_buf[i+j*24] = PWM_HI;
-		//				out_buf[i+24] = PWM_HI;
-				} else {
-					out_buf[i+j*24] = PWM_LO;
-		//			out_buf[i+24] = PWM_LO;
-				}
-			}
-		}
-
-#endif
-
-		// No matter what operation we do, we set the last bits in the buffer to 0;
-		for (int i = buff_base; i < buff_base + 24; i++) { // TODO: Make this 24 a variable "zero_extend_length"
-			out_buf[i] = 0;
-		}
+//		// No matter what operation we do, we set the last bits in the buffer to 0;
+//		for (int i = buff_base; i < buff_base + 24; i++) { // TODO: Make this 24 a variable "zero_extend_length"
+//			out_buf[i] = 0;
+//		}
 
 //		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
 //		HAL_Delay(20);
+
+
+
+//		led_buffer_init();
+//		led_set_RGB_index(0, 0x000404);
+		led_set_all_RGBs(0x000404);
 		HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf,
-				buff_base + 24);
+						BUFF_SIZE);
+//		led_render_RGB();
+//		led_set_all_RGBs(0, 0x000404);
+
 
 		HAL_Delay(1000);
 //		HAL_Delay(100);
@@ -264,15 +279,16 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLN = 12;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
