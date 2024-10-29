@@ -16,8 +16,8 @@
 #define NUM_BYTES (NUM_BPP * NUM_PIXELS)
 
 // Constants
-#define PWM_HI (19)
-#define PWM_LO (38)
+#define PWM_HI (38)
+#define PWM_LO (19)
 
 // Function Declarations
 void led_set_RGB(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
