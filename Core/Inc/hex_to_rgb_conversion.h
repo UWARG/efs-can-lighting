@@ -15,9 +15,12 @@
 #define RED_BIT_MASK (0x0000FF00)
 #define BLUE_BIT_MASK (0x000000FF)
 
-uint8_t get_red_from_hex(uint32_t hex_value);
-uint8_t get_green_from_hex(uint32_t hex_value);
-uint8_t get_blue_from_hex(uint32_t hex_value);
+#define RED_SHIFT_INDEX 8
+#define GREEN_SHIFT_INDEX 16
+
+uint8_t get_red_byte_from_hex(uint32_t hex_value);
+uint8_t get_green_byte_from_hex(uint32_t hex_value);
+uint8_t get_blue_byte_from_hex(uint32_t hex_value);
 
 
 #endif /* INC_HEX_TO_RGB_CONVERSION_H_ */
