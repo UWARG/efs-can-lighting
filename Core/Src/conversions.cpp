@@ -1,3 +1,11 @@
+/*
+ * conversions.c
+ *
+ *  Created on: Nov 2, 2024
+ *      Author: folafatola
+ */
+
+
 // Fast hsl2rgb algorithm: https://stackoverflow.com/questions/13105185/fast-algorithm-for-rgb-hsl-conversion
 uint32_t hsl_to_rgb(uint8_t h, uint8_t s, uint8_t l) {
 	if (l == 0)
