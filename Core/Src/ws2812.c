@@ -3,6 +3,9 @@
  *
  *  Created on: Sep 22, 2024
  *      Author: Anthony Luo and Fola Fatola
+ *
+ *      Reference:
+ *      https://www.thevfdcollective.com/blog/stm32-and-sk6812-rgbw-led
  */
 
 #include "stm32l4xx_hal.h"
@@ -29,14 +32,20 @@ void led_buffer_init() {
 	}
 }
 
-void led_set_RGB_index(uint8_t index, uint32_t color_code) {
+//Writes the color specified by "color_code" to the Neopixel specified by the index.
+void led_set_color(uint8_t index, uint32_t color_code) {
+
 	//Get the brightness of each color
 	uint8_t green_brightness_byte = get_green_byte_from_hex(color_code);
 	uint8_t red_brightness_byte = get_red_byte_from_hex(color_code);
 	uint8_t blue_brightness_byte = get_blue_byte_from_hex(color_code);
 
-	uint8_t mask = 1;
+	led_set_RGB_index(index, green_brightness_byte, red_brightness_byte, blue_brightness_byte, color_code);
+}
 
+void led_set_RGB_index(uint8_t index, uint8_t green_byte, uint8_t red_byte, uint8_t blue_byte, uint32_t color_code) {
+
+	uint8_t mask = 1;
 	//For each color's brightness byte, mask off each bit 1 at a time.
 	//If the color bit is a 1, write PWM_high to the appropriate index of the out_buf.
 	//If the color bit is 0, write PWM_low.
@@ -46,7 +55,7 @@ void led_set_RGB_index(uint8_t index, uint32_t color_code) {
 	//output buffer index of all the color bytes.
 
 	for (int g = 7; g >= 0; g--) {
-		if (green_brightness_byte & mask) {
+		if (green_byte & mask) {
 			//(index+1)*24 to skip to the part of the buffer that corresponds to LED #.
 			out_buf[g + (index+1)*24] = PWM_HI;
 		} else {
@@ -58,7 +67,7 @@ void led_set_RGB_index(uint8_t index, uint32_t color_code) {
 	mask = 1;
 
 	for (int r = 7; r >= 0; r--) {
-		if (red_brightness_byte & mask) {
+		if (red_byte & mask) {
 			out_buf[r + (index +1)*24 + 8] = PWM_HI;
 		} else {
 			out_buf[r + (index+1)*24 + 8] = PWM_LO;
@@ -69,25 +78,23 @@ void led_set_RGB_index(uint8_t index, uint32_t color_code) {
 	mask = 1;
 
 	for (int b = 7; b >= 0; b--) {
-		if (blue_brightness_byte & mask) {
+		if (blue_byte & mask) {
 			out_buf[b + (index +1)*24 + 16] = PWM_HI;
 		} else {
 			out_buf[b + (index +1)*24 + 16] = PWM_LO;
 		}
 		mask = mask << 1;
 	}
-
 }
 
 //set the color for all the LEDS
 void led_set_all_RGBs(uint32_t color_code) {
 	for (int i = 0; i < NUM_LEDS; i++) {
-		led_set_RGB_index(i, color_code);
+		led_set_color(i, color_code);
 	}
 }
 
 void led_render_RGB() {
-	//As long as you're not cycling through the LEDs.
 	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf,
 					BUFF_SIZE);
 }

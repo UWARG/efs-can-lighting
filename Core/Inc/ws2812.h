@@ -3,6 +3,7 @@
  *
  *  Created on: Sep 22, 2024
  *      Author: anni and Fola
+ *      Based on
  */
 
 #ifndef INC_WS2812_H_
@@ -27,8 +28,8 @@ extern uint8_t out_buf[BUFF_SIZE]; //Byte buffer of values to be transferred to 
 
 // Function Declarations
 void led_buffer_init();
-void led_set_RGB_index(uint8_t index, uint32_t color_code);
-void led_set_RGB_cycle(uint32_t color_code);
+void led_set_color(uint8_t index, uint32_t color_code);
+void led_set_RGB_index(uint8_t index, uint8_t green_byte, uint8_t red_byte, uint8_t blue_byte, uint32_t color_code);
 void led_set_all_RGBs(uint32_t color_code);
 void led_render_RGB();
 
