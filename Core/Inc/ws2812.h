@@ -2,7 +2,7 @@
  * ws2812.h
  *
  *  Created on: Sep 22, 2024
- *      Author: anni
+ *      Author: anni and Fola
  */
 
 #ifndef INC_WS2812_H_
@@ -10,33 +10,27 @@
 
 #include <stdint.h>
 
-// LED parameters
-#define NUM_BPP (3) // 3 for WS2812B, 4 for SK6812
-#define NUM_PIXELS (3)
-#define NUM_BYTES (NUM_BPP * NUM_PIXELS)
-
 #define NUM_LEDS 6
-#define BUFF_SIZE (NUM_LEDS + 2) * 24 // Each LED has 24 Bits (8 for each of RGB)
 
-extern uint8_t out_buf[BUFF_SIZE]; // We add 24 to the end so that we have 24 (one LED) bits of 0
+/*
+ * Each LED receives a 24-bit frame of data. Buffer size large enough for 8 frames.
+ * Please see led_buffer_init() function for the reason for the 2 extra frames.
+ * 1 bit in a frame is mapped to 1 byte in the output buffer.
+ */
+#define BUFF_SIZE (NUM_LEDS + 2) * 24
+
+extern uint8_t out_buf[BUFF_SIZE]; //Byte buffer of values to be transferred to the capture compare register (CCR).
 
 // Constants
 #define PWM_HI (38)
 #define PWM_LO (19)
 
 // Function Declarations
-void led_set_RGB(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
-void led_set_RGBW(uint8_t index, uint8_t r, uint8_t g, uint8_t b, uint8_t w);
-void led_set_all_RGB(uint8_t r, uint8_t g, uint8_t b);
-void led_set_all_RGBW(uint8_t r, uint8_t g, uint8_t b, uint8_t w);
-void led_render();
-
 void led_buffer_init();
 void led_set_RGB_index(uint8_t index, uint32_t color_code);
 void led_set_RGB_cycle(uint32_t color_code);
 void led_set_all_RGBs(uint32_t color_code);
 void led_render_RGB();
-void led_render_cycle(uint32_t color_code);
 
 
 #endif /* INC_WS2812_H_ */
