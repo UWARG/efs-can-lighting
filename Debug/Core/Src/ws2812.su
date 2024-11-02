@@ -1,6 +1,0 @@
-../Core/Src/ws2812.c:22:23:scale8	16	static
-../Core/Src/ws2812.c:27:6:led_set_RGB	24	static
-../Core/Src/ws2812.c:41:6:led_set_RGBW	24	static
-../Core/Src/ws2812.c:48:6:led_set_all_RGBW	40	static
-../Core/Src/ws2812.c:53:6:led_render	16	static
-../Core/Src/ws2812.c:99:6:HAL_TIM_PWM_PulseFinishedCallback	16	static
