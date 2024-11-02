@@ -1,0 +1,5 @@
+# Metadata
+.metadata/
+
+Debug/
+Release/
