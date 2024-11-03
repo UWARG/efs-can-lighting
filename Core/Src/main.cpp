@@ -17,15 +17,12 @@
  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include "can.hpp"
+#include "dma.hpp"
+#include "gpio.hpp"
+#include "tim.hpp"
+#include "ws2812.hpp"
 #include "main.h"
-#include "can.h"
-#include "dma.h"
-#include "tim.h"
-#include "gpio.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-#include "ws2812.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,7 +34,7 @@
 /* USER CODE BEGIN PD */
 //#define ROTATE_LED
 //#define CYCLE_ONE_LED_ON
-#define CONSTANT_COLOR
+//#define CONSTANT_COLOR
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -76,185 +73,37 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
 
   /* Configure the system clock */
-  SystemClock_Config();
+	SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_CAN1_Init();
-  MX_TIM1_Init();
+	MX_GPIO_Init();
+	MX_DMA_Init();
+	MX_CAN1_Init();
+	MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-	uint8_t angle = 0;
-	const uint8_t angle_difference = 11;
-	led_buffer_init();
-//
-//	int rotate_lo = 8;
-//	int rotate_hi = 16;
-
-//	uint8_t num_led = 6; // Number of LED's we have
-	uint8_t led_in_cycle = 0;	// This is a value that we use to keep track of which LED is on during the cycle.
-//	num_led += 1; // +1 because we need 24 bits of 0 at the start
-//	uint8_t buff_base = num_led * 24; // Each LED has 24 Bits (8 for each of RGB)
-//	uint8_t out_buf[buff_base + 24]; // We add 24 to the end so that we have 24 (one LED) bits of 0
-//	uint8_t setval = PWM_LO;
-  /* USER CODE END 2 */
+	init_led_buffer();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
-		// Demo code for 8 LEDs
-//		for (uint8_t i = 0; i < NUM_PIXELS /* Change that to your amount of LEDs */;
-//				i++) {
-//			// Calculate color
-//			uint32_t rgb_color = hsl_to_rgb(angle + (i * angle_difference), 255,
-//					127);
-//			// Set color
-//			led_set_RGB(i, (rgb_color >> 16) & 0xFF, (rgb_color >> 8) & 0xFF,
-//					rgb_color & 0xFF);
-//		}
-//		// Write to LED
-//		++angle;
-//		led_render();
-//		// Some delay
-//		HAL_Delay(10);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//		led_set_RGB(0, 0, 0, 0);
-//		led_set_RGB(1, 0, 0, 0);
-//		led_set_RGB(0, 50, 0, 0);
-//		led_set_RGB(1, 50, 0, 0);
-//		led_set_RGB(2, 50, 0, 0);
-//		led_render();
-//
-//		HAL_Delay(1000);
-//		led_set_RGB(0, 0, 50, 0);
-//	    led_set_RGB(1, 0, 50, 0);
-//		led_set_RGB(2, 0, 50, 0);
-//		led_render();
-//		HAL_Delay(1000);
-//
-//		led_set_RGB(0, 0, 0, 50);
-//		led_set_RGB(1, 0, 0, 50);
-//		led_set_RGB(2, 0, 0, 50);
-//		led_render();
-//		HAL_Delay(1000);
-		// Every loop, we set the bytes that we want to send out directly
-//# ifdef ROTATE_LED
-//		for (int i= 0; i < 24; i++) {
-//			out_buf[i] = 0; // set the fisrt 24 bits to 0
-//			for (int j= 1; j < num_led; j++) {
-//			if ((i < rotate_hi) && (i >= rotate_lo) && ((i%8) >5)) {
-//				out_buf[i+j*24] = PWM_HI;
-////				out_buf[i+24] = PWM_HI;
-//			} else {
-//				out_buf[i+j*24] = PWM_LO;
-////				out_buf[i+24] = PWM_LO;
-//			}
-//			}
-//		}
-//
-//		rotate_lo += 8;
-//		rotate_hi += 8;
-//
-//		if (rotate_lo == 24) {
-//			rotate_lo = 0;
-//			rotate_hi = 8;
-//		}
-//# endif
-
-//#ifdef CYCLE_ONE_LED_ON
-//		uint8_t led_that_should_be_on = led_in_cycle;
-//		/**
-//		 * Cycles one LED on for each cycle
-//		 */
-//
-//		// This for loop is kinda busted, the nesting can go either way.
-//		// Right now, it iterates through every individual position of the 24-bit colours
-//		// Recall j=0 is the dead LED
-//		// We are only assigning J=1-6, where num_led = 6+1 (dead LED accounted for at the0th index)
-////		for (int i = 0; i < 24; i++) {
-////			out_buf[i] = 0;
-////			for (int j = 1; j < num_led; j++) {
-////				if (j == led_in_cycle) {
-////					// This LED needs to be on
-////					if ((i % 8) > 5) {
-////						out_buf[i + j * 24] = PWM_HI;
-////					} else {
-////						out_buf[i + j * 24] = PWM_LO;
-////					}
-//////				} else if (j == (led_in_cycle + 1)) { // Only use this if you want goofiness
-////					// Basically forces the next "led" in sequence to be a flat line, instead of a neopixel command
-//////					out_buf[i+j*24] = 0;
-////				} else {
-////					// This LED needs to be off
-////					out_buf[i + j * 24] = PWM_LO;
-////				}
-////			}
-////		}
-//
-//
-//		led_buffer_init();
-//		led_set_RGB_index(led_in_cycle, 0x000404);
-//
-//
-////
-////		// Add 1 and wrap around if it's too large
-//		led_in_cycle += 1;
-//		if (led_in_cycle > 6) {
-//			led_in_cycle = 1;
-//		}
-//#endif
-
-//
-//#ifdef CONSTANT_COLOR
-//		for (int i= 0; i < 24; i++) {
-//			out_buf[i] = 0; // set the fisrt 24 bits to 0
-//			for (int j= 1; j < num_led; j++) {
-//				if ((i%8) == 6 && i > 7) {
-//					//Just set the first bit of red and blue bytes high to get purple.
-//					out_buf[i+j*24] = PWM_HI;
-//		//				out_buf[i+24] = PWM_HI;
-//				} else {
-//					out_buf[i+j*24] = PWM_LO;
-//		//			out_buf[i+24] = PWM_LO;
-//				}
-//			}
-//		}
-//#endif
-
-//		// No matter what operation we do, we set the last bits in the buffer to 0;
-//		for (int i = buff_base; i < buff_base + 24; i++) { // TODO: Make this 24 a variable "zero_extend_length"
-//			out_buf[i] = 0;
-//		}
-
-//		HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
-//		HAL_Delay(20);
-
-
-
-//		led_buffer_init();
-//		led_set_RGB_index(0, 0x000404);
-		led_set_all_RGBs(0x000404);
-		HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf,
-						BUFF_SIZE);
-//		led_render_RGB();
-//		led_set_all_RGBs(0, 0x000404);
-
-
+		set_all_led_colors(0x000808);
+		HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf, BUFF_SIZE);
 		HAL_Delay(1000);
-//		HAL_Delay(100);
 
 	}
   /* USER CODE END 3 */

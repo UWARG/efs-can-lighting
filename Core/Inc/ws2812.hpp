@@ -6,8 +6,8 @@
  *      Based on
  */
 
-#ifndef INC_WS2812_H_
-#define INC_WS2812_H_
+#ifndef INC_WS2812_HPP_
+#define INC_WS2812_HPP_
 
 #include <stdint.h>
 
@@ -27,11 +27,15 @@ extern uint8_t out_buf[BUFF_SIZE]; //Byte buffer of values to be transferred to 
 #define PWM_LO (19)
 
 // Function Declarations
-void led_buffer_init();
-void led_set_color(uint8_t index, uint32_t color_code);
-void led_set_RGB_index(uint8_t index, uint8_t green_byte, uint8_t red_byte, uint8_t blue_byte, uint32_t color_code);
-void led_set_all_RGBs(uint32_t color_code);
-void led_render_RGB();
+void init_led_buffer();
+void set_led_color_by_index(uint8_t index, uint32_t color_code);
+void write_color_bytes_to_buffer(uint8_t index, uint8_t green_byte, uint8_t red_byte, uint8_t blue_byte, uint32_t color_code);
+void set_all_led_colors(uint32_t color_code);
+void render_led_colors();
 
 
-#endif /* INC_WS2812_H_ */
+//HAVE A SET color function.
+//then overload that to take in either a RGB type (struct) or a hexcode.
+//There are certain things that shouldn't be exposed to the user like init_led_buffer() and stuff. so just make sure...
+
+#endif /* INC_WS2812_HPP_ */
