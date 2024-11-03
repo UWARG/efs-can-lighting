@@ -1,5 +1,5 @@
 // Peripheral usage
-#include "stm32f0xx_hal.h"
+#include "stm32l4xx_hal.h"
 extern TIM_HandleTypeDef htim2;
 extern DMA_HandleTypeDef hdma_tim2_ch1;
 

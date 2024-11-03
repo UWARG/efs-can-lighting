@@ -6,28 +6,30 @@
  */
 
 #include <canard.h>
-#include "stm32l5xx_hal.h"
+#include "stm32l4xx_hal.h"
 #include <string.h>
+
+uint32_t canMailBox;
 
 /**
   * @brief  Process CAN message from RxLocation FIFO into rx_frame
-  * @param  hfdcan pointer to an FDCAN_HandleTypeDef structure that contains
+  * @param  hfdcan pointer to an CAN_HandleTypeDef structure that contains
   *         the configuration information for the specified FDCAN.
   * @param  RxLocation Location of the received message to be read.
-  *         This parameter can be a value of @arg FDCAN_Rx_location.
+  *         This parameter can be a value of @arg CAN_Rx_location.
   * @param  rx_frame pointer to a CanardCANFrame structure where the received CAN message will be
   * 		stored.
   * @retval ret == 1: OK, ret < 0: CANARD_ERROR, ret == 0: Check hfdcan->ErrorCode
   */
-int16_t canardSTM32Recieve(FDCAN_HandleTypeDef *hfdcan, uint32_t RxLocation, CanardCANFrame *const rx_frame) {
+int16_t canardSTM32Recieve(CAN_HandleTypeDef *hcan, uint32_t RxLocation, CanardCANFrame *const rx_frame) {
 	if (rx_frame == NULL) {
 		return -CANARD_ERROR_INVALID_ARGUMENT;
 	}
 
-	FDCAN_RxHeaderTypeDef RxHeader;
+	CAN_RxHeaderTypeDef RxHeader;
 	uint8_t RxData[8];
 
-	if (HAL_FDCAN_GetRxMessage(hfdcan, RxLocation, &RxHeader, RxData) == HAL_OK) {
+	if (HAL_CAN_GetRxMessage(hcan, RxLocation, &RxHeader, RxData) == HAL_OK) {
 
 		//	printf("Received message: ID=%lu, DLC=%lu\n", RxHeader.Identifier, RxHeader.DataLength);
 		//
@@ -38,18 +40,19 @@ int16_t canardSTM32Recieve(FDCAN_HandleTypeDef *hfdcan, uint32_t RxLocation, Can
 		//	printf("\n");
 
 		// Process ID to canard format
-		rx_frame->id = RxHeader.Identifier;
+		rx_frame->id = RxHeader.StdId;
 
-		if (RxHeader.IdType == FDCAN_EXTENDED_ID) { // canard will only process the message if it is extended ID
+		if (RxHeader.IDE == CAN_ID_EXT) { // canard will only process the message if it is extended ID
+			// TODO: properly include RxHeader.ExtId
 			rx_frame->id |= CANARD_CAN_FRAME_EFF;
 		}
 
-		if (RxHeader.RxFrameType == FDCAN_REMOTE_FRAME) { // canard won't process the message if it is a remote frame
+		if (RxHeader.RTR == CAN_RTR_REMOTE) { // canard won't process the message if it is a remote frame
 			rx_frame->id |= CANARD_CAN_FRAME_RTR;
 		}
 
-		rx_frame->data_len = RxHeader.DataLength;
-		memcpy(rx_frame->data, RxData, RxHeader.DataLength);
+		rx_frame->data_len = RxHeader.DLC;
+		memcpy(rx_frame->data, RxData, RxHeader.DLC);
 
 		// assume a single interface
 		rx_frame->iface_id = 0;
@@ -63,13 +66,13 @@ int16_t canardSTM32Recieve(FDCAN_HandleTypeDef *hfdcan, uint32_t RxLocation, Can
 
 /**
   * @brief  Process tx_frame CAN message into Tx FIFO/Queue and transmit it
-  * @param  hfdcan pointer to an FDCAN_HandleTypeDef structure that contains
+  * @param  hfdcan pointer to an CAN_HandleTypeDef structure that contains
   *         the configuration information for the specified FDCAN.
   * @param  tx_frame pointer to a CanardCANFrame structure that contains the CAN message to
   * 		transmit.
   * @retval ret == 1: OK, ret < 0: CANARD_ERROR, ret == 0: Check hfdcan->ErrorCode
   */
-int16_t canardSTM32Transmit(FDCAN_HandleTypeDef *hfdcan, const CanardCANFrame* const tx_frame) {
+int16_t canardSTM32Transmit(CAN_HandleTypeDef *hcan, const CanardCANFrame* const tx_frame) {
 	if (tx_frame == NULL) {
 		return -CANARD_ERROR_INVALID_ARGUMENT;
 	}
@@ -78,34 +81,32 @@ int16_t canardSTM32Transmit(FDCAN_HandleTypeDef *hfdcan, const CanardCANFrame* c
 		return -CANARD_ERROR_INVALID_ARGUMENT; // unsupported frame format
 	}
 
-	FDCAN_TxHeaderTypeDef TxHeader;
+	CAN_TxHeaderTypeDef TxHeader;
 	uint8_t TxData[8];
 
 	// Process canard id to STM FDCAN header format
 	if (tx_frame->id & CANARD_CAN_FRAME_EFF) {
-		TxHeader.IdType = FDCAN_EXTENDED_ID;
-		TxHeader.Identifier = tx_frame->id & CANARD_CAN_EXT_ID_MASK;
+		// TODO: get extended IDs working correctly
+		TxHeader.IDE = CAN_ID_EXT;
+		TxHeader.ExtId = tx_frame->id & CANARD_CAN_EXT_ID_MASK;
 	} else {
-		TxHeader.IdType = FDCAN_STANDARD_ID;
-		TxHeader.Identifier = tx_frame->id & CANARD_CAN_STD_ID_MASK;
+		TxHeader.IDE = CAN_ID_STD;
+		TxHeader.StdId = tx_frame->id & CANARD_CAN_STD_ID_MASK;
 	}
 
-	TxHeader.DataLength = tx_frame->data_len;
+	TxHeader.DLC = tx_frame->data_len;
 
 	if (tx_frame->id & CANARD_CAN_FRAME_RTR) {
-		TxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
+		TxHeader.RTR = CAN_RTR_REMOTE;
 	} else {
-		TxHeader.TxFrameType = FDCAN_DATA_FRAME;
+		TxHeader.RTR = CAN_RTR_DATA;
 	}
 
-	TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE; // unsure about this one
-	TxHeader.BitRateSwitch = FDCAN_BRS_OFF; // Disabling FDCAN (using CAN 2.0)
-	TxHeader.FDFormat = FDCAN_CLASSIC_CAN; // Disabling FDCAN (using CAN 2.0)
-	TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS; // unsure about this one
-	TxHeader.MessageMarker = 0; // unsure about this one
-	memcpy(TxData, tx_frame->data, TxHeader.DataLength);
+	TxHeader.TransmitGlobalTime = DISABLE;
 
-	if (HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxHeader, TxData) == HAL_OK) {
+	memcpy(TxData, tx_frame->data, TxHeader.DLC);
+
+	if (HAL_CAN_AddTxMessage(hcan, &TxHeader, TxData, &canMailBox) == HAL_OK) {
 //		printf("Successfully sent message with id: %lu \n", TxHeader.Identifier);
 		return 1;
 	}

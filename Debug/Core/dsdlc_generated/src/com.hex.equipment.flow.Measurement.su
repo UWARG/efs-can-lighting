@@ -1,0 +1,4 @@
+C:/Users/north/Documents/code/cpp/efs-can-lighting/Core/dsdlc_generated/include/com.hex.equipment.flow.Measurement.h:67:6:_com_hex_equipment_flow_Measurement_encode	32	static
+C:/Users/north/Documents/code/cpp/efs-can-lighting/Core/dsdlc_generated/include/com.hex.equipment.flow.Measurement.h:135:6:_com_hex_equipment_flow_Measurement_decode	40	static
+../Core/dsdlc_generated/src/com.hex.equipment.flow.Measurement.c:12:10:com_hex_equipment_flow_Measurement_encode	24	static
+../Core/dsdlc_generated/src/com.hex.equipment.flow.Measurement.c:32:6:com_hex_equipment_flow_Measurement_decode	24	static

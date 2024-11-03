@@ -1,0 +1,4 @@
+../Core/Inc/com.hobbywing.esc.SetDirection_req.h:63:6:_com_hobbywing_esc_SetDirectionRequest_encode	24	static
+../Core/Inc/com.hobbywing.esc.SetDirection_req.h:88:6:_com_hobbywing_esc_SetDirectionRequest_decode	32	static
+../Core/Src/com.hobbywing.esc.SetDirection_req.c:14:10:com_hobbywing_esc_SetDirectionRequest_encode	24	static
+../Core/Src/com.hobbywing.esc.SetDirection_req.c:34:6:com_hobbywing_esc_SetDirectionRequest_decode	24	static

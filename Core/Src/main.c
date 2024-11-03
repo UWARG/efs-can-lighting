@@ -21,7 +21,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <time.h>
+#include <stdio.h>
+#include <canard.h>
+#include <string.h>
+#include <node_settings.h>
+#include <dronecan_msgs.h>
+#include <canard_stm32_driver.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,6 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define CLOCK_MONOTONIC 1
 
 /* USER CODE END PD */
 
@@ -45,6 +52,7 @@ CAN_HandleTypeDef hcan1;
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
+static CanardInstance canard;
 static uint8_t memory_pool[1024];
 
 /* USER CODE END PV */
@@ -55,7 +63,8 @@ static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
-
+void set_rgb_led(uint8_t red, uint8_t green, uint8_t blue);
+void handle_lights_command(CanardInstance *ins, CanardRxTransfer *transfer);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -89,12 +98,12 @@ void getUniqueID(uint8_t id[16]){
 }
 
 
-void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
+void HAL_CAN_RxFifo0Callback(CAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
 	// Receiving
 	CanardCANFrame rx_frame;
 
 	const uint64_t timestamp = HAL_GetTick() * 1000ULL;
-	const int16_t rx_res = canardSTM32Recieve(hfdcan, FDCAN_RX_FIFO0, &rx_frame);
+	const int16_t rx_res = canardSTM32Recieve(hfdcan, CAN_RX_FIFO0, &rx_frame);
 
 	if (rx_res < 0) {
 		printf("Receive error %d\n", rx_res);
@@ -281,9 +290,9 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer) {
     handle_NotifyState(ins, transfer);
     break;
   }
-	// Specific efs-can-lighting functionality
+	// Specific efs-can-lighting functional
 	case UAVCAN_EQUIPMENT_INDICATION_LIGHTSCOMMAND_ID:
-	  handle_lights_command(canard_instance, transfer);
+	  handle_lights_command(ins, transfer);
 	}
 }
 
@@ -318,7 +327,7 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
 	return false;
 }
 
-void processCanardTxQueue(FDCAN_HandleTypeDef *hfdcan) {
+void processCanardTxQueue(CAN_HandleTypeDef *hfdcan) {
 	// Transmitting
 
 	for (const CanardCANFrame *tx_frame ; (tx_frame = canardPeekTxQueue(&canard)) != NULL;) {
@@ -350,7 +359,7 @@ void process1HzTasks(uint64_t timestamp_usec) {
     send_NodeStatus();
 }
 
-int16_t constraint_int16(int16_t value, int16_t min, int16_t max) {
+int16_t constrain_int16(int16_t value, int16_t min, int16_t max) {
   if (value < min) {
     return min;
   }
@@ -362,12 +371,12 @@ int16_t constraint_int16(int16_t value, int16_t min, int16_t max) {
 
 // TODO: implement these
 void handle_lights_command(CanardInstance *ins, CanardRxTransfer *transfer) {
-  uavcan_equipment_idnication_LightsCommand req;
+  struct uavcan_equipment_indication_LightsCommand req;
   if (uavcan_equipment_indication_LightsCommand_decode(transfer, &req)) {
     return;
   }
   for (uint8_t i = 0; i < req.commands.len; i++) {
-    uavcan_equipment_indication_SingleLightCommand &cmd = req.commands.data[i];
+    struct uavcan_equipment_indication_SingleLightCommand cmd = req.commands.data[i];
     // green needs extra scaling so that it is in the same format as red and blue
     uint8_t red = cmd.color.red << 3U;
     uint8_t green = (cmd.color.green >> 1U) << 3U;
@@ -436,10 +445,6 @@ int main(void)
 	  printf("Node ID is 0, this node is anonymous and can't transmit most messaged. Please update this in node_settings.h\n");
   }
 
-
-  uint32_t hex_color = 0x000339FC;
-  led_set_HEX(hex_color);
-  led_render();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -449,7 +454,7 @@ int main(void)
     /* USER CODE END WHILE */
   
     /* USER CODE BEGIN 3 */
-    processCanardTxQueue(&hfdcan1);
+    processCanardTxQueue(&hcan1);
 
     const uint64_t ts = HAL_GetTick();
     if (ts >= next_1hz_service_at) {
