@@ -5,7 +5,7 @@
  *      Author: folafatola
  */
 
-#include <conversions.hpp>
+#include "conversions.hpp"
 
 
 // Fast hsl2rgb algorithm: https://stackoverflow.com/questions/13105185/fast-algorithm-for-rgb-hsl-conversion
