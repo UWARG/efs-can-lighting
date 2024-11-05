@@ -17,10 +17,7 @@
  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "can.hpp"
-#include "dma.hpp"
-#include "gpio.hpp"
-#include "tim.hpp"
+
 #include "ws2812.hpp"
 #include "main.h"
 /* USER CODE END Includes */
@@ -92,17 +89,22 @@ int main(void)
 	MX_CAN1_Init();
 	MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-	init_led_buffer();
+	ws2812_LED neopixel = ws2812_LED();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
 
+		neopixel.set_all_led_colors(0x080808);
+		neopixel.render_led_colors();
+
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		set_all_led_colors(0x000808);
-		HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf, BUFF_SIZE);
+//		set_all_led_colors(0x000008);
+//		HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf, BUFF_SIZE);
 		HAL_Delay(1000);
 
 	}
