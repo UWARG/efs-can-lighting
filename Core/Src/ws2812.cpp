@@ -8,7 +8,7 @@
  *      https://www.thevfdcollective.com/blog/stm32-and-sk6812-rgbw-led
  */
 
-#include <hex_to_rgb_conversion.hpp>
+#include <conversions.hpp>
 #include <ws2812.hpp>
 #include "stm32l4xx_hal.h"
 
