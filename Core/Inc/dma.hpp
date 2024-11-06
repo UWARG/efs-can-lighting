@@ -35,6 +35,7 @@ extern "C" {
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
+extern DMA_HandleTypeDef hdma;
 
 /* USER CODE END Private defines */
 
