@@ -1,4 +1,0 @@
-../Core/Inc/com.xacti.GnssStatus.h:99:6:_com_xacti_GnssStatus_encode	24	static
-../Core/Inc/com.xacti.GnssStatus.h:223:6:_com_xacti_GnssStatus_decode	32	static
-../Core/Src/com.xacti.GnssStatus.c:12:10:com_xacti_GnssStatus_encode	24	static
-../Core/Src/com.xacti.GnssStatus.c:32:6:com_xacti_GnssStatus_decode	24	static

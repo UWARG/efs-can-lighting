@@ -1,4 +1,0 @@
-../Core/Inc/com.xacti.GimbalControlData.h:67:6:_com_xacti_GimbalControlData_encode	24	static
-../Core/Inc/com.xacti.GimbalControlData.h:119:6:_com_xacti_GimbalControlData_decode	32	static
-../Core/Src/com.xacti.GimbalControlData.c:12:10:com_xacti_GimbalControlData_encode	24	static
-../Core/Src/com.xacti.GimbalControlData.c:32:6:com_xacti_GimbalControlData_decode	24	static

@@ -1,4 +1,0 @@
-../Core/Inc/uavcan.protocol.dynamic_node_id.Allocation.h:79:6:_uavcan_protocol_dynamic_node_id_Allocation_encode	32	static
-../Core/Inc/uavcan.protocol.dynamic_node_id.Allocation.h:144:6:_uavcan_protocol_dynamic_node_id_Allocation_decode	40	static
-../Core/Src/uavcan.protocol.dynamic_node_id.Allocation.c:12:10:uavcan_protocol_dynamic_node_id_Allocation_encode	24	static
-../Core/Src/uavcan.protocol.dynamic_node_id.Allocation.c:32:6:uavcan_protocol_dynamic_node_id_Allocation_decode	24	static

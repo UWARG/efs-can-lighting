@@ -1,9 +1,0 @@
-../Core/Src/neopixel.c:26:23:scale8	1
-../Core/Src/neopixel.c:31:6:led_set_RGB	1
-../Core/Src/neopixel.c:44:6:led_set_HEX	1
-../Core/Src/neopixel.c:53:6:led_set_RGBW	1
-../Core/Src/neopixel.c:61:6:led_set_all_RGB	2
-../Core/Src/neopixel.c:66:6:led_set_all_RGBW	2
-../Core/Src/neopixel.c:71:6:led_render	13
-../Core/Src/neopixel.c:106:6:HAL_TIM_PWM_PulseFinishedHalfCpltCallback	9
-../Core/Src/neopixel.c:134:6:HAL_TIM_PWM_PulseFinishedCallback	9

@@ -1,4 +1,0 @@
-../Core/Inc/uavcan.tunnel.SerialConfig.h:63:6:_uavcan_tunnel_SerialConfig_encode	24	static
-../Core/Inc/uavcan.tunnel.SerialConfig.h:106:6:_uavcan_tunnel_SerialConfig_decode	32	static
-../Core/Src/uavcan.tunnel.SerialConfig.c:12:10:uavcan_tunnel_SerialConfig_encode	24	static
-../Core/Src/uavcan.tunnel.SerialConfig.c:32:6:uavcan_tunnel_SerialConfig_decode	24	static

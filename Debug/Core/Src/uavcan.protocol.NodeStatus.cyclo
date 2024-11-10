@@ -1,4 +1,0 @@
-../Core/Inc/uavcan.protocol.NodeStatus.h:97:6:_uavcan_protocol_NodeStatus_encode	1
-../Core/Inc/uavcan.protocol.NodeStatus.h:158:6:_uavcan_protocol_NodeStatus_decode	1
-../Core/Src/uavcan.protocol.NodeStatus.c:12:10:uavcan_protocol_NodeStatus_encode	1
-../Core/Src/uavcan.protocol.NodeStatus.c:32:6:uavcan_protocol_NodeStatus_decode	2

@@ -1,3 +1,0 @@
-../Core/Src/hex_to_rgb_conversion.c:3:9:get_red_from_hex	16	static
-../Core/Src/hex_to_rgb_conversion.c:7:9:get_green_from_hex	16	static
-../Core/Src/hex_to_rgb_conversion.c:11:9:get_blue_from_hex	16	static

@@ -24,8 +24,9 @@
  * Documentation: http://uavcan.org/Implementations/Libcanard
  */
 
-#include "canard_internals.h"
+#include <canard_internals.h>
 #include <string.h>
+#include <stdio.h>
 
 
 #undef MIN

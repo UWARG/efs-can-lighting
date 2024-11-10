@@ -1,4 +1,0 @@
-../Core/Inc/ardupilot.indication.SafetyState.h:61:6:_ardupilot_indication_SafetyState_encode	24	static
-../Core/Inc/ardupilot.indication.SafetyState.h:86:6:_ardupilot_indication_SafetyState_decode	32	static
-../Core/Src/ardupilot.indication.SafetyState.c:12:10:ardupilot_indication_SafetyState_encode	24	static
-../Core/Src/ardupilot.indication.SafetyState.c:32:6:ardupilot_indication_SafetyState_decode	24	static

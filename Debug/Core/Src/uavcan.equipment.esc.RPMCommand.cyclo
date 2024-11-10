@@ -1,4 +1,0 @@
-../Core/Inc/uavcan.equipment.esc.RPMCommand.h:55:6:_uavcan_equipment_esc_RPMCommand_encode	3
-../Core/Inc/uavcan.equipment.esc.RPMCommand.h:102:6:_uavcan_equipment_esc_RPMCommand_decode	4
-../Core/Src/uavcan.equipment.esc.RPMCommand.c:12:10:uavcan_equipment_esc_RPMCommand_encode	1
-../Core/Src/uavcan.equipment.esc.RPMCommand.c:32:6:uavcan_equipment_esc_RPMCommand_decode	2

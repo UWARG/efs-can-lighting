@@ -1,4 +1,0 @@
-../Core/Inc/uavcan.protocol.RestartNode_res.h:55:6:_uavcan_protocol_RestartNodeResponse_encode	24	static
-../Core/Inc/uavcan.protocol.RestartNode_res.h:80:6:_uavcan_protocol_RestartNodeResponse_decode	32	static
-../Core/Src/uavcan.protocol.RestartNode_res.c:12:10:uavcan_protocol_RestartNodeResponse_encode	24	static
-../Core/Src/uavcan.protocol.RestartNode_res.c:32:6:uavcan_protocol_RestartNodeResponse_decode	24	static

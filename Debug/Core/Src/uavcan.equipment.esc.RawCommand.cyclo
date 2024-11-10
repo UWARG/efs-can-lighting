@@ -1,4 +1,0 @@
-../Core/Inc/uavcan.equipment.esc.RawCommand.h:55:6:_uavcan_equipment_esc_RawCommand_encode	3
-../Core/Inc/uavcan.equipment.esc.RawCommand.h:102:6:_uavcan_equipment_esc_RawCommand_decode	4
-../Core/Src/uavcan.equipment.esc.RawCommand.c:12:10:uavcan_equipment_esc_RawCommand_encode	1
-../Core/Src/uavcan.equipment.esc.RawCommand.c:32:6:uavcan_equipment_esc_RawCommand_decode	2

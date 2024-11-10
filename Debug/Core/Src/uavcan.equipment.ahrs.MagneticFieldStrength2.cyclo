@@ -1,4 +1,0 @@
-../Core/Inc/uavcan.equipment.ahrs.MagneticFieldStrength2.h:63:6:_uavcan_equipment_ahrs_MagneticFieldStrength2_encode	4
-../Core/Inc/uavcan.equipment.ahrs.MagneticFieldStrength2.h:142:6:_uavcan_equipment_ahrs_MagneticFieldStrength2_decode	5
-../Core/Src/uavcan.equipment.ahrs.MagneticFieldStrength2.c:12:10:uavcan_equipment_ahrs_MagneticFieldStrength2_encode	1
-../Core/Src/uavcan.equipment.ahrs.MagneticFieldStrength2.c:32:6:uavcan_equipment_ahrs_MagneticFieldStrength2_decode	2

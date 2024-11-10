@@ -1,4 +1,0 @@
-../Core/Inc/dronecan.remoteid.SelfID.h:67:6:_dronecan_remoteid_SelfID_encode	40	static
-../Core/Inc/dronecan.remoteid.SelfID.h:148:6:_dronecan_remoteid_SelfID_decode	40	static
-../Core/Src/dronecan.remoteid.SelfID.c:12:10:dronecan_remoteid_SelfID_encode	24	static
-../Core/Src/dronecan.remoteid.SelfID.c:32:6:dronecan_remoteid_SelfID_decode	24	static

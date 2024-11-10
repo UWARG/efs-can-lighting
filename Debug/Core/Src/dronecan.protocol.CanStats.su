@@ -1,4 +1,0 @@
-../Core/Inc/dronecan.protocol.CanStats.h:95:6:_dronecan_protocol_CanStats_encode	24	static
-../Core/Inc/dronecan.protocol.CanStats.h:210:6:_dronecan_protocol_CanStats_decode	32	static
-../Core/Src/dronecan.protocol.CanStats.c:12:10:dronecan_protocol_CanStats_encode	24	static
-../Core/Src/dronecan.protocol.CanStats.c:32:6:dronecan_protocol_CanStats_decode	24	static
