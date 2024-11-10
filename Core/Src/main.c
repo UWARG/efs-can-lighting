@@ -275,7 +275,10 @@ void send_NodeStatus(void) {
 
 // Implement Ardupilot can lighting protocol
 
+volatile uint64_t last_frame_timestamp_usec = 0;
+
 void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer) {
+  last_frame_timestamp_usec = transfer -> timestamp_usec;
   switch (transfer->data_type_id) {
   // General CAN node functionality
   case UAVCAN_PROTOCOL_GETNODEINFO_ID: {
@@ -406,6 +409,7 @@ void set_rgb_led(uint8_t red, uint8_t green, uint8_t blue) {
   * @brief  The application entry point.
   * @retval int
   */
+
 int main(void)
 {
 
@@ -454,7 +458,7 @@ int main(void)
     /* USER CODE END WHILE */
   
     /* USER CODE BEGIN 3 */
-    processCanardTxQueue(&hcan1);
+    //processCanardTxQueue(&hcan1);
 
     const uint64_t ts = HAL_GetTick();
     if (ts >= next_1hz_service_at) {

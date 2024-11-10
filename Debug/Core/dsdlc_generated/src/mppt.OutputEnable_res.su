@@ -1,4 +1,4 @@
-C:/Users/north/Documents/code/cpp/efs-can-lighting/Core/dsdlc_generated/include/mppt.OutputEnable_res.h:57:6:_mppt_OutputEnableResponse_encode	24	static
-C:/Users/north/Documents/code/cpp/efs-can-lighting/Core/dsdlc_generated/include/mppt.OutputEnable_res.h:88:6:_mppt_OutputEnableResponse_decode	32	static
+../Core/dsdlc_generated/include/mppt.OutputEnable_res.h:57:6:_mppt_OutputEnableResponse_encode	24	static
+../Core/dsdlc_generated/include/mppt.OutputEnable_res.h:88:6:_mppt_OutputEnableResponse_decode	32	static
 ../Core/dsdlc_generated/src/mppt.OutputEnable_res.c:12:10:mppt_OutputEnableResponse_encode	24	static
 ../Core/dsdlc_generated/src/mppt.OutputEnable_res.c:32:6:mppt_OutputEnableResponse_decode	24	static
