@@ -24,6 +24,7 @@
 #include "main.h"
 #include <time.h>
 #include <stdio.h>
+#include <canard.h>
 #include <string.h>
 #include <tim.h>
 #include "can_interface.hpp"
@@ -108,6 +109,7 @@ int main(void)
 	  } else {
 		  printf("Node ID is 0, this node is anonymous and can't transmit most messaged. Please update this in node_settings.h\n");
 	  }
+	HAL_CAN_Start(&hcan1);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
@@ -116,15 +118,15 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		if (shouldFlashLights) {
-			set_all_led_colors(0x000808);
+			set_all_led_colors(0x000800);
 			HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf, BUFF_SIZE);
-			HAL_Delay(1000);
+			HAL_Delay(100);
 			shouldFlashLights = false;
 		}
 		
 		set_all_led_colors(0x000000);
 		HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf, BUFF_SIZE);
-		HAL_Delay(1000);
+		HAL_Delay(10);
 
 		const uint64_t ts = HAL_GetTick();
 		if (ts >= next_1hz_service_at) {
@@ -134,6 +136,12 @@ int main(void)
 		if (ts >= next_50hz_service_at) {
 		  next_50hz_service_at += 1000000ULL/50U;
 		  // TODO: send neopixel status info back to flight controller here, see efs-can-servo for example using servos
+		}
+
+		if (HAL_GetTick() % 257 == 0) {
+			set_all_led_colors(0x000008);
+			HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf, BUFF_SIZE);
+			HAL_Delay(100);
 		}
 	}
   /* USER CODE END 3 */

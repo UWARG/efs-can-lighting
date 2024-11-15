@@ -35,6 +35,8 @@ void MX_CAN1_Init(void)
   /* USER CODE END CAN1_Init 0 */
 
   /* USER CODE BEGIN CAN1_Init 1 */
+  CAN_FilterTypeDef sFilterConfig;
+  sFilterConfig.FilterActivation = CAN_FILTER_DISABLE;
 
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
@@ -54,7 +56,12 @@ void MX_CAN1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN CAN1_Init 2 */
-
+  if (HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig) != HAL_OK) {
+	  Error_Handler();
+  }
+  if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK) {
+	  Error_Handler();
+  }
   /* USER CODE END CAN1_Init 2 */
 
 }

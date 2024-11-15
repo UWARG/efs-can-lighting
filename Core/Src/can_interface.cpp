@@ -4,7 +4,7 @@ CanardInstance canard;
 uint8_t memory_pool[1024];
 struct uavcan_protocol_NodeStatus node_status;
 volatile uint64_t last_frame_timestamp_usec;
-volatile bool shouldFlashLights;
+volatile bool shouldFlashLights = false;
 
 // Custom clock_gettime function for STM32
 int clock_gettime(clockid_t clk_id, struct timespec *tp) {
@@ -31,12 +31,14 @@ void getUniqueID(uint8_t id[16]){
 }
 
 
-void HAL_CAN_RxFifo0Callback(CAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
+void HAL_CAN_RxFifo0Callback(CAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs) {
 	// Receiving
 	CanardCANFrame rx_frame;
 
+	shouldFlashLights = true;
+
 	const uint64_t timestamp = HAL_GetTick() * 1000ULL;
-	const int16_t rx_res = canardSTM32Recieve(hfdcan, CAN_RX_FIFO0, &rx_frame);
+	const int16_t rx_res = canardSTM32Recieve(hcan, CAN_RX_FIFO0, &rx_frame);
 
 	if (rx_res < 0) {
 		printf("Receive error %d\n", rx_res);
@@ -209,7 +211,7 @@ void send_NodeStatus(void) {
 // Implement Ardupilot can lighting protocol
 
 void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer) {
-	shouldFlashLights = true;
+  shouldFlashLights = true;
   last_frame_timestamp_usec = transfer -> timestamp_usec;
   switch (transfer->data_type_id) {
   // General CAN node functionality
@@ -237,7 +239,7 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
                             CanardTransferType transfer_type,
                             uint8_t source_node_id)
 {
-
+  shouldFlashLights = true;
   switch (data_type_id) {
   // General CAN node functionality
   case UAVCAN_PROTOCOL_GETNODEINFO_ID: {
