@@ -21,8 +21,8 @@
 #include "conversions.hpp"
 
 // Use uint8_t instead of size_t to ensure we don't get too big
-static constexpr uint8_t NUM_LEDS = 6;			// Number of LED's on one board
-static constexpr uint8_t NUM_LEDS_PADDING = 2;	// Number of LED's worth of padding (0) to give
+static constexpr uint8_t NUM_LEDS = 1;			// Number of LED's on one board
+static constexpr uint8_t NUM_LEDS_PADDING = 1;	// Number of LED's worth of padding (0) to give
 static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS + NUM_LEDS_PADDING*2) * 24 * 2;	// 24 bits per LED, (or padding), x2 for DMA functionality
 
 // TODO: Replace this with something better???? Not sure what yet
@@ -43,7 +43,7 @@ void initialize_dma_output_buffer(uint8_t *dma_output_buffer, uint8_t *led_bank_
 
 void run_lighting_board() {
 	// initial setup
-	initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
+	initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
 	initialize_dma_output_buffer(dma_output_buffer, led_bank_output_buffer, LED_BANK_OUTPUT_BUFFER_SIZE);
 
 	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
