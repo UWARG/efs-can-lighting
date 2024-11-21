@@ -26,7 +26,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#include "ws2812.hpp"
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -34,6 +33,7 @@
 //#define ROTATE_LED
 //#define CYCLE_ONE_LED_ON
 //#define CONSTANT_COLOR
+# include "lighting_controller.hpp"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -93,6 +93,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 	// TODO: Make a call to my source file main()
+
+	run_lighting_board();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {

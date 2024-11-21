@@ -10,6 +10,10 @@
 
 // TEMPORARY VALUES
 
+// TODO: Make these public
 void run_lighting_board();
+
+// TODO: Make these private
+void initialize_dma_output_buffer(uint8_t *dma_output_buffer, uint8_t *led_bank_output_buffer, uint16_t bank_size);
 
 #endif /* INC_LIGHTING_CONTROLLER_HPP_ */

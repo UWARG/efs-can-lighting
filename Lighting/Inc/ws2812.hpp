@@ -8,8 +8,8 @@
 #ifndef INC_WS2812_HPP_
 #define INC_WS2812_HPP_
 
-
-
+void initialize_bank_output_buffer_off(uint8_t *bank_out_buff, uint8_t num_led, uint8_t num_pad);
+void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led, uint8_t num_pad);
 
 
 #endif /* INC_WS2812_HPP_ */
