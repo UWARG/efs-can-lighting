@@ -23,7 +23,7 @@ void init_led_buffer() {
 		//data transfers.
 		//For everything else, the buffer is filled with PWM_LO (for 0 brightness)
 		//by default.
-		if (i < 24 || i > (NUM_LEDS + 1) * 24) {
+		if (i < 24 || i >= (NUM_LEDS + 1) * 24) {
 			out_buf[i] = 0;
 		} else {
 			out_buf[i] = PWM_LO;
@@ -100,5 +100,5 @@ void render_led_colors() {
 
 //TODO: Global flag for if DMA transfer has finished?
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
-
+//	HAL_TIMEx_PWMN_Stop_DMA(htim, TIM_CHANNEL_2);
 }

@@ -1,0 +1,3 @@
+../Core/Src/conversions.cpp:10:9:uint8_t get_red_byte_from_hex(uint32_t)	1
+../Core/Src/conversions.cpp:14:9:uint8_t get_green_byte_from_hex(uint32_t)	1
+../Core/Src/conversions.cpp:19:9:uint8_t get_blue_byte_from_hex(uint32_t)	1

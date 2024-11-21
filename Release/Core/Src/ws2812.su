@@ -1,0 +1,6 @@
+../Core/Src/ws2812.cpp:20:6:void init_led_buffer()	0	static
+../Core/Src/ws2812.cpp:34:6:void write_color_bytes_to_buffer(uint8_t, uint8_t, uint8_t, uint8_t, uint32_t)	20	static
+../Core/Src/ws2812.cpp:77:6:void set_led_color_by_index(uint8_t, uint32_t)	32	static
+../Core/Src/ws2812.cpp:89:6:void set_all_led_colors(uint32_t)	16	static
+../Core/Src/ws2812.cpp:96:6:void render_led_colors()	0	static
+../Core/Src/ws2812.cpp:102:6:void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef*)	0	static
