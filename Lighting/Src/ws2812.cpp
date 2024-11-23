@@ -93,11 +93,24 @@ void WS2812::initialize_led_off() {
 void WS2812::set_led_colour(RGB_colour_t rgb_colour_value) {
 	this->colour = rgb_colour_value;
 
+	// TODO: remove magic numbers && properly explain this bit offset stuff
 	for(int i = 0; i < bits_per_colour; ++i) {
 		if ((rgb_colour_value.red >> i) & 0x1) {
 			this->r_offset[7-i] = PWM_HI;
 		} else {
 			this->r_offset[7-i] = PWM_LO;
+		}
+
+		if ((rgb_colour_value.green >> i) & 0x1) {
+			this->g_offset[7-i] = PWM_HI;
+		} else {
+			this->g_offset[7-i] = PWM_LO;
+		}
+
+		if ((rgb_colour_value.blue >> i) & 0x1) {
+			this->b_offset[7-i] = PWM_HI;
+		} else {
+			this->b_offset[7-i] = PWM_LO;
 		}
 	}
 }

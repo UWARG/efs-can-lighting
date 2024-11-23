@@ -50,35 +50,14 @@ void run_lighting_board() {
 	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
 	uint8_t temporary_led_brightness = 5;	// range from 0-8
 
-	// FIRST LED starts when padding is done
-	WS2812 led_0(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*0);
-	led_0.initialize_led_on();
-
-	WS2812 led_1(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*1);
-	led_1.initialize_led_on();
-
-	WS2812 led_3(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*3);
-	led_3.initialize_led_on();
-
 	// Just simply some temporary values
-	bool flip_flop = false;
-	RGB_colour_t my_colour;
-	my_colour.red = 127;
+	uint8_t state = 8;
 
 	while (true) {
 		// Update values of our bank_output_buffer as needed inside the while loop
-
+		temp_make_led_colours(state);
 		// For now, just flip/flop the top/outer edge led's
-		if (flip_flop) {
-			led_0.initialize_led_on();
-			led_3.initialize_led_off();
-			led_3.set_led_colour(my_colour);
-		} else {
-			led_0.initialize_led_off();
-			led_0.set_led_colour(my_colour);
-			led_3.initialize_led_on();
-		}
-		flip_flop = !flip_flop;
+		state += 1;
 
 		HAL_Delay(1200);
 		initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING, temporary_led_brightness);
@@ -107,3 +86,65 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 	std::memcpy(dma_output_buffer + LED_BANK_OUTPUT_BUFFER_SIZE, led_bank_output_buffer, LED_BANK_OUTPUT_BUFFER_SIZE);
 }
 
+
+void temp_make_led_colours(uint8_t state) {
+
+	// FIRST LED starts when padding is done
+	WS2812 led_0(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*0);
+	led_0.initialize_led_off();
+
+	WS2812 led_2(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*2);
+	led_2.initialize_led_off();
+
+	WS2812 led_3(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*3);
+	led_3.initialize_led_off();
+
+	WS2812 led_5(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*5);
+	led_5.initialize_led_off();
+
+	RGB_colour_t my_colour;
+
+	if (state%6 == 0) {
+		my_colour.red = 127;
+		my_colour.green = 0;
+		my_colour.blue = 0;
+
+		led_0.set_led_colour(my_colour);
+		led_3.initialize_led_on();
+	} else if (state%6 == 1) {
+		my_colour.red = 0;
+		my_colour.green = 127;
+		my_colour.blue = 0;
+
+		led_2.set_led_colour(my_colour);
+		led_5.initialize_led_on();
+	} else if (state%6 == 2) {
+		my_colour.red = 0;
+		my_colour.green = 0;
+		my_colour.blue = 127;
+
+		led_0.set_led_colour(my_colour);
+		led_3.initialize_led_on();
+	} else if (state%6 == 3) {
+		my_colour.red = 127;
+		my_colour.green = 0;
+		my_colour.blue = 0;
+
+		led_5.initialize_led_on();
+		led_2.set_led_colour(my_colour);
+	} else if (state%6 == 4) {
+		my_colour.red = 0;
+		my_colour.green = 127;
+		my_colour.blue = 0;
+
+		led_0.set_led_colour(my_colour);
+		led_3.initialize_led_on();
+	} else if (state%6 == 5) {
+		my_colour.red = 0;
+		my_colour.green = 0;
+		my_colour.blue = 127;
+
+		led_2.set_led_colour(my_colour);
+		led_5.initialize_led_on();
+	}
+}
