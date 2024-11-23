@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+#include "conversions.hpp"
+
 static constexpr uint8_t PWM_LO = 19;
 static constexpr uint8_t PWM_HI = 38;
 static constexpr uint8_t BITS_PER_LED = 24;
@@ -19,32 +21,62 @@ void initialize_bank_output_buffer_off(uint8_t *bank_out_buff, uint8_t num_led, 
 void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led, uint8_t num_pad);
 void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led, uint8_t num_pad, uint8_t brightness);
 
-typedef struct {
-	uint8_t red;
-	uint8_t green;
-	uint8_t blue;
-} RGB_colour_t;
 
-typedef struct {
-	uint16_t hue;		// TODO: limit this to 0-360 (degrees)
-	uint8_t saturation;	// TODO: limit this to 0-100 (percentage)
-	uint8_t lightness; 	// TODO: limit this to 0-100 (percentage)
-} HSL_colour_t;
-
-// WS2812 class definition.
-// This is really just ONE led.
+/**
+ * @class WS2812
+ * @brief A class representing a single WS2812 LED
+ *
+ * This class manages the state of a single WS2812 LED by directly manipulating
+ * the memory buffer associated with it's output data. When you set an LED,
+ * it will store state (RGB), and immediately set LED colour.
+ */
 class WS2812 {
 public:
+	/**
+	 * Constructs a WS2812 object
+	 *
+	 * @param output_buffer : Pointer to the start of the output buffer
+	 */
 	WS2812(uint8_t *output_buffer);
+
+	/**
+	 * Initializes the LED to be full brightness on
+	 *
+	 * TODO: Add overloading to allow "on" to have a specified brightness
+	 */
 	void initialize_led_on();
 //	void initialize_led_on(uint8_t *led_output_buffer);
+
+	/**
+	 * Initializes the LED to be full brightness off
+	 */
 	void initialize_led_off();
 //	void initialize_led_off(uint8_t *led_output_buffer);
+
+	/**
+	 * Copies the data in the output buffer into the specified memory location
+	 */
 	void get_led_output_buffer(uint8_t *led_output_buffer);
-	void set_led_colour(RGB_colour_t rgb_colour_value);			// TODO: proper error codes
+
+	/**
+	 * Sets the LED colour immediately.
+	 *
+	 * Since the LED itself works off of 8 bit R/G/B values, this is the function
+	 * that all HSL/HEX functions will call!
+	 *
+	 * @param rgb_colour_value : RGB_colour_t that you want set
+	 */
+	void set_led_colour(RGB_colour_t rgb_colour_value);			// TODO: proper error codes/return types
 
 private:
+	static constexpr uint8_t output_bitdwidth = 24;	// 24 bits (8 each for R, G, B)
+	static constexpr uint8_t bits_per_colour = 8;
+
 	uint8_t *buffer;	// Each LED keeps track of the start of it's buffer within a bank
+	uint8_t *g_offset;	// Green is first
+	uint8_t *r_offset;	// Then Red
+	uint8_t *b_offset;	// Lastly Blue
+	RGB_colour_t colour;
 	bool on;
 };
 

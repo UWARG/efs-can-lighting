@@ -60,7 +60,10 @@ void run_lighting_board() {
 	WS2812 led_3(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*3);
 	led_3.initialize_led_on();
 
+	// Just simply some temporary values
 	bool flip_flop = false;
+	RGB_colour_t my_colour;
+	my_colour.red = 127;
 
 	while (true) {
 		// Update values of our bank_output_buffer as needed inside the while loop
@@ -69,13 +72,15 @@ void run_lighting_board() {
 		if (flip_flop) {
 			led_0.initialize_led_on();
 			led_3.initialize_led_off();
+			led_3.set_led_colour(my_colour);
 		} else {
 			led_0.initialize_led_off();
+			led_0.set_led_colour(my_colour);
 			led_3.initialize_led_on();
 		}
 		flip_flop = !flip_flop;
 
-		HAL_Delay(1000);
+		HAL_Delay(1200);
 		initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING, temporary_led_brightness);
 		HAL_Delay(100);
 		initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);

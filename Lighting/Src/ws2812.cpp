@@ -7,7 +7,8 @@
  *      Author: Anni
  */
 
-#include <stdint.h>
+#include <cstdint>
+#include <cstring>
 
 #include "ws2812.hpp"
 
@@ -57,17 +58,46 @@ void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led, u
 //// This is really just ONE led.
 WS2812::WS2812(uint8_t *output_buffer) {
 	this->buffer = output_buffer;
+
+	// TODO: replace these magic numbers
+	this->g_offset = this->buffer;
+	this->r_offset = this->buffer + 8;
+	this->b_offset = this->buffer + 16;
 	initialize_led_off();
 
 }
+
 void WS2812::initialize_led_on() {
-	for (int i = 0; i < BITS_PER_LED; i++) {
-		this->buffer[i] = PWM_HI;
+	this->colour.red = 255;
+	this->colour.green = 255;
+	this->colour.blue = 255;
+	for (int i = 0; i < BITS_PER_LED; ++i) {
+		if ((i%8) > 3) {			// TODO: remove this and offer a bitter way to do this
+			// This is really only here to protect our eyes while we debug....
+			this->buffer[i] = PWM_HI;
+		} else {
+			this->buffer[i] = PWM_LO;
+		}
 	}
 }
+
 void WS2812::initialize_led_off() {
-	for (int i = 0; i < BITS_PER_LED; i++) {
+	this->colour.red = 0;
+	this->colour.green = 0;
+	this->colour.blue = 0;
+	for (int i = 0; i < BITS_PER_LED; ++i) {
 		this->buffer[i] = PWM_LO;
 	}
 }
 
+void WS2812::set_led_colour(RGB_colour_t rgb_colour_value) {
+	this->colour = rgb_colour_value;
+
+	for(int i = 0; i < bits_per_colour; ++i) {
+		if ((rgb_colour_value.red >> i) & 0x1) {
+			this->r_offset[7-i] = PWM_HI;
+		} else {
+			this->r_offset[7-i] = PWM_LO;
+		}
+	}
+}
