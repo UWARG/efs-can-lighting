@@ -68,6 +68,16 @@ public:
 	 */
 	void set_led_colour(RGB_colour_t rgb_colour_value);			// TODO: proper error codes/return types
 
+	// TODO: set various methods for setting LED colour using custom HEX_COLOUR or HSL
+	// Maybe take advantage of Unions, otherwise conversion.cpp is there for us!
+
+	/**
+	 * Gets the current colour of the LED (in case it needs to be reset?)
+	 * 
+	 * TODO: return current LED colour
+	 */
+	RGB_colour_t get_led_colour();
+
 private:
 	static constexpr uint8_t output_bitdwidth = 24;	// 24 bits (8 each for R, G, B)
 	static constexpr uint8_t bits_per_colour = 8;
@@ -76,6 +86,7 @@ private:
 	uint8_t *g_offset;	// Green is first
 	uint8_t *r_offset;	// Then Red
 	uint8_t *b_offset;	// Lastly Blue
+	
 	RGB_colour_t colour;
 	bool on;
 };

@@ -53,6 +53,19 @@ void run_lighting_board() {
 	// Just simply some temporary values
 	uint8_t state = 8;
 
+	// TODO: - Make a LightBank class
+	//		 - Check functionality by calling recolour_all() every loop
+	//       - Check functionality by setting individuals colours for all of the LED's
+	// For example:
+
+	/**
+	 * LightingController rev3_ledboard(&led_bank_output_buffer);
+	 * while (true) {
+	 *     rev3_ledboard.recolour_all(my_colour);
+	 * 	   // shift mycolour
+	 * }
+	 */
+
 	while (true) {
 		// Update values of our bank_output_buffer as needed inside the while loop
 		temp_make_led_colours(state);
@@ -147,4 +160,16 @@ void temp_make_led_colours(uint8_t state) {
 		led_2.set_led_colour(my_colour);
 		led_5.initialize_led_on();
 	}
+}
+
+LightingController::LightingController(uint8_t *bank_output_buffer) {
+	this->lb_output_buffer = led_bank_output_buffer;
+
+	// TODO: create & initialize all of the LED's to off
+	/**
+	 * for (int i =0; i < NUM_LEDS; ++i) {
+	 *     this->leds = WS2812(<BUFFER_LOCATION>);
+	 *     this->leds.initialize_led_off();			// This line technically isn't necessary
+	 * }
+	 */
 }

@@ -114,3 +114,7 @@ void WS2812::set_led_colour(RGB_colour_t rgb_colour_value) {
 		}
 	}
 }
+
+RGB_colour_t WS2812::get_led_colour() {
+	// TODO: return LED colour
+}
