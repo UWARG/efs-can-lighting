@@ -48,12 +48,40 @@ void run_lighting_board() {
 
 	// Start the Circular DMA buffer (once only)
 	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
+	uint8_t temporary_led_brightness = 5;	// range from 0-8
+
+	// FIRST LED starts when padding is done
+	WS2812 led_0(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*0);
+	led_0.initialize_led_on();
+
+	WS2812 led_1(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*1);
+	led_1.initialize_led_on();
+
+	WS2812 led_3(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*3);
+	led_3.initialize_led_on();
+
+	bool flip_flop = false;
 
 	while (true) {
 		// Update values of our bank_output_buffer as needed inside the while loop
+
+		// For now, just flip/flop the top/outer edge led's
+		if (flip_flop) {
+			led_0.initialize_led_on();
+			led_3.initialize_led_off();
+		} else {
+			led_0.initialize_led_off();
+			led_3.initialize_led_on();
+		}
+		flip_flop = !flip_flop;
+
 		HAL_Delay(1000);
-		initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
-		HAL_Delay(1000);
+		initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING, temporary_led_brightness);
+		HAL_Delay(100);
+		initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
+		HAL_Delay(100);
+		initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING, temporary_led_brightness);
+		HAL_Delay(100);
 		initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
 	}
 }
