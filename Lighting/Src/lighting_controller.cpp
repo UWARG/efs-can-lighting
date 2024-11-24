@@ -43,7 +43,8 @@ void initialize_dma_output_buffer(uint8_t *dma_output_buffer, uint8_t *led_bank_
 
 void run_lighting_board() {
 	// initial setup
-	initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
+//	initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
+	initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
 	initialize_dma_output_buffer(dma_output_buffer, led_bank_output_buffer, LED_BANK_OUTPUT_BUFFER_SIZE);
 
 	// Start the Circular DMA buffer (once only)
@@ -163,7 +164,7 @@ void temp_make_led_colours(uint8_t state) {
 }
 
 LightingController::LightingController(uint8_t *bank_output_buffer) {
-	this->lb_output_buffer = led_bank_output_buffer;
+	this->lc_output_buffer = led_bank_output_buffer;
 
 	// TODO: create & initialize all of the LED's to off
 	/**
