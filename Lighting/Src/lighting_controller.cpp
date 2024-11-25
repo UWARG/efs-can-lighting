@@ -20,7 +20,7 @@
 #include "ws2812.hpp"
 #include "conversions.hpp"
 
-#define STARTUP_SEQUENCE_1 // very basic selftest
+//#define STARTUP_SEQUENCE_1 // very basic selftest
 
 // TODO: custom types?
 static constexpr uint8_t NUM_LEDS = 6;
@@ -43,6 +43,53 @@ void run_lighting_board() {
 
 	// Call to start lighting control
 	rev3.start_lighting_control();
+
+	RGB_colour_t my_colour;
+	my_colour.red = 127;
+	my_colour.green = 0;
+	my_colour.blue = 255;
+
+	int red_direction = 1;   // 1 for increasing, -1 for decreasing
+	int green_direction = 1; // 1 for increasing, -1 for decreasing
+	int blue_direction = 1;  // 1 for increasing, -1 for decreasing
+
+	while (true) {
+		// Update LED colors
+		rev3.recolour_all(my_colour);
+
+		// Update red value
+		my_colour.red += red_direction;
+		if (my_colour.red >= 255) {
+			my_colour.red = 255;
+			red_direction = -1; // Start decreasing
+		} else if (my_colour.red <= 0) {
+			my_colour.red = 0;
+			red_direction = 1; // Start increasing
+		}
+
+		// Update green value
+		my_colour.green += green_direction;
+		if (my_colour.green >= 255) {
+			my_colour.green = 255;
+			green_direction = -1; // Start decreasing
+		} else if (my_colour.green <= 0) {
+			my_colour.green = 0;
+			green_direction = 1; // Start increasing
+		}
+
+		// Update blue value
+		my_colour.blue += blue_direction;
+		if (my_colour.blue >= 255) {
+			my_colour.blue = 255;
+			blue_direction = -1; // Start decreasing
+		} else if (my_colour.blue <= 0) {
+			my_colour.blue = 0;
+			blue_direction = 1; // Start increasing
+		}
+
+		// Add a small delay for smooth transitions
+		HAL_Delay(10); // Adjust this value for faster/slower fading
+	}
 }
 
 LightingController::LightingController(uint8_t *dma_output_buffer,
@@ -55,7 +102,8 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 
 	// Initialize all of the internal LED's as well
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].initialize_led_on(bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
+		this->leds[i].initialize_led_on(
+				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
 	}
 }
 
@@ -80,6 +128,17 @@ void LightingController::start_lighting_control() {
 		HAL_Delay(1000);
 	}
 #endif
+}
+
+void LightingController::recolour_all(RGB_colour_t desired_colour) {
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		this->leds[i].set_led_colour(desired_colour);
+	}
+}
+
+void LightingController::recolour_by_index(uint8_t index,
+		RGB_colour_t desired_colour) {
+	this->leds[index].set_led_colour(desired_colour);
 }
 
 void LightingController::initialize_bank_buffer_off() {
