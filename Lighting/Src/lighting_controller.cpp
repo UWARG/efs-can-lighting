@@ -20,13 +20,15 @@
 #include "ws2812.hpp"
 #include "conversions.hpp"
 
-//#define STARTUP_SEQUENCE_1 // very basic selftest
+#define STARTUP_SEQUENCE_1 // very basic selftest
 
 // TODO: custom types?
 static constexpr uint8_t NUM_LEDS = 6;
 static constexpr uint8_t NUM_LEDS_PADDING = 6;
-static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS + NUM_LEDS_PADDING*2)*24*2;		// TODO: remove magic num
-static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS + NUM_LEDS_PADDING*2)*24*2;	// TODO: remove magic num
+static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS
+		+ NUM_LEDS_PADDING * 2) * 24 * 2;		// TODO: remove magic num
+static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS
+		+ NUM_LEDS_PADDING * 2) * 24 * 2;	// TODO: remove magic num
 
 uint8_t dma_output_buffer[DMA_OUTPUT_BUFFER_SIZE];
 uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
@@ -43,20 +45,29 @@ void run_lighting_board() {
 	rev3.start_lighting_control();
 }
 
-LightingController::LightingController(uint8_t *dma_output_buffer, uint8_t *bank_output_buffer, WS2812 *leds) {
+LightingController::LightingController(uint8_t *dma_output_buffer,
+		uint8_t *bank_output_buffer, WS2812 *leds) {
 	this->dma_buffer = dma_output_buffer;
 	this->bank_buffer = bank_output_buffer;
 	this->leds = leds;
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
 
-	start_lighting_control();
-	HAL_Delay(1000);
+	// Initialize all of the internal LED's as well
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		this->leds[i].initialize_led_on(bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
+	}
+}
+
+void LightingController::start_lighting_control() {
+	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2,
+			(uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
 
 #ifdef STARTUP_SEQUENCE_1
+	HAL_Delay(1000);
 	// Average startup selftest moment
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].initialize_led_off(bank_output_buffer + NUM_LEDS_PADDING*24 + 24*i);
+		this->leds[i].initialize_led_off();
 		HAL_Delay(1000);
 	}
 
@@ -74,7 +85,8 @@ LightingController::LightingController(uint8_t *dma_output_buffer, uint8_t *bank
 void LightingController::initialize_bank_buffer_off() {
 	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
 		// Check if the bit is a padding bit or value bit
-		if (i < 24*NUM_LEDS_PADDING || i >= (BANK_OUTPUT_BUFFER_SIZE - 24*NUM_LEDS_PADDING)) {
+		if (i < 24 * NUM_LEDS_PADDING
+				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
 			this->bank_buffer[i] = 0;
 		} else {
 			this->bank_buffer[i] = PWM_LO;
@@ -85,10 +97,11 @@ void LightingController::initialize_bank_buffer_off() {
 void LightingController::initialize_bank_buffer_on() {
 	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
 		// Check if the bit is a padding bit or value bit
-		if (i < 24*NUM_LEDS_PADDING || i >= (BANK_OUTPUT_BUFFER_SIZE - 24*NUM_LEDS_PADDING)) {
+		if (i < 24 * NUM_LEDS_PADDING
+				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
 			this->bank_buffer[i] = 0;
 		} else {
-			if ((i%8) > 4) {
+			if ((i % 8) > 4) {
 				this->bank_buffer[i] = PWM_HI;
 			} else {
 				this->bank_buffer[i] = PWM_LO;
@@ -101,11 +114,8 @@ void LightingController::initialize_dma_buffer() {
 	// memcpy first bank
 	std::memcpy(this->dma_buffer, bank_output_buffer, BANK_OUTPUT_BUFFER_SIZE);
 	// memcpy the second bank
-	std::memcpy(this->dma_buffer + BANK_OUTPUT_BUFFER_SIZE, bank_output_buffer, BANK_OUTPUT_BUFFER_SIZE);
-}
-
-void LightingController::start_lighting_control() {
-	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
+	std::memcpy(this->dma_buffer + BANK_OUTPUT_BUFFER_SIZE, bank_output_buffer,
+			BANK_OUTPUT_BUFFER_SIZE);
 }
 
 // CALLBACKS
@@ -122,5 +132,6 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 	// | BANK 1 | BANK 2 |
 	//                   ^ Current location
 	// So update BANK 2
-	std::memcpy(dma_output_buffer + BANK_OUTPUT_BUFFER_SIZE, bank_output_buffer, BANK_OUTPUT_BUFFER_SIZE);
+	std::memcpy(dma_output_buffer + BANK_OUTPUT_BUFFER_SIZE, bank_output_buffer,
+			BANK_OUTPUT_BUFFER_SIZE);
 }

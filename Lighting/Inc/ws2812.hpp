@@ -17,10 +17,12 @@ static constexpr uint8_t PWM_HI = 38;
 static constexpr uint8_t BITS_PER_LED = 24;
 
 // TODO: remove these
-void initialize_bank_output_buffer_off(uint8_t *bank_out_buff, uint8_t num_led, uint8_t num_pad);
-void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led, uint8_t num_pad);
-void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led, uint8_t num_pad, uint8_t brightness);
-
+void initialize_bank_output_buffer_off(uint8_t *bank_out_buff, uint8_t num_led,
+		uint8_t num_pad);
+void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led,
+		uint8_t num_pad);
+void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led,
+		uint8_t num_pad, uint8_t brightness);
 
 /**
  * @class WS2812
@@ -38,7 +40,9 @@ public:
 	 *
 	 * You must then call `initialize_<>()` with a pointer to the output buffer
 	 */
-	WS2812() {};
+	WS2812() {
+	}
+	;
 	/**
 	 * Constructs a WS2812 object
 	 *
@@ -81,7 +85,7 @@ public:
 	 *
 	 * @param rgb_colour_value : RGB_colour_t that you want set
 	 */
-	void set_led_colour(RGB_colour_t rgb_colour_value);			// TODO: proper error codes/return types
+	void set_led_colour(RGB_colour_t rgb_colour_value);	// TODO: proper error codes/return types
 
 	// TODO: set various methods for setting LED colour using custom HEX_COLOUR or HSL
 	// Maybe take advantage of Unions, otherwise conversion.cpp is there for us!
@@ -97,15 +101,13 @@ private:
 	static constexpr uint8_t output_bitdwidth = 24;	// 24 bits (8 each for R, G, B)
 	static constexpr uint8_t bits_per_colour = 8;
 
-	uint8_t *buffer;	// Each LED keeps track of the start of it's buffer within a bank
+	uint8_t *buffer;// Each LED keeps track of the start of it's buffer within a bank
 	uint8_t *g_offset;	// Green is first
 	uint8_t *r_offset;	// Then Red
 	uint8_t *b_offset;	// Lastly Blue
-	
+
 	RGB_colour_t colour;
 	bool on;
 };
-
-
 
 #endif /* INC_WS2812_HPP_ */
