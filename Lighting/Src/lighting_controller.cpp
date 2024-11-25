@@ -20,6 +20,9 @@
 #include "ws2812.hpp"
 #include "conversions.hpp"
 
+//#define STARTUP_SEQUENCE_1 // very basic selftest
+
+// TODO: custom types?
 static constexpr uint8_t NUM_LEDS = 6;
 static constexpr uint8_t NUM_LEDS_PADDING = 6;
 static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS + NUM_LEDS_PADDING*2)*24*2;		// TODO: remove magic num
@@ -30,27 +33,13 @@ uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 
 WS2812 leds[NUM_LEDS]; // TODO: make this work
 
-// TODO: define custom types so we don't need this weirdness
-//uint8_t *dma_output_buffer;
-//uint8_t *led_bank_output_buffer;
-uint16_t LED_BANK_OUTPUT_BUFFER_SIZE = BANK_OUTPUT_BUFFER_SIZE;
-
 extern TIM_HandleTypeDef htim;
 
-void initialize_dma_output_buffer(uint8_t *dma_output_buffer, uint8_t *led_bank_output_buffer, uint16_t bank_size) {
-	// Memcpy first bank
-	std::memcpy(dma_output_buffer, led_bank_output_buffer, bank_size);
-	// Memcpy second bank
-	std::memcpy(dma_output_buffer + bank_size, led_bank_output_buffer, bank_size);
-}
-
 void run_lighting_board() {
-	// initial setup
-//	initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
-//	initialize_dma_output_buffer(dma_output_buffer, led_bank_output_buffer, LED_BANK_OUTPUT_BUFFER_SIZE);
-
+	// Initial setup call
 	LightingController rev3(dma_output_buffer, bank_output_buffer, leds);
 
+	// Call to start lighting control
 	rev3.start_lighting_control();
 }
 
@@ -61,11 +50,25 @@ LightingController::LightingController(uint8_t *dma_output_buffer, uint8_t *bank
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
 
-	uint8_t* led_address;
-	for (int i = 0; i < NUM_LEDS; i++) {
-		led_address = bank_buffer + NUM_LEDS*24 + 24*i;
-		this->leds[i].initialize_led_off(led_address);
+	start_lighting_control();
+	HAL_Delay(1000);
+
+#ifdef STARTUP_SEQUENCE_1
+	// Average startup selftest moment
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		this->leds[i].initialize_led_off(bank_output_buffer + NUM_LEDS_PADDING*24 + 24*i);
+		HAL_Delay(1000);
 	}
+
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		RGB_colour_t my_colour;
+		my_colour.red = (i % 3 == 0) ? 80 : 0;
+		my_colour.green = (i % 3 == 1) ? 80 : 0;
+		my_colour.blue = (i % 3 == 2) ? 80 : 0;
+		this->leds[i].set_led_colour(my_colour);
+		HAL_Delay(1000);
+	}
+#endif
 }
 
 void LightingController::initialize_bank_buffer_off() {
@@ -85,7 +88,11 @@ void LightingController::initialize_bank_buffer_on() {
 		if (i < 24*NUM_LEDS_PADDING || i >= (BANK_OUTPUT_BUFFER_SIZE - 24*NUM_LEDS_PADDING)) {
 			this->bank_buffer[i] = 0;
 		} else {
-			this->bank_buffer[i] = PWM_HI;
+			if ((i%8) > 4) {
+				this->bank_buffer[i] = PWM_HI;
+			} else {
+				this->bank_buffer[i] = PWM_LO;
+			}
 		}
 	}
 }
@@ -99,14 +106,6 @@ void LightingController::initialize_dma_buffer() {
 
 void LightingController::start_lighting_control() {
 	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
-
-	// TODO: remove this testing code
-	while (true) {
-		initialize_bank_buffer_on();
-		HAL_Delay(1000);
-		initialize_bank_buffer_off();
-		HAL_Delay(1000);
-	}
 }
 
 // CALLBACKS
