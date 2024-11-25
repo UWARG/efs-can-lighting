@@ -13,7 +13,7 @@
 #include "ws2812.hpp"
 
 
-// TODO: move buffer initialization to a different part of the code
+// TODO: move buffer initialization to LightingController
 void initialize_bank_output_buffer_off(uint8_t *bank_out_buff, uint8_t num_led, uint8_t num_pad) {
 	uint16_t buffer_size = (num_led + 2*num_pad) * 24;
 	for (int i = 0; i < buffer_size; ++i) {
@@ -82,6 +82,17 @@ void WS2812::initialize_led_on() {
 }
 
 void WS2812::initialize_led_off() {
+	this->colour.red = 0;
+	this->colour.green = 0;
+	this->colour.blue = 0;
+	for (int i = 0; i < BITS_PER_LED; ++i) {
+		this->buffer[i] = PWM_LO;
+	}
+}
+
+void WS2812::initialize_led_off(uint8_t *led_output_buffer) {
+	this->buffer = led_output_buffer;
+
 	this->colour.red = 0;
 	this->colour.green = 0;
 	this->colour.blue = 0;

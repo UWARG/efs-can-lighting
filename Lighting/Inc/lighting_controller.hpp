@@ -11,9 +11,7 @@
 #include <cstdint>
 
 #include "conversions.hpp"
-
-// TODO: determine if this builds
-// extern static constexpr uint8_t NUM_LEDS;
+#include "ws2812.hpp"
 
 // TODO: Make these public
 void run_lighting_board();
@@ -28,7 +26,9 @@ public:
     /**
      * TODO: Initialize lighting controller with a reference to the led bank output
      */
-    LightingController(uint8_t *bank_output_buffer);
+    LightingController(uint8_t *dma_output_buffer, uint8_t *bank_output_buffer, WS2812 *leds);
+
+    void start_lighting_control();
 
     /**
      * TODO: re-colour all of the LED's
@@ -41,8 +41,12 @@ public:
     void recolour_by_index(uint8_t index, RGB_colour_t desired_colour);
 
 private:
-    uint8_t *lc_output_buffer;
-    // WS2812 *leds[NUM_LEDS]; TODO: make this work
+    uint8_t *dma_buffer;
+    uint8_t *bank_buffer;
+    WS2812 *leds;
 
-}
+    void initialize_bank_buffer_off();
+    void initialize_bank_buffer_on();
+    void initialize_dma_buffer();
+};
 #endif /* INC_LIGHTING_CONTROLLER_HPP_ */

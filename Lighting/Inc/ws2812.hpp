@@ -32,6 +32,13 @@ void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led, u
  */
 class WS2812 {
 public:
+
+	/**
+	 * Default Constructor
+	 *
+	 * You must then call `initialize_<>()` with a pointer to the output buffer
+	 */
+	WS2812() {};
 	/**
 	 * Constructs a WS2812 object
 	 *
@@ -48,10 +55,18 @@ public:
 //	void initialize_led_on(uint8_t *led_output_buffer);
 
 	/**
-	 * Initializes the LED to be full brightness off
+	 * Initializes the LED to be full off
+	 *
+	 * Assumes that output buffer has already been set
 	 */
 	void initialize_led_off();
-//	void initialize_led_off(uint8_t *led_output_buffer);
+
+	/**
+	 * Initializes the LED to be full off
+	 *
+	 * @param led_output_buffer : Pointer to the start of the output buffer for this LED
+	 */
+	void initialize_led_off(uint8_t *led_output_buffer);
 
 	/**
 	 * Copies the data in the output buffer into the specified memory location
