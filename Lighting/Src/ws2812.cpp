@@ -81,6 +81,16 @@ void WS2812::initialize_led_on() {
 	}
 }
 
+void WS2812::initialize_led_on(uint8_t *led_output_buffer) {
+	this->buffer = led_output_buffer;
+
+	this->g_offset = this->buffer;
+	this->r_offset = this->buffer + 8;
+	this->b_offset = this->buffer + 16;
+
+	initialize_led_on();
+}
+
 void WS2812::initialize_led_off() {
 	this->colour.red = 0;
 	this->colour.green = 0;
