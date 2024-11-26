@@ -16,13 +16,19 @@ static constexpr uint8_t PWM_LO = 19;
 static constexpr uint8_t PWM_HI = 38;
 static constexpr uint8_t BITS_PER_LED = 24;
 
-// TODO: remove these
-void initialize_bank_output_buffer_off(uint8_t *bank_out_buff, uint8_t num_led,
-		uint8_t num_pad);
-void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led,
-		uint8_t num_pad);
-void initialize_bank_output_buffer_on(uint8_t *bank_out_buff, uint8_t num_led,
-		uint8_t num_pad, uint8_t brightness);
+/**
+ * @enum CommandMode
+ * Represents the different command mode that an LED might be responsive to.
+ *
+ * CM_MAIN - default mode where LED's respond to main.cpp commands
+ * CM_STROBE - mode where LED's only accept CM_MAIN commands if NOT in a strobe pattern
+ *
+ * Add other modes as necessary
+ */
+enum CommandMode {
+	CM_MAIN,
+	CM_STROBE
+};
 
 /**
  * @class WS2812
@@ -40,9 +46,7 @@ public:
 	 *
 	 * You must then call `initialize_<>()` with a pointer to the output buffer
 	 */
-	WS2812() {
-	}
-	;
+	WS2812();
 	/**
 	 * Constructs a WS2812 object
 	 *
@@ -107,7 +111,7 @@ private:
 	uint8_t *b_offset;	// Lastly Blue
 
 	RGB_colour_t colour;
-	bool on;
+	CommandMode cmd_mode;
 };
 
 #endif /* INC_WS2812_HPP_ */
