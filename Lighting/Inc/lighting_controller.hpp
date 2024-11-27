@@ -11,38 +11,48 @@
 #include <cstdint>
 
 #include "conversions.hpp"
+#include "ws2812.hpp"
 
-// TODO: determine if this builds
-// extern static constexpr uint8_t NUM_LEDS;
+/**
+ * @enum CommandMode
+ * Represents the different command mode that an LED might be responsive to.
+ *
+ * CM_MAIN - default mode where LED's respond to main.cpp commands
+ * CM_STROBE - mode where LED's only accept CM_MAIN commands if NOT in a strobe pattern
+ *
+ * Add other modes as necessary
+ */
 
 // TODO: Make these public
 void run_lighting_board();
 
-// TODO: Make these private
-void initialize_dma_output_buffer(uint8_t *dma_output_buffer, uint8_t *led_bank_output_buffer, uint16_t bank_size);
-
-void temp_make_led_colours(uint8_t state);
-
 class LightingController {
 public:
-    /**
-     * TODO: Initialize lighting controller with a reference to the led bank output
-     */
-    LightingController(uint8_t *bank_output_buffer);
+	/**
+	 * TODO: Initialize lighting controller with a reference to the led bank output
+	 */
+	LightingController(uint8_t *dma_output_buffer, uint8_t *bank_output_buffer,
+			WS2812 *leds);
 
-    /**
-     * TODO: re-colour all of the LED's
-     */
-    void recolour_all(RGB_colour_t desired_colour);
+	void start_lighting_control();
 
-    /**
-     * TODO: re-colour LED by index
-     */
-    void recolour_by_index(uint8_t index, RGB_colour_t desired_colour);
+	/**
+	 * TODO: re-colour all of the LED's
+	 */
+	void recolour_all(RGB_colour_t desired_colour);
+
+	/**
+	 * TODO: re-colour LED by index
+	 */
+	void recolour_by_index(uint8_t index, RGB_colour_t desired_colour);
 
 private:
-    uint8_t *lc_output_buffer;
-    // WS2812 *leds[NUM_LEDS]; TODO: make this work
+	uint8_t *dma_buffer;
+	uint8_t *bank_buffer;
+	WS2812 *leds;
 
-}
+	void initialize_bank_buffer_off();
+	void initialize_bank_buffer_on();
+	void initialize_dma_buffer();
+};
 #endif /* INC_LIGHTING_CONTROLLER_HPP_ */

@@ -20,157 +20,177 @@
 #include "ws2812.hpp"
 #include "conversions.hpp"
 
-// Use uint8_t instead of size_t to ensure we don't get too big
-static constexpr uint8_t NUM_LEDS = 6;			// Number of LED's on one board
-static constexpr uint8_t NUM_LEDS_PADDING = 6;	// Number of LED's worth of padding (0) to give
-static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS + NUM_LEDS_PADDING*2) * 24 * 2;	// 24 bits per LED, (or padding), x2 for DMA functionality
+//#define STARTUP_SEQUENCE_1 // very basic selftest
 
-// TODO: Replace this with something better???? Not sure what yet
-static constexpr uint16_t LED_BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS + NUM_LEDS_PADDING*2) *24; // Padding for one bank of LED's, + padding
+// TODO: custom types?
+static constexpr uint8_t NUM_LEDS = 6;
+static constexpr uint8_t NUM_LEDS_PADDING = 6;
+static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS
+		+ NUM_LEDS_PADDING * 2) * 24 * 2;		// TODO: remove magic num
+static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS
+		+ NUM_LEDS_PADDING * 2) * 24 * 2;	// TODO: remove magic num
 
-// TODO: define custom types so we don't need this weirdness
 uint8_t dma_output_buffer[DMA_OUTPUT_BUFFER_SIZE];
-uint8_t led_bank_output_buffer[LED_BANK_OUTPUT_BUFFER_SIZE];
+uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
+
+WS2812 leds[NUM_LEDS]; // TODO: make this work
 
 extern TIM_HandleTypeDef htim;
 
-void initialize_dma_output_buffer(uint8_t *dma_output_buffer, uint8_t *led_bank_output_buffer, uint16_t bank_size) {
-	// Memcpy first bank
-	std::memcpy(dma_output_buffer, led_bank_output_buffer, bank_size);
-	// Memcpy second bank
-	std::memcpy(dma_output_buffer + bank_size, led_bank_output_buffer, bank_size);
-}
-
 void run_lighting_board() {
-	// initial setup
-//	initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
-	initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
-	initialize_dma_output_buffer(dma_output_buffer, led_bank_output_buffer, LED_BANK_OUTPUT_BUFFER_SIZE);
+	// Initial setup call
+	LightingController rev3(dma_output_buffer, bank_output_buffer, leds);
 
-	// Start the Circular DMA buffer (once only)
-	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
-	uint8_t temporary_led_brightness = 5;	// range from 0-8
+	// Call to start lighting control
+	rev3.start_lighting_control();
 
-	// Just simply some temporary values
-	uint8_t state = 8;
+	RGB_colour_t my_colour;
+	my_colour.red = 127;
+	my_colour.green = 0;
+	my_colour.blue = 255;
 
-	// TODO: - Make a LightBank class
-	//		 - Check functionality by calling recolour_all() every loop
-	//       - Check functionality by setting individuals colours for all of the LED's
-	// For example:
-
-	/**
-	 * LightingController rev3_ledboard(&led_bank_output_buffer);
-	 * while (true) {
-	 *     rev3_ledboard.recolour_all(my_colour);
-	 * 	   // shift mycolour
-	 * }
-	 */
+	int red_direction = 1;   // 1 for increasing, -1 for decreasing
+	int green_direction = 1; // 1 for increasing, -1 for decreasing
+	int blue_direction = 1;  // 1 for increasing, -1 for decreasing
 
 	while (true) {
-		// Update values of our bank_output_buffer as needed inside the while loop
-		temp_make_led_colours(state);
-		// For now, just flip/flop the top/outer edge led's
-		state += 1;
+		// Update LED colors
+		rev3.recolour_all(my_colour);
 
-		HAL_Delay(1200);
-		initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING, temporary_led_brightness);
-		HAL_Delay(100);
-		initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
-		HAL_Delay(100);
-		initialize_bank_output_buffer_on(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING, temporary_led_brightness);
-		HAL_Delay(100);
-		initialize_bank_output_buffer_off(led_bank_output_buffer, NUM_LEDS, NUM_LEDS_PADDING);
+		// Update red value
+		my_colour.red += red_direction;
+		if (my_colour.red >= 255) {
+			my_colour.red = 255;
+			red_direction = -1; // Start decreasing
+		} else if (my_colour.red <= 0) {
+			my_colour.red = 0;
+			red_direction = 1; // Start increasing
+		}
+
+		// Update green value
+		my_colour.green += green_direction;
+		if (my_colour.green >= 255) {
+			my_colour.green = 255;
+			green_direction = -1; // Start decreasing
+		} else if (my_colour.green <= 0) {
+			my_colour.green = 0;
+			green_direction = 1; // Start increasing
+		}
+
+		// Update blue value
+		my_colour.blue += blue_direction;
+		if (my_colour.blue >= 255) {
+			my_colour.blue = 255;
+			blue_direction = -1; // Start decreasing
+		} else if (my_colour.blue <= 0) {
+			my_colour.blue = 0;
+			blue_direction = 1; // Start increasing
+		}
+
+		// Add a small delay for smooth transitions
+		HAL_Delay(10); // Adjust this value for faster/slower fading
 	}
+}
+
+LightingController::LightingController(uint8_t *dma_output_buffer,
+		uint8_t *bank_output_buffer, WS2812 *leds) {
+	this->dma_buffer = dma_output_buffer;
+	this->bank_buffer = bank_output_buffer;
+	this->leds = leds;
+	initialize_bank_buffer_on();
+	initialize_dma_buffer();
+
+	// Initialize all of the internal LED's as well
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		this->leds[i].initialize_led_on(
+				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
+	}
+}
+
+void LightingController::start_lighting_control() {
+	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2,
+			(uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
+
+#ifdef STARTUP_SEQUENCE_1
+	HAL_Delay(1000);
+	// Average startup selftest moment
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		this->leds[i].initialize_led_off();
+		HAL_Delay(1000);
+	}
+
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		RGB_colour_t my_colour;
+		my_colour.red = (i % 3 == 0) ? 80 : 0;
+		my_colour.green = (i % 3 == 1) ? 80 : 0;
+		my_colour.blue = (i % 3 == 2) ? 80 : 0;
+		this->leds[i].set_led_colour(my_colour);
+		HAL_Delay(1000);
+	}
+#endif
+}
+
+void LightingController::recolour_all(RGB_colour_t desired_colour) {
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		this->leds[i].set_led_colour(desired_colour);
+	}
+}
+
+void LightingController::recolour_by_index(uint8_t index,
+		RGB_colour_t desired_colour) {
+	this->leds[index].set_led_colour(desired_colour);
+}
+
+void LightingController::initialize_bank_buffer_off() {
+	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
+		// Check if the bit is a padding bit or value bit
+		if (i < 24 * NUM_LEDS_PADDING
+				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
+			this->bank_buffer[i] = 0;
+		} else {
+			this->bank_buffer[i] = PWM_LO;
+		}
+	}
+}
+
+void LightingController::initialize_bank_buffer_on() {
+	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
+		// Check if the bit is a padding bit or value bit
+		if (i < 24 * NUM_LEDS_PADDING
+				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
+			this->bank_buffer[i] = 0;
+		} else {
+			if ((i % 8) > 4) {
+				this->bank_buffer[i] = PWM_HI;
+			} else {
+				this->bank_buffer[i] = PWM_LO;
+			}
+		}
+	}
+}
+
+void LightingController::initialize_dma_buffer() {
+	// memcpy first bank
+	std::memcpy(this->dma_buffer, bank_output_buffer, BANK_OUTPUT_BUFFER_SIZE);
+	// memcpy the second bank
+	std::memcpy(this->dma_buffer + BANK_OUTPUT_BUFFER_SIZE, bank_output_buffer,
+			BANK_OUTPUT_BUFFER_SIZE);
 }
 
 // CALLBACKS
 // TODO: Register custom callbacks for the timers
 // https://community.st.com/t5/stm32-mcus/how-to-use-register-callbacks-in-stm32/ta-p/580499
+// We should be able to register _class_ functions as callbacks?
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 	// | BANK 1 | BANK 2 |
 	//          ^ Current location
 	// So update BANK 1
-	std::memcpy(dma_output_buffer, led_bank_output_buffer, LED_BANK_OUTPUT_BUFFER_SIZE);
+	std::memcpy(dma_output_buffer, bank_output_buffer, BANK_OUTPUT_BUFFER_SIZE);
 }
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 	// | BANK 1 | BANK 2 |
 	//                   ^ Current location
 	// So update BANK 2
-	std::memcpy(dma_output_buffer + LED_BANK_OUTPUT_BUFFER_SIZE, led_bank_output_buffer, LED_BANK_OUTPUT_BUFFER_SIZE);
-}
-
-
-void temp_make_led_colours(uint8_t state) {
-
-	// FIRST LED starts when padding is done
-	WS2812 led_0(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*0);
-	led_0.initialize_led_off();
-
-	WS2812 led_2(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*2);
-	led_2.initialize_led_off();
-
-	WS2812 led_3(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*3);
-	led_3.initialize_led_off();
-
-	WS2812 led_5(led_bank_output_buffer + NUM_LEDS_PADDING*24 + 24*5);
-	led_5.initialize_led_off();
-
-	RGB_colour_t my_colour;
-
-	if (state%6 == 0) {
-		my_colour.red = 127;
-		my_colour.green = 0;
-		my_colour.blue = 0;
-
-		led_0.set_led_colour(my_colour);
-		led_3.initialize_led_on();
-	} else if (state%6 == 1) {
-		my_colour.red = 0;
-		my_colour.green = 127;
-		my_colour.blue = 0;
-
-		led_2.set_led_colour(my_colour);
-		led_5.initialize_led_on();
-	} else if (state%6 == 2) {
-		my_colour.red = 0;
-		my_colour.green = 0;
-		my_colour.blue = 127;
-
-		led_0.set_led_colour(my_colour);
-		led_3.initialize_led_on();
-	} else if (state%6 == 3) {
-		my_colour.red = 127;
-		my_colour.green = 0;
-		my_colour.blue = 0;
-
-		led_5.initialize_led_on();
-		led_2.set_led_colour(my_colour);
-	} else if (state%6 == 4) {
-		my_colour.red = 0;
-		my_colour.green = 127;
-		my_colour.blue = 0;
-
-		led_0.set_led_colour(my_colour);
-		led_3.initialize_led_on();
-	} else if (state%6 == 5) {
-		my_colour.red = 0;
-		my_colour.green = 0;
-		my_colour.blue = 127;
-
-		led_2.set_led_colour(my_colour);
-		led_5.initialize_led_on();
-	}
-}
-
-LightingController::LightingController(uint8_t *bank_output_buffer) {
-	this->lc_output_buffer = led_bank_output_buffer;
-
-	// TODO: create & initialize all of the LED's to off
-	/**
-	 * for (int i =0; i < NUM_LEDS; ++i) {
-	 *     this->leds = WS2812(<BUFFER_LOCATION>);
-	 *     this->leds.initialize_led_off();			// This line technically isn't necessary
-	 * }
-	 */
+	std::memcpy(dma_output_buffer + BANK_OUTPUT_BUFFER_SIZE, bank_output_buffer,
+			BANK_OUTPUT_BUFFER_SIZE);
 }
