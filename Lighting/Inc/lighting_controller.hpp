@@ -37,12 +37,18 @@ public:
 	void start_lighting_control();
 
 	/**
-	 * TODO: re-colour all of the LED's
+	 * Re-Colours all of the LED's with a desired colour
+	 *
+	 * @param desired_colour : desired colour
 	 */
 	void recolour_all(RGB_colour_t desired_colour);
+	// TODO: add recolour_all_with_brightness
 
 	/**
-	 * TODO: re-colour LED by index
+	 * Re-Colours only the specific LED
+	 *
+	 * @param index : index of the LED (starts at 0 - see board designators)
+	 * @param desired_colour : desired colour
 	 */
 	void recolour_by_index(uint8_t index, RGB_colour_t desired_colour);
 
