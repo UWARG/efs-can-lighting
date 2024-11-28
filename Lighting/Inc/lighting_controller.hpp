@@ -49,6 +49,7 @@ public:
 	 * @param desired_colour : RGB_colour_t that you want set
 	 */
 	void recolour_all(RGB_colour_t desired_colour);
+	// TODO: add recolour_all_with_brightness
 
 
 	/**

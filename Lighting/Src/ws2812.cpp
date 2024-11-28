@@ -142,5 +142,5 @@ void WS2812::push_colour_to_output_buffer(RGB_colour_t color) {
 
 
 RGB_colour_t WS2812::get_led_colour() {
-	// TODO: return LED colour
+	return this->colour;
 }

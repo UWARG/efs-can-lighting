@@ -55,7 +55,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+extern TIM_HandleTypeDef htim6;
 /* USER CODE END 0 */
 
 /**
@@ -90,7 +90,10 @@ int main(void)
 	MX_DMA_Init();
 	MX_CAN1_Init();
 	MX_TIM1_Init();
+	MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
+
+	HAL_TIM_Base_Start_IT(&htim6);
 
 	// TODO: Make a call to my source file main()
 	run_lighting_board();
