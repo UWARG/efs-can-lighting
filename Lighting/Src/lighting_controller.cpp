@@ -58,8 +58,6 @@ void run_lighting_board() {
 
 	while (true) {
 		// Update LED colors
-//
-
 		rev3.recolour_all(my_colour, brightness);
 
 
