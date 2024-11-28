@@ -92,6 +92,15 @@ public:
 	 */
 	void set_led_colour(RGB_colour_t rgb_colour_value);	// TODO: proper error codes/return types
 
+	/**
+	 * Sets the LED colour immediately based on the brightness
+	 *
+	 * @param rgb_colour_value : RGB_colour_t that you want set
+	 *
+	 * @param color_brightness : RGB_colour_t brightness
+	 */
+	void set_led_colour(RGB_colour_t rgb_colour_value, uint8_t color_brightness);
+
 	// TODO: set various methods for setting LED colour using custom HEX_COLOUR or HSL
 	// Maybe take advantage of Unions, otherwise conversion.cpp is there for us!
 
@@ -102,6 +111,14 @@ public:
 	 */
 	RGB_colour_t get_led_colour();
 
+	/**
+	 * Sets the LED colour brightness
+	 *
+	 * @param color_brightness : RGB_colour_t brightness
+	 */
+
+	void set_brightness(uint8_t color_brightness);
+
 private:
 	static constexpr uint8_t output_bitdwidth = 24;	// 24 bits (8 each for R, G, B)
 	static constexpr uint8_t bits_per_colour = 8;
@@ -111,8 +128,22 @@ private:
 	uint8_t *r_offset;	// Then Red
 	uint8_t *b_offset;	// Lastly Blue
 
-	RGB_colour_t colour;
+	RGB_colour_t colour;	//LED color
+	uint8_t brightness;	//Sets the color brightness as a percentage (0 is 0% and 100 is 100%)
 	CommandMode cmd_mode;
+
+
+
+	/**
+	 * Writes color data from this->colour to the buffer
+	 *
+	 * @param cocolourlor : RGB_colour_t "colour" to write to the buffer
+	 *
+	 */
+	void push_colour_to_output_buffer(RGB_colour_t colour);
+
+
+
 };
 
 #endif /* INC_WS2812_HPP_ */

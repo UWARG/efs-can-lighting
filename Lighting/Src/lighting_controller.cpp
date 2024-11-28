@@ -8,7 +8,7 @@
  * It handles the final output buffer that is sent to DMA, as well as DMA transfer half complete callback
  *
  *  Created on: Nov 21, 2024
- *      Author: Anni
+ *      Author: Anni and Fola
  */
 
 #include <cstring>
@@ -53,38 +53,23 @@ void run_lighting_board() {
 	int green_direction = 1; // 1 for increasing, -1 for decreasing
 	int blue_direction = 1;  // 1 for increasing, -1 for decreasing
 
+	int brightness_direction = 1;
+	uint8_t brightness = 0;
+
 	while (true) {
 		// Update LED colors
-		rev3.recolour_all(my_colour);
+//
 
-		// Update red value
-		my_colour.red += red_direction;
-		if (my_colour.red >= 255) {
-			my_colour.red = 255;
-			red_direction = -1; // Start decreasing
-		} else if (my_colour.red <= 0) {
-			my_colour.red = 0;
-			red_direction = 1; // Start increasing
-		}
+		rev3.recolour_all(my_colour, brightness);
 
-		// Update green value
-		my_colour.green += green_direction;
-		if (my_colour.green >= 255) {
-			my_colour.green = 255;
-			green_direction = -1; // Start decreasing
-		} else if (my_colour.green <= 0) {
-			my_colour.green = 0;
-			green_direction = 1; // Start increasing
-		}
 
-		// Update blue value
-		my_colour.blue += blue_direction;
-		if (my_colour.blue >= 255) {
-			my_colour.blue = 255;
-			blue_direction = -1; // Start decreasing
-		} else if (my_colour.blue <= 0) {
-			my_colour.blue = 0;
-			blue_direction = 1; // Start increasing
+		brightness += brightness_direction;
+		if (brightness >= 100) {
+			brightness = 100;
+			brightness_direction = -1;
+		} else if (brightness <= 0) {
+			brightness = 0;
+			brightness_direction = 1;
 		}
 
 		// Add a small delay for smooth transitions
@@ -136,9 +121,20 @@ void LightingController::recolour_all(RGB_colour_t desired_colour) {
 	}
 }
 
+void LightingController::recolour_all(RGB_colour_t desired_colour, uint8_t brightness) {
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		this->leds[i].set_led_colour(desired_colour, brightness);
+	}
+}
+
 void LightingController::recolour_by_index(uint8_t index,
 		RGB_colour_t desired_colour) {
 	this->leds[index].set_led_colour(desired_colour);
+}
+
+
+void LightingController::recolour_by_index(uint8_t index, RGB_colour_t desired_colour, uint8_t brightness) {
+	this->leds[index].set_led_colour(desired_colour, brightness);
 }
 
 void LightingController::initialize_bank_buffer_off() {
