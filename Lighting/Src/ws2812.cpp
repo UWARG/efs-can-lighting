@@ -16,7 +16,6 @@
 //// WS2812 class definition.
 //// This is really just ONE led.
 WS2812::WS2812() {
-	cmd_mode = CM_MAIN;
 }
 
 WS2812::WS2812(uint8_t *output_buffer) {
@@ -27,7 +26,6 @@ WS2812::WS2812(uint8_t *output_buffer) {
 	this->r_offset = this->buffer + 8;
 	this->b_offset = this->buffer + 16;
 
-	cmd_mode = CM_MAIN;
 	initialize_led_off();
 
 }

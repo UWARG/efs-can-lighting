@@ -48,52 +48,62 @@ void run_lighting_board() {
 	rev3.start_lighting_control();
 
 	RGB_colour_t my_colour;
-	my_colour.red = 127;
+	my_colour.red = 65;
 	my_colour.green = 0;
-	my_colour.blue = 255;
+	my_colour.blue = 127;
 
 	int red_direction = 1;   // 1 for increasing, -1 for decreasing
 	int green_direction = 1; // 1 for increasing, -1 for decreasing
 	int blue_direction = 1;  // 1 for increasing, -1 for decreasing
 
+	// DOMAIN SETUP
+	// TODO: move this to special functions
+	RGB_colour_t WHITE = {255, 255, 255};
+	rev3.set_domain_colour(CD_STROBE, WHITE);
+	rev3.add_led_to_cd(0, CD_STROBE);
+	rev3.add_led_to_cd(2, CD_STROBE);
+	rev3.add_led_to_cd(3, CD_STROBE);
+	rev3.add_led_to_cd(5, CD_STROBE);
+
 	while (true) {
 		// Update LED colors
 //		rev3.recolour_all(my_colour);
-//
-//		// Update red value
-//		my_colour.red += red_direction;
-//		if (my_colour.red >= 255) {
-//			my_colour.red = 255;
-//			red_direction = -1; // Start decreasing
-//		} else if (my_colour.red <= 0) {
-//			my_colour.red = 0;
-//			red_direction = 1; // Start increasing
-//		}
-//
-//		// Update green value
-//		my_colour.green += green_direction;
-//		if (my_colour.green >= 255) {
-//			my_colour.green = 255;
-//			green_direction = -1; // Start decreasing
-//		} else if (my_colour.green <= 0) {
-//			my_colour.green = 0;
-//			green_direction = 1; // Start increasing
-//		}
-//
-//		// Update blue value
-//		my_colour.blue += blue_direction;
-//		if (my_colour.blue >= 255) {
-//			my_colour.blue = 255;
-//			blue_direction = -1; // Start decreasing
-//		} else if (my_colour.blue <= 0) {
-//			my_colour.blue = 0;
-//			blue_direction = 1; // Start increasing
-//		}
-//
-//		// Add a small delay for smooth transitions
-//		HAL_Delay(10); // Adjust this value for faster/slower fading
 
-		HAL_Delay(1000);
+		// Update red value
+		my_colour.red += red_direction;
+		if (my_colour.red >= 127) {
+			my_colour.red = 127;
+			red_direction = -1; // Start decreasing
+		} else if (my_colour.red <= 0) {
+			my_colour.red = 0;
+			red_direction = 1; // Start increasing
+		}
+
+		// Update green value
+		my_colour.green += green_direction;
+		if (my_colour.green >= 127) {
+			my_colour.green = 127;
+			green_direction = -1; // Start decreasing
+		} else if (my_colour.green <= 0) {
+			my_colour.green = 0;
+			green_direction = 1; // Start increasing
+		}
+
+		// Update blue value
+		my_colour.blue += blue_direction;
+		if (my_colour.blue >= 127) {
+			my_colour.blue = 127;
+			blue_direction = -1; // Start decreasing
+		} else if (my_colour.blue <= 0) {
+			my_colour.blue = 0;
+			blue_direction = 1; // Start increasing
+		}
+
+		// Add a small delay for smooth transitions
+		HAL_Delay(10); // Adjust this value for faster/slower fading
+
+		rev3.set_domain_colour(CD_MAIN, my_colour);
+		rev3.enable_control_domain(CD_MAIN);
 	}
 }
 
@@ -109,6 +119,7 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 	for (int i = 0; i < NUM_LEDS; ++i) {
 		this->leds[i].initialize_led_on(
 				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
+		this->domain_leds[CD_MAIN] |= 1 << i;	// this led index is now enabled
 	}
 }
 
@@ -146,6 +157,49 @@ void LightingController::recolour_by_index(uint8_t index,
 	this->leds[index].set_led_colour(desired_colour);
 }
 
+void LightingController::add_led_to_cd(uint8_t index, ControlDomain domain) {
+	// set the index in the domain
+	this->domain_leds[domain] |= 1 << index;
+}
+
+void LightingController::remove_led_from_cd(uint8_t index, ControlDomain domain) {
+	// clear the index from the domain
+	this->domain_leds[domain] &= ~(1 << index);
+}
+
+void LightingController::enable_control_domain(ControlDomain domain) {
+	this->domain_state[domain] = true;		// TODO: have active/disabled booleans
+	for (int i = 0; i < CD_LENGTH; ++i) {
+		if (this->domain_state[i]) { // IF THIS DOMAIN IS ACTIVE
+			for (int j = 0; j < NUM_LEDS; ++j) {
+				if (this->domain_leds[i] & (1 << j)) {
+					this->leds[j].set_led_colour(domain_colours[i]);
+				}
+			}
+		}
+	}
+}
+
+void LightingController::disable_control_domain(ControlDomain domain) {
+	this->domain_state[domain] = false;
+	for (int i = 0; i < CD_LENGTH; ++i) {
+		if (this->domain_state[domain]) { // IF THIS DOMAIN IS ACTIVE
+			for (int j = 0; j < NUM_LEDS; ++j) {
+				if (this->domain_leds[i] & (1 << j)) {
+					this->leds[i].set_led_colour(domain_colours[i]);
+				}
+			}
+		}
+	}
+}
+
+void LightingController::set_domain_colour(ControlDomain domain, RGB_colour_t colour) {
+	this->domain_colours[domain] = colour;
+}
+
+/////////////////
+// Private fn
+/////////////////
 void LightingController::initialize_bank_buffer_off() {
 	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
 		// Check if the bit is a padding bit or value bit
@@ -221,16 +275,20 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static RGB_colour_t ALL_ON = {255, 255, 255};
 	static RGB_colour_t ALL_OFF = {0, 0, 0};
 	if (stage == 0) {
-		rev3.recolour_all(ALL_ON);
+//		rev3.recolour_all(ALL_ON);
+		rev3.enable_control_domain(CD_STROBE);
 		stage = 1;
 	} else if (stage == 1) {
-		rev3.recolour_all(ALL_OFF);
+//		rev3.recolour_all(ALL_OFF);
+		rev3.disable_control_domain(CD_STROBE);
 		stage = 2;
 	} else if (stage == 2) {
-		rev3.recolour_all(ALL_ON);
+//		rev3.recolour_all(ALL_ON);
+		rev3.enable_control_domain(CD_STROBE);
 		stage = 3;
 	} else {
-		rev3.recolour_all(ALL_OFF);
+//		rev3.recolour_all(ALL_OFF);
+		rev3.disable_control_domain(CD_STROBE);
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
@@ -243,5 +301,4 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	} else if (htim->Instance == TIM7) {
 		TIM7_100msCallback(htim);
 	}
-
 }

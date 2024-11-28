@@ -17,20 +17,6 @@ static constexpr uint8_t PWM_HI = 38;
 static constexpr uint8_t BITS_PER_LED = 24;
 
 /**
- * @enum CommandMode
- * Represents the different command mode that an LED might be responsive to.
- *
- * CM_MAIN - default mode where LED's respond to main.cpp commands
- * CM_STROBE - mode where LED's only accept CM_MAIN commands if NOT in a strobe pattern
- *
- * Add other modes as necessary
- */
-enum CommandMode {
-	CM_MAIN,
-	CM_STROBE
-};
-
-/**
  * @class WS2812
  * @brief A class representing a single WS2812 LED
  *
@@ -111,7 +97,6 @@ private:
 	uint8_t *b_offset;	// Lastly Blue
 
 	RGB_colour_t colour;
-	CommandMode cmd_mode;
 };
 
 #endif /* INC_WS2812_HPP_ */
