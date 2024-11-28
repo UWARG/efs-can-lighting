@@ -22,6 +22,8 @@
 
 //#define STARTUP_SEQUENCE_1 // very basic selftest
 
+extern TIM_HandleTypeDef htim7;
+
 // TODO: custom types?
 static constexpr uint8_t NUM_LEDS = 6;
 static constexpr uint8_t NUM_LEDS_PADDING = 6;
@@ -200,15 +202,46 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 			BANK_OUTPUT_BUFFER_SIZE);
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	static uint8_t on_off = 0;
+void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
+	HAL_TIM_Base_Start_IT(&htim7);
+//	static uint8_t on_off = 0;
+//	static RGB_colour_t ALL_ON = {255, 255, 255};
+//	static RGB_colour_t ALL_OFF = {0, 0, 0};
+//	if (on_off) {
+//		rev3.recolour_all(ALL_ON);
+//		on_off = 0;
+//	} else {
+//		rev3.recolour_all(ALL_OFF);
+//		on_off = 1;
+//	}
+}
+
+void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
+	static uint8_t stage = 0;
 	static RGB_colour_t ALL_ON = {255, 255, 255};
 	static RGB_colour_t ALL_OFF = {0, 0, 0};
-	if (on_off) {
+	if (stage == 0) {
 		rev3.recolour_all(ALL_ON);
-		on_off = 0;
+		stage = 1;
+	} else if (stage == 1) {
+		rev3.recolour_all(ALL_OFF);
+		stage = 2;
+	} else if (stage == 2) {
+		rev3.recolour_all(ALL_ON);
+		stage = 3;
 	} else {
 		rev3.recolour_all(ALL_OFF);
-		on_off = 1;
+		stage = 0;
+		HAL_TIM_Base_Stop_IT(htim7);
 	}
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+
+	if (htim->Instance == TIM6) {
+		TIM6_OneSecondCallback(htim);
+	} else if (htim->Instance == TIM7) {
+		TIM7_100msCallback(htim);
+	}
+
 }

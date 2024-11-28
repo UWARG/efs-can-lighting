@@ -91,6 +91,7 @@ int main(void)
 	MX_CAN1_Init();
 	MX_TIM1_Init();
 	MX_TIM6_Init();
+	MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 
 	HAL_TIM_Base_Start_IT(&htim6);
