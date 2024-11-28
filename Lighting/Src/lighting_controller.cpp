@@ -35,11 +35,12 @@ uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 
 WS2812 leds[NUM_LEDS]; // TODO: make this work
 
+// Initial setup call
+LightingController rev3(dma_output_buffer, bank_output_buffer, leds); // TODO: Once we have custom functions registered as callbacks.....
+
 extern TIM_HandleTypeDef htim;
 
 void run_lighting_board() {
-	// Initial setup call
-	LightingController rev3(dma_output_buffer, bank_output_buffer, leds);
 
 	// Call to start lighting control
 	rev3.start_lighting_control();
@@ -55,40 +56,42 @@ void run_lighting_board() {
 
 	while (true) {
 		// Update LED colors
-		rev3.recolour_all(my_colour);
+//		rev3.recolour_all(my_colour);
+//
+//		// Update red value
+//		my_colour.red += red_direction;
+//		if (my_colour.red >= 255) {
+//			my_colour.red = 255;
+//			red_direction = -1; // Start decreasing
+//		} else if (my_colour.red <= 0) {
+//			my_colour.red = 0;
+//			red_direction = 1; // Start increasing
+//		}
+//
+//		// Update green value
+//		my_colour.green += green_direction;
+//		if (my_colour.green >= 255) {
+//			my_colour.green = 255;
+//			green_direction = -1; // Start decreasing
+//		} else if (my_colour.green <= 0) {
+//			my_colour.green = 0;
+//			green_direction = 1; // Start increasing
+//		}
+//
+//		// Update blue value
+//		my_colour.blue += blue_direction;
+//		if (my_colour.blue >= 255) {
+//			my_colour.blue = 255;
+//			blue_direction = -1; // Start decreasing
+//		} else if (my_colour.blue <= 0) {
+//			my_colour.blue = 0;
+//			blue_direction = 1; // Start increasing
+//		}
+//
+//		// Add a small delay for smooth transitions
+//		HAL_Delay(10); // Adjust this value for faster/slower fading
 
-		// Update red value
-		my_colour.red += red_direction;
-		if (my_colour.red >= 255) {
-			my_colour.red = 255;
-			red_direction = -1; // Start decreasing
-		} else if (my_colour.red <= 0) {
-			my_colour.red = 0;
-			red_direction = 1; // Start increasing
-		}
-
-		// Update green value
-		my_colour.green += green_direction;
-		if (my_colour.green >= 255) {
-			my_colour.green = 255;
-			green_direction = -1; // Start decreasing
-		} else if (my_colour.green <= 0) {
-			my_colour.green = 0;
-			green_direction = 1; // Start increasing
-		}
-
-		// Update blue value
-		my_colour.blue += blue_direction;
-		if (my_colour.blue >= 255) {
-			my_colour.blue = 255;
-			blue_direction = -1; // Start decreasing
-		} else if (my_colour.blue <= 0) {
-			my_colour.blue = 0;
-			blue_direction = 1; // Start increasing
-		}
-
-		// Add a small delay for smooth transitions
-		HAL_Delay(10); // Adjust this value for faster/slower fading
+		HAL_Delay(1000);
 	}
 }
 
@@ -177,7 +180,9 @@ void LightingController::initialize_dma_buffer() {
 			BANK_OUTPUT_BUFFER_SIZE);
 }
 
+//////////////////////////////////////////
 // CALLBACKS
+//////////////////////////////////////////
 // TODO: Register custom callbacks for the timers
 // https://community.st.com/t5/stm32-mcus/how-to-use-register-callbacks-in-stm32/ta-p/580499
 // We should be able to register _class_ functions as callbacks?
@@ -193,4 +198,17 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 	// So update BANK 2
 	std::memcpy(dma_output_buffer + BANK_OUTPUT_BUFFER_SIZE, bank_output_buffer,
 			BANK_OUTPUT_BUFFER_SIZE);
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	static uint8_t on_off = 0;
+	static RGB_colour_t ALL_ON = {255, 255, 255};
+	static RGB_colour_t ALL_OFF = {0, 0, 0};
+	if (on_off) {
+		rev3.recolour_all(ALL_ON);
+		on_off = 0;
+	} else {
+		rev3.recolour_all(ALL_OFF);
+		on_off = 1;
+	}
 }
