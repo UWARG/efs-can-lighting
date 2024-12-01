@@ -17,17 +17,15 @@
  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "can.hpp"
-#include "dma.hpp"
-#include "gpio.hpp"
-#include "tim.hpp"
-#include "ws2812.hpp"
 #include "main.h"
+#include "can.h"
+#include "dma.h"
+#include "tim.h"
+#include "gpio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -35,6 +33,7 @@
 //#define ROTATE_LED
 //#define CYCLE_ONE_LED_ON
 //#define CONSTANT_COLOR
+# include "lighting_controller.hpp"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -56,7 +55,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+extern TIM_HandleTypeDef htim6;
 /* USER CODE END 0 */
 
 /**
@@ -91,19 +90,23 @@ int main(void)
 	MX_DMA_Init();
 	MX_CAN1_Init();
 	MX_TIM1_Init();
+	MX_TIM6_Init();
+	MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
-	init_led_buffer();
 
+	// Starts the 1s pulse asap (no weird user setup calls).
+	// I don't think this changes timing at all but maybe it does.
+	HAL_TIM_Base_Start_IT(&htim6);
+
+	// TODO: Make a call to my source file main()
+	run_lighting_board();
+  
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		set_all_led_colors(0x000808);
-		HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2, (uint32_t*) out_buf, BUFF_SIZE);
-		HAL_Delay(1000);
 
 	}
   /* USER CODE END 3 */
