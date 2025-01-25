@@ -219,9 +219,9 @@ void LightingController::set_domain_colour(ControlDomain domain,
 }
 
 void LightingController::enable_control_domain(ControlDomain domain) {
-	this->domain_state[domain] = true;	// TODO: have active/disabled booleans
+	this->cd_active |= 1 << domain;	// TODO: have active/disabled booleans
 	for (int i = 0; i < CD_LENGTH; ++i) {
-		if (this->domain_state[i]) { // IF THIS DOMAIN IS ACTIVE
+		if (this->cd_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
 			for (int j = 0; j < NUM_LEDS; ++j) {
 				if (this->domain_leds[i] & (1 << j)) {
 					this->leds[j].set_led_colour(domain_colours[i],
@@ -233,9 +233,9 @@ void LightingController::enable_control_domain(ControlDomain domain) {
 }
 
 void LightingController::disable_control_domain(ControlDomain domain) {
-	this->domain_state[domain] = false;
+	this->cd_active &= ~(1 << domain);
 	for (int i = 0; i < CD_LENGTH; ++i) {
-		if (this->domain_state[domain]) { // IF THIS DOMAIN IS ACTIVE
+		if (this->cd_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
 			for (int j = 0; j < NUM_LEDS; ++j) {
 				if (this->domain_leds[i] & (1 << j)) {
 					this->leds[i].set_led_colour(domain_colours[i],
