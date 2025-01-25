@@ -142,7 +142,7 @@ private:
 	uint8_t *dma_buffer;
 	uint8_t *bank_buffer;
 	WS2812 *leds;
-	bool domain_state[CD_LENGTH];				// true when domain is active
+	uint8_t cd_active : CD_LENGTH;			// true when domain is active
 	uint8_t domain_leds[CD_LENGTH];	// Bitmask of LED's which are active in each domain
 	RGB_colour_t domain_colours[CD_LENGTH];		// Domain colour
 	uint8_t domain_brightness[CD_LENGTH];		// Domain brightness
