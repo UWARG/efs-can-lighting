@@ -110,7 +110,7 @@ public:
 	 *
 	 * @param domain : domain to be enabled.
 	 */
-	void enable_control_domain(ControlDomain domain);
+	void activate_domain(ControlDomain domain);
 
 	/**
 	 * Disables (turn off) a Control Domain
@@ -120,7 +120,11 @@ public:
 	 *
 	 * @param domain : domain to be disabled
 	 */
-	void disable_control_domain(ControlDomain domain);
+	void deactivate_domain(ControlDomain domain);
+
+	void allow_domain(ControlDomain domain);
+
+	void disallow_domain(ControlDomain domain);
 
 	/**
 	 * Sets the colour & brightness of a Control Domain
@@ -142,10 +146,11 @@ private:
 	uint8_t *dma_buffer;
 	uint8_t *bank_buffer;
 	WS2812 *leds;
-	bool domain_state[CD_LENGTH];				// true when domain is active
-	uint8_t domain_leds[CD_LENGTH];	// Bitmask of LED's which are active in each domain
-	RGB_colour_t domain_colours[CD_LENGTH];		// Domain colour
-	uint8_t domain_brightness[CD_LENGTH];		// Domain brightness
+	uint8_t domain_allowed;					// true when a domain is allowed to be active
+	uint8_t domain_active;					// true when domain is active
+	uint8_t domain_leds[CD_LENGTH];			// Bitmask of LED's which are active in each domain
+	RGB_colour_t domain_colours[CD_LENGTH];	// Domain colour
+	uint8_t domain_brightness[CD_LENGTH];	// Domain brightness
 
 	void initialize_bank_buffer_off();
 	void initialize_bank_buffer_on();
