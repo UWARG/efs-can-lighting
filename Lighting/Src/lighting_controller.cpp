@@ -42,6 +42,7 @@ LightingController rev3(dma_output_buffer, bank_output_buffer, leds); // TODO: O
 
 extern TIM_HandleTypeDef htim;
 
+// Temporary (ish) function with exemplar code that allows us to test lighting board functionality without needing CAN commands
 void run_lighting_board() {
 
 	// Call to start lighting control
@@ -75,11 +76,18 @@ void run_lighting_board() {
 	rev3.add_led_to_cd(4, CD_BEACON);
 
 	// build strobe domain
+	// comment any of these out to see the effect of adding LED's
 	rev3.set_domain_colour(CD_STROBE, WHITE, BRIGHTNESS_MAX);
 	rev3.add_led_to_cd(0, CD_STROBE);
 	rev3.add_led_to_cd(2, CD_STROBE);
 	rev3.add_led_to_cd(3, CD_STROBE);
 	rev3.add_led_to_cd(5, CD_STROBE);
+
+	// allow all of our domains
+	// comment any of these out to see the effect of allowing command domains
+	rev3.allow_domain(CD_MAIN);
+	rev3.allow_domain(CD_BEACON);
+	rev3.allow_domain(CD_STROBE);
 
 	while (true) {
 		// Demo program to update LED colors & show control domain functionality
@@ -131,7 +139,7 @@ void run_lighting_board() {
 		HAL_Delay(10); // Adjust this value for faster/slower fading
 
 		rev3.set_domain_colour(CD_MAIN, my_colour, brightness);
-		rev3.enable_control_domain(CD_MAIN);
+		rev3.activate_domain(CD_MAIN);
 	}
 }
 
@@ -145,7 +153,7 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 
 	// Initialize all of the internal LED's as well
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].initialize_led_on(
+		this->leds[i].initialize_led_off(
 				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
 		this->domain_leds[CD_MAIN] |= 1 << i;	// this led index is now enabled
 	}
@@ -218,24 +226,30 @@ void LightingController::set_domain_colour(ControlDomain domain,
 	this->domain_brightness[domain] = brightness;
 }
 
-void LightingController::enable_control_domain(ControlDomain domain) {
-	this->domain_state[domain] = true;	// TODO: have active/disabled booleans
-	for (int i = 0; i < CD_LENGTH; ++i) {
-		if (this->domain_state[i]) { // IF THIS DOMAIN IS ACTIVE
-			for (int j = 0; j < NUM_LEDS; ++j) {
-				if (this->domain_leds[i] & (1 << j)) {
-					this->leds[j].set_led_colour(domain_colours[i],
-							domain_brightness[i]);
+void LightingController::activate_domain(ControlDomain domain) {
+	if (this->domain_allowed & (1 << domain)) {
+		this->domain_active |= 1 << domain;	// TODO: have active/disabled booleans
+		for (int i = 0; i < CD_LENGTH; ++i) {
+			if (this->domain_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
+				for (int j = 0; j < NUM_LEDS; ++j) {
+					if (this->domain_leds[i] & (1 << j)) {
+						this->leds[j].set_led_colour(domain_colours[i],
+								domain_brightness[i]);
+					}
 				}
 			}
 		}
+	} else {
+		// Domains should not be active when they are disallowed.
+		// Instead of checking this every time we poll domains, check it on domain activation request.
+		this->domain_active &= ~(1 << domain);
 	}
 }
 
-void LightingController::disable_control_domain(ControlDomain domain) {
-	this->domain_state[domain] = false;
+void LightingController::deactivate_domain(ControlDomain domain) {
+	this->domain_active &= ~(1 << domain);
 	for (int i = 0; i < CD_LENGTH; ++i) {
-		if (this->domain_state[domain]) { // IF THIS DOMAIN IS ACTIVE
+		if (this->domain_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
 			for (int j = 0; j < NUM_LEDS; ++j) {
 				if (this->domain_leds[i] & (1 << j)) {
 					this->leds[i].set_led_colour(domain_colours[i],
@@ -244,6 +258,14 @@ void LightingController::disable_control_domain(ControlDomain domain) {
 			}
 		}
 	}
+}
+
+void LightingController::allow_domain(ControlDomain domain) {
+	this->domain_allowed |= 1 << domain;
+}
+
+void LightingController::disallow_domain(ControlDomain domain) {
+	this->domain_allowed &= ~(1 << domain);
 }
 
 /////////////////
@@ -313,33 +335,32 @@ void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
 void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static uint8_t stage = 0;
 	if (stage == 0) { 			// STROBE ON
-		rev3.enable_control_domain(CD_STROBE);
+		rev3.activate_domain(CD_STROBE);
 		stage = 1;
 	} else if (stage == 1) { 	// STROBE OFF
-		rev3.disable_control_domain(CD_STROBE);
+		rev3.deactivate_domain(CD_STROBE);
 		stage = 2;
 	} else if (stage == 2) {	// STROBE ON
-		rev3.enable_control_domain(CD_STROBE);
+		rev3.activate_domain(CD_STROBE);
 		stage = 3;
 	} else if (stage == 3) {	// STROBE OFF
-		rev3.disable_control_domain(CD_STROBE);
+		rev3.deactivate_domain(CD_STROBE);
 		stage = 4;
 	} else if (stage == 4) {	// OFF
 		stage = 5;
 	} else if (stage == 5) {	// OFF
 		stage = 6;
 	} else if (stage == 6) {	// BCN ON
-		rev3.enable_control_domain(CD_BEACON);
+		rev3.activate_domain(CD_BEACON);
 		stage = 7;
 	} else if (stage == 7) {	// BCN OFF
-		rev3.disable_control_domain(CD_BEACON);
+		rev3.deactivate_domain(CD_BEACON);
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-
 	if (htim->Instance == TIM6) {
 		TIM6_OneSecondCallback(htim);
 	} else if (htim->Instance == TIM7) {
