@@ -27,8 +27,7 @@
 #include "canard_stm32_driver.h"
 #include <time.h>
 #include <stdio.h>
-#include "dronecan_msgs.h"
-#include "node_config.h"
+#include "../dsdlc_generated/inc/dronecan_msgs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,7 +70,7 @@ void SystemClock_Config(void);
 void initializeNodeId() {
 	uint8_t buffer[16];
 	getUniqueID(buffer);
-	uint32_t *parts = buffer;
+	uint32_t *parts = (uint32_t *)buffer;
 	node_id = parts[0] ^ parts[1] ^ parts[2];
 }
 // Run HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) once to set up the ISR
@@ -445,6 +444,7 @@ int main(void)
 
 	// TODO: Make a call to my source file main()
 	run_lighting_board();
+	uint32_t next_1hz_service_at = HAL_GetTick();
   
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
