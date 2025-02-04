@@ -21,6 +21,7 @@
  * CD_BEACON - beacon lights (red pulse 1x per second), indicates LV ON
  * CD_STROBE - strobe lights (Double white flash 1x per second), indicates HV ON
  *
+ *
  * Add other modes as necessary
  */
 enum ControlDomain {
@@ -39,7 +40,7 @@ public:
 	 * TODO: Initialize lighting controller with a reference to the led bank output
 	 */
 	LightingController(uint8_t *dma_output_buffer, uint8_t *bank_output_buffer,
-			WS2812 *leds);
+			WS2812 *leds, TIM_HandleTypeDef *timer, uint16_t timer_channel);
 
 	/**
 	 * Start sending lighting control data to neopixels.
@@ -122,6 +123,27 @@ public:
 	 */
 	void deactivate_domain(ControlDomain domain);
 
+	/**
+	 * Handles the anything relevant to enabling a control domain.
+	 *
+	 * Adds every LED to the control domain for modes that need it.
+	 *
+	 * @param domain : domain to be enabled.
+	*/
+
+	void build_domain(ControlDomain domain);
+
+	/**
+	 * Handles the anything relevant to enabling a control domain.
+	 *
+	 * Adds every LED to the control domain for modes that need it.
+	 *
+	 * @param index : LED index on the board
+	 * @param domain : domain to be enabled.
+	*/
+
+	void build_domain(uint8_t index, ControlDomain domain);
+
 	void allow_domain(ControlDomain domain);
 
 	void disallow_domain(ControlDomain domain);
@@ -151,6 +173,9 @@ private:
 	uint8_t domain_leds[CD_LENGTH];			// Bitmask of LED's which are active in each domain
 	RGB_colour_t domain_colours[CD_LENGTH];	// Domain colour
 	uint8_t domain_brightness[CD_LENGTH];	// Domain brightness
+
+	TIM_HandleTypeDef *htimx;
+	uint16_t tim_channel_x;
 
 	void initialize_bank_buffer_off();
 	void initialize_bank_buffer_on();

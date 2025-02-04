@@ -38,7 +38,7 @@ uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 WS2812 leds[NUM_LEDS]; // TODO: make this work
 
 // Initial setup call
-LightingController rev3(dma_output_buffer, bank_output_buffer, leds); // TODO: Once we have custom functions registered as callbacks.....
+LightingController rev3(dma_output_buffer, bank_output_buffer, leds, &htim1, TIM_CHANNEL_2); // TODO: Once we have custom functions registered as callbacks.....
 
 extern TIM_HandleTypeDef htim;
 
@@ -61,13 +61,14 @@ void run_lighting_board() {
 
 	uint8_t brightness_slow = 0;
 	int brightness_direction = 1;
-	uint8_t brightness = 0;
+	uint8_t brightness = 50;
 
 	// DOMAIN SETUP
 	// TODO: move Control Domain building to special functions
 
 	RGB_colour_t WHITE = { 255, 255, 255 };
 	RGB_colour_t RED = { 255, 0, 0 };
+	RGB_colour_t CYAN = {0, 255, 255};
 	uint8_t BRIGHTNESS_MAX = 100;
 
 	// build beacon domain
@@ -83,11 +84,13 @@ void run_lighting_board() {
 	rev3.add_led_to_cd(3, CD_STROBE);
 	rev3.add_led_to_cd(5, CD_STROBE);
 
+
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
 	rev3.allow_domain(CD_MAIN);
 	rev3.allow_domain(CD_BEACON);
 	rev3.allow_domain(CD_STROBE);
+
 
 	while (true) {
 		// Demo program to update LED colors & show control domain functionality
@@ -144,10 +147,12 @@ void run_lighting_board() {
 }
 
 LightingController::LightingController(uint8_t *dma_output_buffer,
-		uint8_t *bank_output_buffer, WS2812 *leds) {
+		uint8_t *bank_output_buffer, WS2812 *leds, TIM_HandleTypeDef *timer, uint16_t timer_channel) {
 	this->dma_buffer = dma_output_buffer;
 	this->bank_buffer = bank_output_buffer;
 	this->leds = leds;
+	this->htimx = timer;
+	this->tim_channel_x = timer_channel;
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
 
@@ -160,7 +165,7 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 }
 
 void LightingController::start_lighting_control() {
-	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2,
+	HAL_TIMEx_PWMN_Start_DMA(this->htimx, this->tim_channel_x,
 			(uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
 
 #ifdef STARTUP_SEQUENCE_1
