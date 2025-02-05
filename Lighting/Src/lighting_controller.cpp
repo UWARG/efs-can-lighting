@@ -69,21 +69,23 @@ void run_lighting_board() {
 	RGB_colour_t WHITE = { 255, 255, 255 };
 	RGB_colour_t RED = { 255, 0, 0 };
 	RGB_colour_t CYAN = {0, 255, 255};
+	RGB_colour_t BROWN = {139, 69, 19};
 	uint8_t BRIGHTNESS_MAX = 100;
 
 	// build beacon domain
-	rev3.set_domain_colour(CD_BEACON, RED, BRIGHTNESS_MAX);
+	rev3.set_domain_colour(CD_BEACON, CYAN);
+	rev3.set_domain_brightness(CD_BEACON, 255);
 	rev3.add_led_to_cd(1, CD_BEACON);
 	rev3.add_led_to_cd(4, CD_BEACON);
 
 	// build strobe domain
 	// comment any of these out to see the effect of adding LED's
-	rev3.set_domain_colour(CD_STROBE, WHITE, BRIGHTNESS_MAX);
+	rev3.set_domain_colour(CD_STROBE, BROWN);
+	rev3.set_domain_brightness(CD_STROBE, 127);
 	rev3.add_led_to_cd(0, CD_STROBE);
 	rev3.add_led_to_cd(2, CD_STROBE);
 	rev3.add_led_to_cd(3, CD_STROBE);
 	rev3.add_led_to_cd(5, CD_STROBE);
-
 
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
@@ -141,7 +143,7 @@ void run_lighting_board() {
 		// Add a small delay for smooth transitions
 		HAL_Delay(10); // Adjust this value for faster/slower fading
 
-		rev3.set_domain_colour(CD_MAIN, my_colour, brightness);
+		rev3.set_domain_colour_and_brightness(CD_MAIN, my_colour, brightness);
 		rev3.activate_domain(CD_MAIN);
 	}
 }
@@ -225,12 +227,19 @@ void LightingController::remove_led_from_cd(uint8_t index,
 	this->domain_leds[domain] &= ~(1 << index);
 }
 
-void LightingController::set_domain_colour(ControlDomain domain,
+void LightingController::set_domain_colour_and_brightness(ControlDomain domain,
 		RGB_colour_t colour, uint8_t brightness) {
 	this->domain_colours[domain] = colour;
 	this->domain_brightness[domain] = brightness;
 }
 
+void LightingController::set_domain_brightness(ControlDomain domain, uint8_t brightness) {
+	this->domain_brightness[domain] = brightness;
+}
+
+void LightingController::set_domain_colour(ControlDomain domain, RGB_colour_t colour) {
+	this->domain_colours[domain] = colour;
+}
 
 void LightingController::activate_domain(ControlDomain domain) {
 	if (this->domain_allowed & (1 << domain)) {
