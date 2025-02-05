@@ -123,27 +123,6 @@ public:
 	 */
 	void deactivate_domain(ControlDomain domain);
 
-	/**
-	 * Handles the anything relevant to enabling a control domain.
-	 *
-	 * Adds every LED to the control domain for modes that need it.
-	 *
-	 * @param domain : domain to be enabled.
-	*/
-
-	void build_domain(ControlDomain domain);
-
-	/**
-	 * Handles the anything relevant to enabling a control domain.
-	 *
-	 * Adds every LED to the control domain for modes that need it.
-	 *
-	 * @param index : LED index on the board
-	 * @param domain : domain to be enabled.
-	*/
-
-	void build_domain(uint8_t index, ControlDomain domain);
-
 	void allow_domain(ControlDomain domain);
 
 	void disallow_domain(ControlDomain domain);
@@ -157,8 +136,26 @@ public:
 	 * @param colour : desired colour
 	 * @param brightness : desired brightness
 	 */
-	void set_domain_colour(ControlDomain domain, RGB_colour_t colour,
+	void set_domain_colour_and_brightness(ControlDomain domain, RGB_colour_t colour,
 			uint8_t brightness);
+
+	/**
+	 * This will set just the brightness of all the LEDs that are part of a control domain.
+	 *
+	 * @param domain : domain to be modified
+	 * @param colour : desired colour
+	*/
+	void set_domain_colour(ControlDomain domain, RGB_colour_t colour);
+
+	/**
+	 * This will set just the colour of all the LEDs that are part of a control domain.
+	 *
+	 * @param domain : domain to be modified
+	 * @param brightness : desired brightness
+	*/
+	void set_domain_brightness(ControlDomain domain, uint8_t brightness);
+
+
 
 	// TODO: add function to "recolour domain" (enables & sets colour)
 	// Use this instead of set + enable?
@@ -174,8 +171,8 @@ private:
 	RGB_colour_t domain_colours[CD_LENGTH];	// Domain colour
 	uint8_t domain_brightness[CD_LENGTH];	// Domain brightness
 
-	TIM_HandleTypeDef *htimx;
-	uint16_t tim_channel_x;
+	TIM_HandleTypeDef *htimx;				//timer handle
+	uint16_t tim_channel_x;					//timer channel
 
 	void initialize_bank_buffer_off();
 	void initialize_bank_buffer_on();
