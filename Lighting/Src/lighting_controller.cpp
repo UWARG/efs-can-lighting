@@ -23,10 +23,12 @@
 //#define STARTUP_SEQUENCE_1 // very basic selftest
 
 extern TIM_HandleTypeDef htim7;
+extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim;
 
 // TODO: custom types?
-static constexpr uint8_t NUM_LEDS = 6;
-static constexpr uint8_t NUM_LEDS_PADDING = 6;
+static constexpr uint8_t NUM_LEDS = 10;
+static constexpr uint8_t NUM_LEDS_PADDING = 19;
 static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS
 		+ NUM_LEDS_PADDING * 2) * 24 * 2;		// TODO: remove magic num
 static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS
@@ -37,10 +39,19 @@ uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 
 WS2812 leds[NUM_LEDS]; // TODO: make this work
 
+RGB_colour_t WHITE = { 255, 255, 255 };
+RGB_colour_t RED = { 255, 0, 0 };
+RGB_colour_t ORANGE = {255, 165, 0};
+RGB_colour_t GREEN = {0, 255, 0};
+RGB_colour_t CYAN = {0, 255, 255};
+RGB_colour_t BROWN = {139, 69, 19};
+RGB_colour_t PURPLE = {255, 0, 255};
+
 // Initial setup call
 LightingController rev3(dma_output_buffer, bank_output_buffer, leds, &htim1, TIM_CHANNEL_2); // TODO: Once we have custom functions registered as callbacks.....
 
-extern TIM_HandleTypeDef htim;
+static volatile uint8_t g_input = 0;
+static volatile uint8_t g_num_seconds = 0;
 
 // Temporary (ish) function with exemplar code that allows us to test lighting board functionality without needing CAN commands
 void run_lighting_board() {
@@ -61,85 +72,46 @@ void run_lighting_board() {
 
 	uint8_t brightness_slow = 0;
 	int brightness_direction = 1;
-	uint8_t brightness = 50;
+	uint8_t brightness = 5;
 
 	// DOMAIN SETUP
 	// TODO: move Control Domain building to special functions
 
-	RGB_colour_t WHITE = { 255, 255, 255 };
-	RGB_colour_t RED = { 255, 0, 0 };
-	RGB_colour_t CYAN = {0, 255, 255};
-	RGB_colour_t BROWN = {139, 69, 19};
 	uint8_t BRIGHTNESS_MAX = 100;
 
-	// build beacon domain
-	rev3.set_domain_colour(CD_BEACON, CYAN);
-	rev3.set_domain_brightness(CD_BEACON, 255);
-	rev3.add_led_to_cd(1, CD_BEACON);
-	rev3.add_led_to_cd(4, CD_BEACON);
+	/* build standby domain
+	 * Let's say the drone starts in standby for this demonstration.
+	 *
+	 */
 
-	// build strobe domain
-	// comment any of these out to see the effect of adding LED's
-	rev3.set_domain_colour(CD_STROBE, BROWN);
-	rev3.set_domain_brightness(CD_STROBE, 127);
-	rev3.add_led_to_cd(0, CD_STROBE);
-	rev3.add_led_to_cd(2, CD_STROBE);
-	rev3.add_led_to_cd(3, CD_STROBE);
-	rev3.add_led_to_cd(5, CD_STROBE);
+	rev3.set_domain_colour_and_brightness(CD_STANDBY, ORANGE, 10);
+	rev3.add_led_to_cd(0, CD_STANDBY);
+	rev3.add_led_to_cd(5, CD_STANDBY);
+	rev3.add_led_to_cd(6, CD_STANDBY);
+	rev3.add_led_to_cd(8, CD_STANDBY);
+
+
+	rev3.activate_domain(CD_BEACON);
+	rev3.activate_domain(CD_STROBE);
+	rev3.activate_domain(CD_STANDBY);
+	rev3.activate_domain(CD_NAVIGATION);
+	rev3.activate_domain(CD_BRAKE);
+	rev3.activate_domain(CD_LANDING_TAKEOFF);
+	rev3.activate_domain(CD_SEARCH);
 
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
 	rev3.allow_domain(CD_MAIN);
+	rev3.allow_domain(CD_STANDBY);
 	rev3.allow_domain(CD_BEACON);
 	rev3.allow_domain(CD_STROBE);
+	rev3.allow_domain(CD_LANDING_TAKEOFF);
+	rev3.allow_domain(CD_NAVIGATION);
+	rev3.allow_domain(CD_BRAKE);
+	rev3.allow_domain(CD_SEARCH);
 
 
 	while (true) {
-		// Demo program to update LED colors & show control domain functionality
-
-		brightness_slow = brightness_slow + 1;
-		if (brightness_slow >= 20) {
-			brightness += brightness_direction;
-			brightness_slow = 0;
-		}
-		if (brightness >= 50) {
-			brightness = 50;
-			brightness_direction = -1;
-		} else if (brightness <= 0) {
-			brightness = 0;
-			brightness_direction = 1;
-		}
-
-		// Update red value
-		my_colour.red += red_direction;
-		if (my_colour.red >= 255) {
-			my_colour.red = 255;
-			red_direction = -1; // Start decreasing
-		} else if (my_colour.red <= 0) {
-			my_colour.red = 0;
-			red_direction = 1; // Start increasing
-		}
-
-		// Update green value
-		my_colour.green += green_direction;
-		if (my_colour.green >= 255) {
-			my_colour.green = 255;
-			green_direction = -1; // Start decreasing
-		} else if (my_colour.green <= 0) {
-			my_colour.green = 0;
-			green_direction = 1; // Start increasing
-		}
-
-		// Update blue value
-		my_colour.blue += blue_direction;
-		if (my_colour.blue >= 255) {
-			my_colour.blue = 255;
-			blue_direction = -1; // Start decreasing
-		} else if (my_colour.blue <= 0) {
-			my_colour.blue = 0;
-			blue_direction = 1; // Start increasing
-		}
-
 		// Add a small delay for smooth transitions
 		HAL_Delay(10); // Adjust this value for faster/slower fading
 
@@ -268,7 +240,7 @@ void LightingController::deactivate_domain(ControlDomain domain) {
 		if (this->domain_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
 			for (int j = 0; j < NUM_LEDS; ++j) {
 				if (this->domain_leds[i] & (1 << j)) {
-					this->leds[i].set_led_colour(domain_colours[i],
+					this->leds[j].set_led_colour(domain_colours[i],
 							domain_brightness[i]);
 				}
 			}
@@ -283,6 +255,144 @@ void LightingController::allow_domain(ControlDomain domain) {
 void LightingController::disallow_domain(ControlDomain domain) {
 	this->domain_allowed &= ~(1 << domain);
 }
+
+void LightingController::transition_to_search_state() {
+	uint8_t num_top_facing_leds = 6;
+	set_domain_colour_and_brightness(CD_SEARCH, WHITE, 40);
+	for (int i = 0; i < num_top_facing_leds; i++) {
+		add_led_to_cd(i, CD_SEARCH);
+	}
+	this->drone_state = SEARCH_STATE;
+}
+
+void LightingController::transition_to(uint8_t input) {
+	switch (this->drone_state) {
+		case GROUND_STATE:
+			if (input == 0) {												//go into search state
+				remove_led_from_cd(0, CD_STANDBY);
+				remove_led_from_cd(5, CD_STANDBY);
+				remove_led_from_cd(6, CD_STANDBY);
+				remove_led_from_cd(8, CD_STANDBY);
+				transition_to_search_state();
+			} else if (input == 1) {										//going into taxi state;
+				remove_led_from_cd(0, CD_STANDBY);
+				remove_led_from_cd(5, CD_STANDBY);
+				remove_led_from_cd(6, CD_STANDBY);
+				remove_led_from_cd(8, CD_STANDBY);
+
+				add_led_to_cd(0, CD_STROBE);
+				add_led_to_cd(2, CD_STROBE);
+				add_led_to_cd(3, CD_STROBE);
+				add_led_to_cd(5, CD_STROBE);
+
+				add_led_to_cd(1, CD_BEACON);
+				add_led_to_cd(4, CD_BEACON);
+
+				set_domain_colour_and_brightness(CD_BEACON, RED, 15);
+				set_domain_colour_and_brightness(CD_STROBE, WHITE, 4);
+				this->drone_state = TAXI_STATE;
+			}
+			break;
+		case TAXI_STATE:
+			if (input == 0) {
+				remove_led_from_cd(0, CD_STROBE);
+				remove_led_from_cd(2, CD_STROBE);
+				remove_led_from_cd(3, CD_STROBE);
+				remove_led_from_cd(5, CD_STROBE);
+
+				remove_led_from_cd(1, CD_BEACON);
+				remove_led_from_cd(4, CD_BEACON);
+				transition_to_search_state();
+			} else if (input == 1) {									//move to takeoff...
+				remove_led_from_cd(0, CD_STROBE);
+				remove_led_from_cd(2, CD_STROBE);
+				remove_led_from_cd(3, CD_STROBE);
+				remove_led_from_cd(5, CD_STROBE);
+
+				remove_led_from_cd(1, CD_BEACON);
+				remove_led_from_cd(4, CD_BEACON);
+
+				for (int i = 0; i < 6; i++) {
+					add_led_to_cd(i, CD_LANDING_TAKEOFF);
+				}
+				set_domain_colour_and_brightness(CD_LANDING_TAKEOFF, WHITE, 30);
+				this->drone_state = TAKEOFF_STATE;
+			}
+			break;
+		case TAKEOFF_STATE:
+			if (input == 0) {
+				for (int i = 0; i < 6; i++) {
+					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
+				}
+				transition_to_search_state();
+			} else if (input == 1) {
+				for (int i = 0; i < 6; i++) {								//to landing_state;
+					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
+					add_led_to_cd(i, CD_NAVIGATION);
+				}
+				set_domain_colour_and_brightness(CD_NAVIGATION, RED, 30);
+				this->drone_state = FLIGHT_STATE;
+			} else if (input == 2) {
+				this->drone_state = LANDING_STATE;
+			}
+			break;
+		case FLIGHT_STATE:
+			if (input == 0) {
+				for (int i = 0; i < 6; i++) {
+					remove_led_from_cd(i, CD_NAVIGATION);
+				}
+				transition_to_search_state();
+			} else if (input == 1) {										//move to landing state.
+				for (int i = 0; i < 6; i++) {
+					remove_led_from_cd(i, CD_NAVIGATION);
+					add_led_to_cd(i, CD_LANDING_TAKEOFF);
+				}
+				set_domain_colour_and_brightness(CD_NAVIGATION, WHITE, 30);
+				this->drone_state = LANDING_STATE;
+			}
+			break;
+		case LANDING_STATE:
+			if (input == 0) {
+				for (int i = 0; i < 6; i++) {
+					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
+				}
+				transition_to_search_state();
+			} else if (input == 1) {										//back to ground state.
+				for (int i = 0; i < 6; i++) {
+					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
+				}
+				rev3.add_led_to_cd(0, CD_STANDBY);
+				rev3.add_led_to_cd(5, CD_STANDBY);
+				rev3.add_led_to_cd(6, CD_STANDBY);
+				rev3.add_led_to_cd(8, CD_STANDBY);
+				this->drone_state = GROUND_STATE;
+			}
+
+			break;
+		case SEARCH_STATE:
+			if (input == 0) {
+				transition_to_search_state();
+			} else if (input == 1) {
+
+			} else if (input == 2) {
+
+			} else if (input == 3) {
+
+			} else if (input == 4) {
+
+			} else if (input == 5) {
+
+			}
+			break;
+		default:
+			break;
+	}
+}
+
+State LightingController::get_drone_state() {
+	return this->drone_state;
+}
+
 
 /////////////////
 // Private fn
@@ -346,21 +456,50 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 
 void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
 	HAL_TIM_Base_Start_IT(&htim7);
+
+	if (rev3.get_drone_state() == GROUND_STATE && g_num_seconds == 5) {
+		rev3.transition_to(1);
+		g_num_seconds = 0;
+	} else if (rev3.get_drone_state() == TAXI_STATE && g_num_seconds == 5) {
+		rev3.transition_to(1);
+		rev3.activate_domain(CD_LANDING_TAKEOFF);
+		g_num_seconds = 0;
+	} else if(rev3.get_drone_state() == TAKEOFF_STATE && g_num_seconds == 5) {
+		rev3.transition_to(1);
+		rev3.activate_domain(CD_NAVIGATION);
+		g_num_seconds = 0;
+	} else if (rev3.get_drone_state() == FLIGHT_STATE && g_num_seconds == 5) {
+		rev3.transition_to(1);
+		rev3.activate_domain(CD_LANDING_TAKEOFF);
+		g_num_seconds = 0;
+	} else if (rev3.get_drone_state() == LANDING_STATE && g_num_seconds == 5) {
+		rev3.transition_to(1);
+		rev3.activate_domain(CD_STANDBY);
+		g_num_seconds = 0;
+	}
+
+	g_num_seconds += 1;
 }
 
 void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static uint8_t stage = 0;
+	static uint8_t led_index = 0;
+
 	if (stage == 0) { 			// STROBE ON
 		rev3.activate_domain(CD_STROBE);
+		rev3.activate_domain(CD_STANDBY); //STANDBY ON;
 		stage = 1;
 	} else if (stage == 1) { 	// STROBE OFF
 		rev3.deactivate_domain(CD_STROBE);
+		rev3.deactivate_domain(CD_STANDBY);
 		stage = 2;
 	} else if (stage == 2) {	// STROBE ON
 		rev3.activate_domain(CD_STROBE);
+		rev3.activate_domain(CD_STANDBY); //STANDBY ON;
 		stage = 3;
 	} else if (stage == 3) {	// STROBE OFF
 		rev3.deactivate_domain(CD_STROBE);
+		rev3.deactivate_domain(CD_STANDBY);
 		stage = 4;
 	} else if (stage == 4) {	// OFF
 		stage = 5;
@@ -373,6 +512,21 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 		rev3.deactivate_domain(CD_BEACON);
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
+	}
+
+	//"Scrolling" pattern for the "Search" drone state.
+
+	if (rev3.get_drone_state() == SEARCH_STATE) {
+		uint8_t num_top_facing_leds = 6;
+		if (led_index == 0) {
+			rev3.remove_led_from_cd(num_top_facing_leds-1, CD_SEARCH);
+		} else {
+			rev3.remove_led_from_cd(led_index-1, CD_SEARCH);
+		}
+
+		rev3.add_led_to_cd(led_index, CD_SEARCH);
+		rev3.activate_domain(CD_SEARCH);
+		led_index = (led_index + 1) % num_top_facing_leds;
 	}
 }
 

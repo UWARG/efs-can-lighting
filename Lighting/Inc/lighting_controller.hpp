@@ -26,10 +26,36 @@
  */
 enum ControlDomain {
 	CD_MAIN = 0,
-	CD_BEACON = 1,
-	CD_STROBE = 2,
-	CD_LENGTH = 3 // increment this as necessary
+	CD_STANDBY = 1,
+	CD_BEACON = 2,
+	CD_STROBE = 3,
+	CD_LANDING_TAKEOFF = 4,
+	CD_NAVIGATION = 5,
+	CD_BRAKE = 6,
+	CD_SEARCH = 7,
+	CD_LENGTH = 8 // increment this as necessary
 };
+
+/**
+ * @enum State
+ * GROUND_STATE
+ * TAXI_STATE
+ * FLIGHT_STATE
+ * SEARCH_STATE
+ * TAKEOFF_STATE
+ * LANDING_STATE
+ *
+ */
+
+typedef enum State {
+	GROUND_STATE = 0,
+	TAXI_STATE = 1,
+	FLIGHT_STATE = 2,
+	SEARCH_STATE = 3,
+	TAKEOFF_STATE = 4,
+	LANDING_STATE = 5,
+	NUM_STATES = 6	//increment this as necessary.
+} State;
 
 // TODO: Make these public
 void run_lighting_board();
@@ -156,19 +182,40 @@ public:
 	void set_domain_brightness(ControlDomain domain, uint8_t brightness);
 
 
+	/**
+	 * This is a mealy state machine that transitions from one drone state to another.
+	 * The "output" is the highest priority active control domain.
+	 *
+	 * @param input : input that determines the next drone state and output.
+	 */
+
+	void transition_to(uint8_t input);
+
+	void transition_to_search_state();
+
+	/*
+	 * Returns the state of the drone
+	 */
+
+	State get_drone_state();
+
+
+
 
 	// TODO: add function to "recolour domain" (enables & sets colour)
 	// Use this instead of set + enable?
 
 private:
-	static constexpr uint8_t NUM_LEDS = 6;
+	static constexpr uint8_t NUM_LEDS = 10;
+	State drone_state; //state of the drone.
+
 	uint8_t *dma_buffer;
 	uint8_t *bank_buffer;
 	WS2812 *leds;
 
 	uint8_t domain_allowed;					// true when a domain is allowed to be active
 	uint8_t domain_active;					// true when domain is active
-	uint8_t domain_leds[CD_LENGTH];			// Bitmask of LED's which are active in each domain
+	uint16_t domain_leds[CD_LENGTH];			// Bitmask of LED's which are active in each domain
 	RGB_colour_t domain_colours[CD_LENGTH];	// Domain colour
 	uint8_t domain_brightness[CD_LENGTH];	// Domain brightness
 
