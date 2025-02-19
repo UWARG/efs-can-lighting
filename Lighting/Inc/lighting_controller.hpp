@@ -20,10 +20,14 @@
  * CD_MAIN - default mode for LED's
  * CD_BEACON - beacon lights (red pulse 1x per second), indicates LV ON
  * CD_STROBE - strobe lights (Double white flash 1x per second), indicates HV ON
- *
- *
+ * CD_TAXI - white light for when the drone is in taxi.
+ * CD_LANDING - bright white lights, indicates the drone is landing
+ * CD_NAVIGATION - green lights for when the drone is in flight, used for visibility.
+ * CD_Brake - ?
+ * CD_SEARCH - scrolling pattern used for when CAN messages are received but are no longer available.
  * Add other modes as necessary
  */
+
 enum ControlDomain {
 	CD_MAIN = 0,
 	CD_BEACON = 1,
@@ -38,13 +42,14 @@ enum ControlDomain {
 
 /**
  * @enum State
+ * This represents the different states the drone is in and will determine the lighting pattern on the rev boards.
+ *
  * GROUND_STATE
  * TAXI_STATE
  * FLIGHT_STATE
  * SEARCH_STATE
  * TAKEOFF_STATE
  * LANDING_STATE
- *
  */
 
 typedef enum State {
@@ -127,14 +132,19 @@ public:
 	 */
 	void remove_led_from_cd(uint8_t index, ControlDomain domain);
 
-	/*
+	/* Adds multiple LEDs to a Control domain.
 	 *
-	 *
+	 * @param domain : Control Domain to add the LED to
+	 * @param domain_leds : set of leds to add to the domain.
 	 */
-
 	void add_leds_to_cd(ControlDomain domain, uint16_t domain_leds);
 
 
+	/* Removes multiple LEDs to a Control domain.
+	 *
+	 * @param domain : Control Domain to add the LED to
+	 * @param domain_leds : set of leds to remove from the domain.
+	 */
 	void remove_leds_from_cd(ControlDomain domain, uint16_t domain_leds);
 
 	/**
@@ -158,6 +168,14 @@ public:
 	 */
 	void deactivate_domain(ControlDomain domain);
 
+
+	/*
+	 * Enables (turns on) a Control Domain
+	 * This enables Control Domains to become active, so LEDs that are part of that control
+	 * domain can shine their domain colours.
+	 *
+	 * @param domain : domain to be disabled
+	 */
 	void allow_domain(ControlDomain domain);
 
 	void disallow_domain(ControlDomain domain);

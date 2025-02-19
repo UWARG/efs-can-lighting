@@ -38,6 +38,7 @@ uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 
 WS2812 leds[NUM_LEDS]; // TODO: make this work
 
+//list of colours
 RGB_colour_t WHITE = { 255, 255, 255 };
 RGB_colour_t RED = { 255, 0, 0 };
 RGB_colour_t ORANGE = {255, 165, 0};
@@ -48,9 +49,6 @@ RGB_colour_t PURPLE = {255, 0, 255};
 
 // Initial setup call
 LightingController rev4(dma_output_buffer, bank_output_buffer, leds, &htim1, TIM_CHANNEL_2); // TODO: Once we have custom functions registered as callbacks.....
-
-static volatile uint8_t g_input = 0;
-static volatile uint8_t g_num_seconds = 0;
 
 // Temporary (ish) function with exemplar code that allows us to test lighting board functionality without needing CAN commands
 void run_lighting_board() {
@@ -73,8 +71,6 @@ void run_lighting_board() {
 	rev4.allow_domain(CD_BRAKE);
 	rev4.allow_domain(CD_SEARCH);
 
-//	uint8_t cd_main_brightness = 5;
-//	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, cd_main_brightness);
 	rev4.activate_domain(CD_MAIN);
 	while (true) {
 
@@ -223,16 +219,16 @@ void LightingController::disallow_domain(ControlDomain domain) {
 
 
 void LightingController::add_leds_to_cd(ControlDomain domain, uint16_t leds) {
-	for (int i = 0; i < 16; ++i) {
-		if (leds & 1 << i) {
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		if (leds & (1 << i)) {				//if this LED is one I want to add to the control domain.
 			add_led_to_cd(i, domain);
 		}
 	}
 }
 
 void LightingController::remove_leds_from_cd(ControlDomain domain, uint16_t leds) {
-	for (int i = 0; i < 16; ++i) {
-		if (leds & 1 << i) {
+	for (int i = 0; i < NUM_LEDS; ++i) {
+		if (leds & (1 << i)) {				//if this LED is one I want to remove from the control domain.
 			remove_led_from_cd(i, domain);
 		}
 	}
@@ -245,21 +241,21 @@ void LightingController::transition_to(uint8_t input) {
 	uint16_t beacon_leds = 0;
 	uint16_t taxi_leds = (1 << 7) + (1 << 9);
 	uint16_t strobe_leds = 0;
-	uint16_t navigation_leds = (1 << 3) + (1 << 4) + (1 << 5);
+	uint16_t navigation_leds = 0;
 	uint16_t landing_leds = (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);
-	uint8_t search_leds = 63;
+	uint8_t search_leds = 63; //leds 0 to 5
 
 	switch (this->drone_state) {
 		case GROUND_STATE:
 			if (input == 0) {												//go into search state
-				//disable ALL beacon and strobe leds
-				beacon_leds = 65535;
-				strobe_leds = beacon_leds;
+				//disable ALL possibly active beacon and strobe lights.
+				beacon_leds = 63;
+				strobe_leds = 56;
 				remove_leds_from_cd(CD_BEACON, beacon_leds);
 				remove_leds_from_cd(CD_BEACON, strobe_leds);
 
 				set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
-				HAL_TIM_Base_Stop_IT(&htim2);
+				HAL_TIM_Base_Stop_IT(&htim2);								//start breathing.
 				this->drone_state = SEARCH_STATE;
 			} else if (input == 1) {										//go into standby mode
 				//switch out beacon leds and enable strobe lights for standby.
@@ -273,10 +269,12 @@ void LightingController::transition_to(uint8_t input) {
 				add_leds_to_cd(CD_STROBE, strobe_leds);
 				set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
 			} else if (input == 2) {										//going into taxi state;
-				beacon_leds = 63;									//disable all downwards-facing beacon leds.
+				//disable all downwards-facing beacon leds and remove the strobe lights used for standby.
+				beacon_leds = 63;
 				strobe_leds = 1 + (1 << 2) + (1 << 3) + (1 << 5);
 				remove_leds_from_cd(CD_BEACON, beacon_leds);
 				remove_leds_from_cd(CD_STROBE, strobe_leds);
+
 				add_leds_to_cd(CD_TAXI, taxi_leds);
 				set_domain_colour_and_brightness(CD_TAXI, WHITE, 10);
 				this->drone_state = TAXI_STATE;
@@ -325,30 +323,21 @@ void LightingController::transition_to(uint8_t input) {
 				navigation_leds = (1 << 3) + (1 << 4) + (1 << 5);
 				remove_leds_from_cd(CD_NAVIGATION, navigation_leds);
 
-				//remove downwards-facing beacon lights but leave the side ones on because the drone is technically still "on."
-				beacon_leds = 1 + (1 << 1) + (1 << 2);
-				remove_leds_from_cd(CD_BEACON, beacon_leds);
 				set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
 				set_domain_brightness(CD_MAIN, 5);
 				this->drone_state = SEARCH_STATE;
 			} else if (input == 1) {										//move to landing state.
+				//move nav lights on the downwards-facing board to the top of the board.
 				navigation_leds = (1 << 3) + (1 << 4) + (1 << 5);
 				remove_leds_from_cd(CD_NAVIGATION, navigation_leds);
 				navigation_leds = 1 + (1 << 5);
 				add_leds_to_cd(CD_NAVIGATION, navigation_leds);
 				set_domain_colour_and_brightness(CD_NAVIGATION, GREEN, 15);
 
-				beacon_leds = 1 + (1 << 1) + (1 << 2);
-				remove_leds_from_cd(CD_BEACON, beacon_leds);
-
 				//enable landing lights.
 				add_leds_to_cd(CD_LANDING, landing_leds);
 				set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
 
-				//Beacon lights.
-				beacon_leds = (1 << 1) + (1 << 4);
-				add_leds_to_cd(CD_BEACON, beacon_leds);
-				set_domain_colour_and_brightness(CD_BEACON, RED, 15);
 				set_domain_brightness(CD_MAIN, 5);
 				this->drone_state = LANDING_STATE;
 			}
@@ -356,7 +345,7 @@ void LightingController::transition_to(uint8_t input) {
 		case LANDING_STATE:
 			navigation_leds = 1 + (1 << 5);
 			strobe_leds = (1 << 7) + (1 << 9);
-			if (input == 0) {
+			if (input == 0) {												//enter SEARCH_STATE
 				//no anti-collision strobe?
 				remove_leds_from_cd(CD_STROBE, strobe_leds);
 				remove_leds_from_cd(CD_LANDING, landing_leds);
@@ -426,6 +415,7 @@ void LightingController::transition_to(uint8_t input) {
 				add_leds_to_cd(CD_STROBE, strobe_leds);
 				set_domain_colour_and_brightness(CD_STROBE, WHITE, 10);
 
+				navigation_leds = (1 << 3) + (1 << 4) + (1 << 5);
 				add_leds_to_cd(CD_NAVIGATION, navigation_leds);
 				set_domain_colour_and_brightness(CD_NAVIGATION, GREEN, 15);
 				this->drone_state = FLIGHT_STATE;
@@ -441,11 +431,6 @@ void LightingController::transition_to(uint8_t input) {
 				navigation_leds = 1 + (1 << 5);
 				add_leds_to_cd(CD_NAVIGATION, navigation_leds);
 				set_domain_colour_and_brightness(CD_NAVIGATION, GREEN, 15);
-
-				//Beacon lights to show that the drone is on.
-				beacon_leds = (1 << 1) + (1 << 4);
-				add_leds_to_cd(CD_BEACON, beacon_leds);
-				set_domain_colour_and_brightness(CD_BEACON, RED, 15);
 				this->drone_state = LANDING_STATE;
 			}
 			break;
@@ -522,35 +507,36 @@ void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
 	HAL_TIM_Base_Start_IT(&htim7);
 
 	static bool enter_standby = true;
+	static uint8_t g_num_seconds = 0;
 
-	//Demonstration program that cycles through different drone states and the resulting lighting pattern.
+//	//Demonstration program that cycles through different drone states and the resulting lighting pattern.
 	if (rev4.get_drone_state() == GROUND_STATE && g_num_seconds == 5) {
 		if (enter_standby == false) {
-			rev4.transition_to(2);
+			rev4.transition_to(2);	//go to TAXI_STATE
 			rev4.activate_domain(CD_TAXI);
 			enter_standby = true;
 		} else {
-			rev4.transition_to(1);
+			rev4.transition_to(1);	//stay in GROUND_STATE but show standby lighting pattern.
 			enter_standby = false;
 		}
 		g_num_seconds = 0;
 	} else if (rev4.get_drone_state() == TAXI_STATE && g_num_seconds == 1) {
-		rev4.transition_to(1);
+		rev4.transition_to(1);	//go to TAKE_OFF_STATE
 		g_num_seconds = 0;
 	} else if(rev4.get_drone_state() == TAKE_OFF_STATE && g_num_seconds == 1) {
-		rev4.transition_to(1);
+		rev4.transition_to(1);	//go to FLIGHT_STATE
 		rev4.activate_domain(CD_NAVIGATION);
 		g_num_seconds = 0;
 	} else if (rev4.get_drone_state() == FLIGHT_STATE && g_num_seconds == 5) {
-		rev4.transition_to(1);
+		rev4.transition_to(1);	//go to LANDING_STATE
 		rev4.activate_domain(CD_LANDING);
 		g_num_seconds = 0;
 	} else if (rev4.get_drone_state() == LANDING_STATE && g_num_seconds == 5) {
-		rev4.transition_to(0);
+		rev4.transition_to(0);	//go to SEARCH_STATE
 		rev4.activate_domain(CD_BEACON);
 		g_num_seconds = 0;
 	} else if (rev4.get_drone_state() == SEARCH_STATE && g_num_seconds == 5) {
-		rev4.transition_to(1);
+		rev4.transition_to(1);	//go to GROUND_STATE (no standby)
 		rev4.activate_domain(CD_BEACON);
 		g_num_seconds = 0;
 	}
@@ -607,6 +593,7 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 }
 
 void TIM2_20msCallback(TIM_HandleTypeDef *htim2) {
+	//Create a "breathing" pattern for when the drone first "turns on."
 	static uint8_t brightness = 0;
 	static uint8_t brightness_direction = 1;
 	uint8_t brightness_max = 50;
