@@ -15,7 +15,6 @@
 #include <stdint.h>
 
 #include "tim.h"
-
 #include "lighting_controller.hpp"
 #include "ws2812.hpp"
 #include "conversions.hpp"
@@ -58,56 +57,27 @@ void run_lighting_board() {
 
 	// Call to start lighting control
 	rev4.start_lighting_control();
-
-	// RGB Colour & Brightness control demo setup
-
-	RGB_colour_t my_colour;
-	my_colour.red = 65;
-	my_colour.green = 0;
-	my_colour.blue = 127;
-
-	int red_direction = 1;   // 1 for increasing, -1 for decreasing
-	int green_direction = 1; // 1 for increasing, -1 for decreasing
-	int blue_direction = 1;  // 1 for increasing, -1 for decreasing
-
-	uint8_t brightness_slow = 0;
-	int brightness_direction = 1;
-	uint8_t brightness = 5;
+	HAL_TIM_Base_Start_IT(&htim2);
 
 	// DOMAIN SETUP
 	// TODO: move Control Domain building to special functions
 
-	uint8_t BRIGHTNESS_MAX = 100;
-
-	/* build standby domain
-	 * Let's say the drone starts in standby for this demonstration.
-	 */
-
-	rev4.activate_domain(CD_BEACON);
-	rev4.activate_domain(CD_STROBE);
-	rev4.activate_domain(CD_STANDBY);
-	rev4.activate_domain(CD_NAVIGATION);
-	rev4.activate_domain(CD_BRAKE);
-	rev4.activate_domain(CD_LANDING_TAKEOFF);
-	rev4.activate_domain(CD_SEARCH);
-
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
 	rev4.allow_domain(CD_MAIN);
-	rev4.allow_domain(CD_STANDBY);
+	rev4.allow_domain(CD_TAXI);
 	rev4.allow_domain(CD_BEACON);
 	rev4.allow_domain(CD_STROBE);
-	rev4.allow_domain(CD_LANDING_TAKEOFF);
+	rev4.allow_domain(CD_LANDING);
 	rev4.allow_domain(CD_NAVIGATION);
 	rev4.allow_domain(CD_BRAKE);
 	rev4.allow_domain(CD_SEARCH);
 
+//	uint8_t cd_main_brightness = 5;
+//	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, cd_main_brightness);
+	rev4.activate_domain(CD_MAIN);
 	while (true) {
-		// Add a small delay for smooth transitions
-		HAL_Delay(10); // Adjust this value for faster/slower fading
 
-		rev4.set_domain_colour_and_brightness(CD_MAIN, my_colour, brightness);
-		rev4.activate_domain(CD_MAIN);
 	}
 }
 
@@ -120,22 +90,17 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 	this->tim_channel_x = timer_channel;
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
-
-	this->domain_leds_sets[CD_MAIN] = 255;
-	this->domain_leds_sets[CD_STANDBY] = 352;
-	this->domain_leds_sets[CD_BEACON] = 18;
-	this->domain_leds_sets[CD_STROBE] = 45;
-	this->domain_leds_sets[CD_LANDING_TAKEOFF] = 255;
-	this->domain_leds_sets[CD_NAVIGATION] = 199;
-	this->domain_leds_sets[CD_BRAKE] = 255;
-	this->domain_leds_sets[CD_SEARCH] = 255;
-
 	// Initialize all of the internal LED's as well
 	for (int i = 0; i < NUM_LEDS; ++i) {
 		this->leds[i].initialize_led_off(
 				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
 		this->domain_leds[CD_MAIN] |= 1 << i;	// this led index is now enabled
 	}
+
+	//enable beacon LEDs at the start to show that the drone is on
+	uint8_t beacon_leds = 1 + (1 << 2) + (1 << 3) + (1 << 5) + (1 << 6) + (1 << 8);
+	add_leds_to_cd(CD_BEACON, beacon_leds);
+	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15);
 }
 
 void LightingController::start_lighting_control() {
@@ -256,200 +221,232 @@ void LightingController::disallow_domain(ControlDomain domain) {
 	this->domain_allowed &= ~(1 << domain);
 }
 
-void LightingController::enable_domain_leds(ControlDomain domain) {
-	for (int i = 0; i < 16; i++) {
-		if (this->domain_leds_sets[domain] & (1 << i)) {
+
+void LightingController::add_leds_to_cd(ControlDomain domain, uint16_t leds) {
+	for (int i = 0; i < 16; ++i) {
+		if (leds & 1 << i) {
 			add_led_to_cd(i, domain);
 		}
 	}
 }
 
-void LightingController::disable_domain_leds(ControlDomain domain) {
-	for (int i = 0; i < 16; i++) {
-		if (this->domain_leds_sets[domain] & (1 << i)) {
+void LightingController::remove_leds_from_cd(ControlDomain domain, uint16_t leds) {
+	for (int i = 0; i < 16; ++i) {
+		if (leds & 1 << i) {
 			remove_led_from_cd(i, domain);
 		}
 	}
 }
 
-
-
 ////////////////////
 // STATE MACHINE FN
 ////////////////////
-
-void LightingController::transition_to_search_state() {
-	uint8_t num_top_facing_leds = 6;
-	set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
-	for (int i = 0; i < num_top_facing_leds; i++) {
-		add_led_to_cd(i, CD_SEARCH);
-	}
-	this->drone_state = SEARCH_STATE;
-}
-
 void LightingController::transition_to(uint8_t input) {
+	uint16_t beacon_leds = 0;
+	uint16_t taxi_leds = (1 << 7) + (1 << 9);
+	uint16_t strobe_leds = 0;
+	uint16_t navigation_leds = (1 << 3) + (1 << 4) + (1 << 5);
+	uint16_t landing_leds = (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);
+	uint8_t search_leds = 63;
+
 	switch (this->drone_state) {
 		case GROUND_STATE:
 			if (input == 0) {												//go into search state
-				remove_led_from_cd(0, CD_STANDBY);
-				remove_led_from_cd(5, CD_STANDBY);
-				remove_led_from_cd(6, CD_STANDBY);
-				remove_led_from_cd(8, CD_STANDBY);
+				//disable ALL beacon and strobe leds
+				beacon_leds = 65535;
+				strobe_leds = beacon_leds;
+				remove_leds_from_cd(CD_BEACON, beacon_leds);
+				remove_leds_from_cd(CD_BEACON, strobe_leds);
+
 				set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
+				HAL_TIM_Base_Stop_IT(&htim2);
 				this->drone_state = SEARCH_STATE;
 			} else if (input == 1) {										//go into standby mode
-				add_led_to_cd(0, CD_STANDBY);
-				add_led_to_cd(5, CD_STANDBY);
-				add_led_to_cd(6, CD_STANDBY);
-				add_led_to_cd(8, CD_STANDBY);
-				set_domain_colour_and_brightness(CD_STANDBY, ORANGE, 10);
+				//switch out beacon leds and enable strobe lights for standby.
+				beacon_leds = 1 + (1 << 2) + (1 << 3) + (1 << 5);
+				strobe_leds = beacon_leds;
+				remove_leds_from_cd(CD_BEACON, beacon_leds);
+				beacon_leds = (1 << 1) + (1 << 4);
+				add_leds_to_cd(CD_BEACON, beacon_leds);
+				set_domain_colour(CD_STROBE, RED);
+
+				add_leds_to_cd(CD_STROBE, strobe_leds);
+				set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
 			} else if (input == 2) {										//going into taxi state;
-				remove_led_from_cd(0, CD_STANDBY);
-				remove_led_from_cd(5, CD_STANDBY);
-				remove_led_from_cd(6, CD_STANDBY);
-				remove_led_from_cd(8, CD_STANDBY);
-
-				add_led_to_cd(0, CD_STROBE);
-				add_led_to_cd(2, CD_STROBE);
-				add_led_to_cd(3, CD_STROBE);
-				add_led_to_cd(5, CD_STROBE);
-
-				add_led_to_cd(1, CD_BEACON);
-				add_led_to_cd(4, CD_BEACON);
-
-				set_domain_colour_and_brightness(CD_BEACON, RED, 15);
-				set_domain_colour_and_brightness(CD_STROBE, WHITE, 4);
+				beacon_leds = 63;									//disable all downwards-facing beacon leds.
+				strobe_leds = 1 + (1 << 2) + (1 << 3) + (1 << 5);
+				remove_leds_from_cd(CD_BEACON, beacon_leds);
+				remove_leds_from_cd(CD_STROBE, strobe_leds);
+				add_leds_to_cd(CD_TAXI, taxi_leds);
+				set_domain_colour_and_brightness(CD_TAXI, WHITE, 10);
 				this->drone_state = TAXI_STATE;
 			}
 			break;
 		case TAXI_STATE:
-			if (input == 0) {
-				remove_led_from_cd(0, CD_STROBE);
-				remove_led_from_cd(2, CD_STROBE);
-				remove_led_from_cd(3, CD_STROBE);
-				remove_led_from_cd(5, CD_STROBE);
-
-				remove_led_from_cd(1, CD_BEACON);
-				remove_led_from_cd(4, CD_BEACON);
+			if (input == 0) {	//remove landing LEDS and set up search.
+				remove_leds_from_cd(CD_TAXI, taxi_leds);
 				set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
 				this->drone_state = SEARCH_STATE;
-			} else if (input == 1) {									    //move to takeoff...
-				remove_led_from_cd(0, CD_STROBE);
-				remove_led_from_cd(2, CD_STROBE);
-				remove_led_from_cd(3, CD_STROBE);
-				remove_led_from_cd(5, CD_STROBE);
+			} else if (input == 1) {										//go into take-off state
+				//remove_taxi_leds
+				remove_leds_from_cd(CD_TAXI, taxi_leds);
+				strobe_leds = (1 << 7) + (1 << 9);
 
-				remove_led_from_cd(1, CD_BEACON);
-				remove_led_from_cd(4, CD_BEACON);
-
-				for (int i = 0; i < 6; i++) {
-					add_led_to_cd(i, CD_LANDING_TAKEOFF);
-				}
-				set_domain_colour_and_brightness(CD_LANDING_TAKEOFF, WHITE, 15);
-				this->drone_state = TAKEOFF_STATE;
+				//enable strobe LEDs and allow them to be bright for take-off.
+				add_leds_to_cd(CD_STROBE, strobe_leds);
+				set_domain_colour_and_brightness(CD_STROBE, WHITE, 30);
+				HAL_TIM_Base_Stop_IT(&htim2);
+				this->drone_state = TAKE_OFF_STATE;
 			}
 			break;
-		case TAKEOFF_STATE:
+		case TAKE_OFF_STATE:
 			if (input == 0) {
-				for (int i = 0; i < 6; i++) {
-					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
-				}
+				remove_leds_from_cd(CD_STROBE, strobe_leds);
 				set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
 				this->drone_state = SEARCH_STATE;
-			} else if (input == 1) { 										//to landing_state;
-				for (int i = 0; i < 6; i++) {
-					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
-				}
-
-				add_led_to_cd(0, CD_NAVIGATION);
-				add_led_to_cd(1, CD_NAVIGATION);
-				add_led_to_cd(2, CD_NAVIGATION);
-				add_led_to_cd(6, CD_NAVIGATION);
-				add_led_to_cd(7, CD_NAVIGATION);
-
-				set_domain_colour_and_brightness(CD_NAVIGATION, RED, 30);
+			} else if (input == 1) { 										//go to flight state
+				//keep the strobe lights while flying??
+				navigation_leds = (1 << 3) + (1 << 4) + (1 << 5);
+				add_leds_to_cd(CD_NAVIGATION, navigation_leds);
+				set_domain_colour_and_brightness(CD_NAVIGATION, GREEN, 15);
+				set_domain_brightness(CD_MAIN, 0);
 				this->drone_state = FLIGHT_STATE;
 			} else if (input == 2) {
 				this->drone_state = LANDING_STATE;
 			}
 			break;
 		case FLIGHT_STATE:
-			if (input == 0) {
-				remove_led_from_cd(0, CD_NAVIGATION);
-				remove_led_from_cd(1, CD_NAVIGATION);
-				remove_led_from_cd(2, CD_NAVIGATION);
-				remove_led_from_cd(6, CD_NAVIGATION);
-				remove_led_from_cd(7, CD_NAVIGATION);
+			if (input == 0) {												//go search.
+				//no anti-collision strobe?
+				strobe_leds = (1 << 7) + (1 << 9);
+				remove_leds_from_cd(CD_STROBE, strobe_leds);
 
+				//no more nav lights.
+				navigation_leds = (1 << 3) + (1 << 4) + (1 << 5);
+				remove_leds_from_cd(CD_NAVIGATION, navigation_leds);
+
+				//remove downwards-facing beacon lights but leave the side ones on because the drone is technically still "on."
+				beacon_leds = 1 + (1 << 1) + (1 << 2);
+				remove_leds_from_cd(CD_BEACON, beacon_leds);
 				set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
+				set_domain_brightness(CD_MAIN, 5);
 				this->drone_state = SEARCH_STATE;
 			} else if (input == 1) {										//move to landing state.
-				remove_led_from_cd(0, CD_NAVIGATION);
-				remove_led_from_cd(1, CD_NAVIGATION);
-				remove_led_from_cd(2, CD_NAVIGATION);
-				remove_led_from_cd(6, CD_NAVIGATION);
-				remove_led_from_cd(7, CD_NAVIGATION);
-				for (int i = 0; i < 6; i++) {
-					add_led_to_cd(i, CD_LANDING_TAKEOFF);
-				}
-				set_domain_colour_and_brightness(CD_NAVIGATION, WHITE, 15);
+				navigation_leds = (1 << 3) + (1 << 4) + (1 << 5);
+				remove_leds_from_cd(CD_NAVIGATION, navigation_leds);
+				navigation_leds = 1 + (1 << 5);
+				add_leds_to_cd(CD_NAVIGATION, navigation_leds);
+				set_domain_colour_and_brightness(CD_NAVIGATION, GREEN, 15);
+
+				beacon_leds = 1 + (1 << 1) + (1 << 2);
+				remove_leds_from_cd(CD_BEACON, beacon_leds);
+
+				//enable landing lights.
+				add_leds_to_cd(CD_LANDING, landing_leds);
+				set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
+
+				//Beacon lights.
+				beacon_leds = (1 << 1) + (1 << 4);
+				add_leds_to_cd(CD_BEACON, beacon_leds);
+				set_domain_colour_and_brightness(CD_BEACON, RED, 15);
+				set_domain_brightness(CD_MAIN, 5);
 				this->drone_state = LANDING_STATE;
 			}
 			break;
 		case LANDING_STATE:
+			navigation_leds = 1 + (1 << 5);
+			strobe_leds = (1 << 7) + (1 << 9);
 			if (input == 0) {
-				for (int i = 0; i < 6; i++) {
-					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
-				}
+				//no anti-collision strobe?
+				remove_leds_from_cd(CD_STROBE, strobe_leds);
+				remove_leds_from_cd(CD_LANDING, landing_leds);
+				remove_leds_from_cd(CD_NAVIGATION, navigation_leds);
+				beacon_leds = (1 << 1) + (1 << 4);
+				remove_leds_from_cd(CD_BEACON, beacon_leds);
 				set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
 				this->drone_state = SEARCH_STATE;
 			} else if (input == 1) {										//back to ground state in standby lighting mode
-				for (int i = 0; i < 6; i++) {
-					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
-				}
-				add_led_to_cd(0, CD_STANDBY);
-				add_led_to_cd(5, CD_STANDBY);
-				add_led_to_cd(6, CD_STANDBY);
-				add_led_to_cd(8, CD_STANDBY);
 				this->drone_state = GROUND_STATE;
 			} else if (input == 2) {										//to ground state but not in standby....
-				for (int i = 0; i < 6; i++) {
-					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
-				}
+				//no anti-collision strobe?
+				remove_leds_from_cd(CD_STROBE, strobe_leds);
+				remove_leds_from_cd(CD_LANDING, landing_leds);
+
+				//remove beacon lights
+				beacon_leds = (1 << 1) + (1 << 4);
+				remove_leds_from_cd(CD_BEACON, beacon_leds);
+				beacon_leds = 1 + (1 << 2) + (1 << 3) + (1 << 5);			//add ground-facing beacon lights
+				add_leds_to_cd(CD_BEACON, beacon_leds);
+
+				HAL_TIM_Base_Start_IT(&htim2);
+				set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
 				this->drone_state = GROUND_STATE;
-
 			} else if (input == 3) {										//to taxi state
-				for (int i = 0; i < 6; i++) {
-					remove_led_from_cd(i, CD_LANDING_TAKEOFF);
-				}
-
-				add_led_to_cd(0, CD_STROBE);
-				add_led_to_cd(2, CD_STROBE);
-				add_led_to_cd(3, CD_STROBE);
-				add_led_to_cd(5, CD_STROBE);
-
-				add_led_to_cd(1, CD_BEACON);
-				add_led_to_cd(4, CD_BEACON);
-
-				set_domain_colour_and_brightness(CD_BEACON, RED, 15);
-				set_domain_colour_and_brightness(CD_STROBE, WHITE, 4);
+				remove_leds_from_cd(CD_LANDING, landing_leds);
+				add_leds_to_cd(CD_TAXI, taxi_leds);
+				set_domain_colour_and_brightness(CD_TAXI, WHITE, 10);
 				this->drone_state = TAXI_STATE;
 			}
 			break;
 		case SEARCH_STATE:
-			if (input == 0) {
+			if (input == 0) {												//back to ground state (in standby)
+				remove_leds_from_cd(CD_SEARCH, search_leds);
+				HAL_TIM_Base_Start_IT(&htim2);
+
+				//re-activate breathing beacon and strobe lighting pattern.
+				beacon_leds = (1 << 1) + (1 << 4);
+				add_leds_to_cd(CD_BEACON, beacon_leds);
+				set_domain_colour(CD_STROBE, RED);
+
+				strobe_leds = 1 + (1 << 2) + (1 << 3) + (1 << 5);
+				add_leds_to_cd(CD_STROBE, strobe_leds);
+				set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
+
 				set_domain_colour_and_brightness(CD_SEARCH, WHITE, 10);
-				this->drone_state = SEARCH_STATE;
-			} else if (input == 1) {
+				this->drone_state = GROUND_STATE;
+			} else if (input == 1) {										//to ground state (no standby)
+				HAL_TIM_Base_Start_IT(&htim2);
+				remove_leds_from_cd(CD_SEARCH, search_leds);
+				beacon_leds = 1 + (1 << 2) + (1 << 3) + (1 << 5);
+				add_leds_to_cd(CD_BEACON, beacon_leds);
+				this->drone_state = GROUND_STATE;
+			} else if (input == 2) {										//go to taxi_state
+				remove_leds_from_cd(CD_SEARCH, search_leds);
+				taxi_leds = (1 << 7) + (1 << 9);
+				add_leds_to_cd(CD_TAXI, taxi_leds);
+				this->drone_state = TAXI_STATE;
+			} else if (input == 3) {										//go to take-off state
+				remove_leds_from_cd(CD_SEARCH, search_leds);
+				strobe_leds = (1 << 7) + (1 << 9);
+				add_leds_to_cd(CD_STROBE, strobe_leds);
+				this->drone_state = TAKE_OFF_STATE;
+			} else if (input == 4) {										//go into flight state
+				remove_leds_from_cd(CD_SEARCH, search_leds);
+				strobe_leds = (1 << 7) + (1 << 9);
+				add_leds_to_cd(CD_STROBE, strobe_leds);
+				set_domain_colour_and_brightness(CD_STROBE, WHITE, 10);
 
-			} else if (input == 2) {
+				add_leds_to_cd(CD_NAVIGATION, navigation_leds);
+				set_domain_colour_and_brightness(CD_NAVIGATION, GREEN, 15);
+				this->drone_state = FLIGHT_STATE;
+			} else if (input == 5) {										//go to landing state
+				remove_leds_from_cd(CD_SEARCH, search_leds);
 
-			} else if (input == 3) {
+				strobe_leds = (1 << 7) + (1 << 9);
+				add_leds_to_cd(CD_STROBE, strobe_leds);
 
-			} else if (input == 4) {
+				add_leds_to_cd(CD_LANDING, landing_leds);
+				set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
 
-			} else if (input == 5) {
+				navigation_leds = 1 + (1 << 5);
+				add_leds_to_cd(CD_NAVIGATION, navigation_leds);
+				set_domain_colour_and_brightness(CD_NAVIGATION, GREEN, 15);
 
+				//Beacon lights to show that the drone is on.
+				beacon_leds = (1 << 1) + (1 << 4);
+				add_leds_to_cd(CD_BEACON, beacon_leds);
+				set_domain_colour_and_brightness(CD_BEACON, RED, 15);
+				this->drone_state = LANDING_STATE;
 			}
 			break;
 		default:
@@ -524,24 +521,37 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
 	HAL_TIM_Base_Start_IT(&htim7);
 
+	static bool enter_standby = true;
+
+	//Demonstration program that cycles through different drone states and the resulting lighting pattern.
 	if (rev4.get_drone_state() == GROUND_STATE && g_num_seconds == 5) {
-		rev4.transition_to(0);
+		if (enter_standby == false) {
+			rev4.transition_to(2);
+			rev4.activate_domain(CD_TAXI);
+			enter_standby = true;
+		} else {
+			rev4.transition_to(1);
+			enter_standby = false;
+		}
 		g_num_seconds = 0;
-	} else if (rev4.get_drone_state() == TAXI_STATE && g_num_seconds == 5) {
+	} else if (rev4.get_drone_state() == TAXI_STATE && g_num_seconds == 1) {
 		rev4.transition_to(1);
-		rev4.activate_domain(CD_LANDING_TAKEOFF);
 		g_num_seconds = 0;
-	} else if(rev4.get_drone_state() == TAKEOFF_STATE && g_num_seconds == 5) {
+	} else if(rev4.get_drone_state() == TAKE_OFF_STATE && g_num_seconds == 1) {
 		rev4.transition_to(1);
 		rev4.activate_domain(CD_NAVIGATION);
 		g_num_seconds = 0;
 	} else if (rev4.get_drone_state() == FLIGHT_STATE && g_num_seconds == 5) {
 		rev4.transition_to(1);
-		rev4.activate_domain(CD_LANDING_TAKEOFF);
+		rev4.activate_domain(CD_LANDING);
 		g_num_seconds = 0;
 	} else if (rev4.get_drone_state() == LANDING_STATE && g_num_seconds == 5) {
-		rev4.transition_to(2);
-		rev4.activate_domain(CD_STANDBY);
+		rev4.transition_to(0);
+		rev4.activate_domain(CD_BEACON);
+		g_num_seconds = 0;
+	} else if (rev4.get_drone_state() == SEARCH_STATE && g_num_seconds == 5) {
+		rev4.transition_to(1);
+		rev4.activate_domain(CD_BEACON);
 		g_num_seconds = 0;
 	}
 
@@ -554,35 +564,34 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 
 	if (stage == 0) { 			// STROBE ON
 		rev4.activate_domain(CD_STROBE);
-		rev4.activate_domain(CD_STANDBY); //STANDBY ON;
 		stage = 1;
 	} else if (stage == 1) { 	// STROBE OFF
 		rev4.deactivate_domain(CD_STROBE);
-		rev4.deactivate_domain(CD_STANDBY);
 		stage = 2;
 	} else if (stage == 2) {	// STROBE ON
 		rev4.activate_domain(CD_STROBE);
-		rev4.activate_domain(CD_STANDBY); //STANDBY ON;
 		stage = 3;
 	} else if (stage == 3) {	// STROBE OFF
 		rev4.deactivate_domain(CD_STROBE);
-		rev4.deactivate_domain(CD_STANDBY);
 		stage = 4;
 	} else if (stage == 4) {	// OFF
 		stage = 5;
 	} else if (stage == 5) {	// OFF
 		stage = 6;
 	} else if (stage == 6) {	// BCN ON
-		rev4.activate_domain(CD_BEACON);
+		if (rev4.get_drone_state() >= FLIGHT_STATE) {
+			rev4.activate_domain(CD_BEACON);
+		}
 		stage = 7;
 	} else if (stage == 7) {	// BCN OFF
-		rev4.deactivate_domain(CD_BEACON);
+		if (rev4.get_drone_state() >= FLIGHT_STATE) {
+			rev4.deactivate_domain(CD_BEACON);
+		}
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 
 	//"Scrolling" pattern for the "Search" drone state.
-
 	if (rev4.get_drone_state() == SEARCH_STATE) {
 		uint8_t num_top_facing_leds = 6;
 		if (led_index == 0) {
@@ -597,10 +606,30 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	}
 }
 
+void TIM2_20msCallback(TIM_HandleTypeDef *htim2) {
+	static uint8_t brightness = 0;
+	static uint8_t brightness_direction = 1;
+	uint8_t brightness_max = 50;
+
+	if (brightness <= 0) {
+		brightness = 0;
+		brightness_direction = 1;
+	} else if (brightness >= brightness_max) {
+		brightness = brightness_max;
+		brightness_direction = -1;
+	}
+
+	rev4.set_domain_brightness(CD_BEACON, brightness);
+	rev4.activate_domain(CD_BEACON);
+	brightness += brightness_direction;
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM6) {
 		TIM6_OneSecondCallback(htim);
 	} else if (htim->Instance == TIM7) {
 		TIM7_100msCallback(htim);
+	} else if (htim->Instance == TIM2) {
+		TIM2_20msCallback(htim);
 	}
 }

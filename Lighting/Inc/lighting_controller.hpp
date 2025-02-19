@@ -26,10 +26,10 @@
  */
 enum ControlDomain {
 	CD_MAIN = 0,
-	CD_STANDBY = 1,
-	CD_BEACON = 2,
-	CD_STROBE = 3,
-	CD_LANDING_TAKEOFF = 4,
+	CD_BEACON = 1,
+	CD_STROBE = 2,
+	CD_TAXI = 3,
+	CD_LANDING = 4,
 	CD_NAVIGATION = 5,
 	CD_BRAKE = 6,
 	CD_SEARCH = 7,
@@ -52,7 +52,7 @@ typedef enum State {
 	TAXI_STATE = 1,
 	FLIGHT_STATE = 2,
 	SEARCH_STATE = 3,
-	TAKEOFF_STATE = 4,
+	TAKE_OFF_STATE = 4,
 	LANDING_STATE = 5,
 	NUM_STATES = 6	//increment this as necessary.
 } State;
@@ -72,7 +72,6 @@ public:
 	 * Start sending lighting control data to neopixels.
 	 * Send values corresponding to neopixel brightness to capture compare register (CCR).
 	 */
-
 	void start_lighting_control();
 
 	/**
@@ -128,6 +127,16 @@ public:
 	 */
 	void remove_led_from_cd(uint8_t index, ControlDomain domain);
 
+	/*
+	 *
+	 *
+	 */
+
+	void add_leds_to_cd(ControlDomain domain, uint16_t domain_leds);
+
+
+	void remove_leds_from_cd(ControlDomain domain, uint16_t domain_leds);
+
 	/**
 	 * Enable (turn on) a Control Domain
 	 *
@@ -181,25 +190,19 @@ public:
 	*/
 	void set_domain_brightness(ControlDomain domain, uint8_t brightness);
 
-
 	/**
-	 * This is a mealy state machine that transitions from one drone state to another.
-	 * The "output" is the highest priority active control domain.
+	 * This is a state machine that changes enabled leds, control domain colour
+	 * and brightness based on the state the drone is in.
 	 *
 	 * @param input : input that determines the next drone state and output.
 	 */
-
 	void transition_to(uint8_t input);
 
-	void transition_to_search_state();
 
 	/*
 	 * Returns the state of the drone
 	 */
-
 	State get_drone_state();
-
-
 
 
 	// TODO: add function to "recolour domain" (enables & sets colour)
@@ -215,7 +218,7 @@ private:
 
 	uint8_t domain_allowed;					// true when a domain is allowed to be active
 	uint8_t domain_active;					// true when domain is active
-	uint16_t domain_leds[CD_LENGTH];			// Bitmask of LED's which are active in each domain
+	uint16_t domain_leds[CD_LENGTH];		// Bitmask of LED's which are active in each domain
 	RGB_colour_t domain_colours[CD_LENGTH];	// Domain colour
 	uint8_t domain_brightness[CD_LENGTH];	// Domain brightness
 
