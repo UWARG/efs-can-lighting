@@ -259,6 +259,7 @@ void TIM1_TRG_COM_IRQHandler(void)
 }
 
 /**
+<<<<<<< HEAD
   * @brief This function handles TIM2 global interrupt.
   */
 void TIM2_IRQHandler(void)
@@ -273,6 +274,8 @@ void TIM2_IRQHandler(void)
 }
 
 /**
+=======
+>>>>>>> 1e752ee46d7879ce8054d5c17da50b9b71b90ae8
   * @brief This function handles TIM6 global interrupt, DAC channel1 and channel2 underrun error interrupts.
   */
 void TIM6_DAC_IRQHandler(void)

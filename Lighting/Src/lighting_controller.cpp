@@ -148,7 +148,6 @@ void LightingController::recolour_by_index(uint8_t index,
 ////////////////////
 // CONTROL DOMAIN FN
 ////////////////////
-
 void LightingController::add_led_to_cd(uint8_t index, ControlDomain domain) {
 	// set the index in the domain
 	this->domain_leds[domain] |= 1 << index;

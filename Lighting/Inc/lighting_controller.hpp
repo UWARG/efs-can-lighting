@@ -86,6 +86,7 @@ public:
 	 * @param desired_colour : RGB_colour_t that you want set
 	 */
 	void recolour_all(RGB_colour_t desired_colour);
+	// TODO: add recolour_all_with_brightness
 
 	/**
 	 * Sets all LEDs under controller's domain to desired colors.
@@ -224,7 +225,6 @@ public:
 	 */
 	State get_drone_state();
 
-
 	// TODO: add function to "recolour domain" (enables & sets colour)
 	// Use this instead of set + enable?
 
@@ -244,7 +244,6 @@ private:
 
 	TIM_HandleTypeDef *htimx;				//timer handle
 	uint16_t tim_channel_x;					//timer channel
-
 	void initialize_bank_buffer_off();
 	void initialize_bank_buffer_on();
 	void initialize_dma_buffer();
