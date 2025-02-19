@@ -10,26 +10,10 @@
 
 #include <stdint.h>
 
-
 #include "conversions.hpp"
 
 static constexpr uint8_t PWM_LO = 19;
 static constexpr uint8_t PWM_HI = 38;
-static constexpr uint8_t BITS_PER_LED = 24;
-
-/**
- * @enum CommandMode
- * Represents the different command mode that an LED might be responsive to.
- *
- * CM_MAIN - default mode where LED's respond to main.cpp commands
- * CM_STROBE - mode where LED's only accept CM_MAIN commands if NOT in a strobe pattern
- *
- * Add other modes as necessary
- */
-enum CommandMode {
-	CM_MAIN,
-	CM_STROBE
-};
 
 /**
  * @class WS2812
@@ -97,9 +81,10 @@ public:
 	 *
 	 * @param rgb_colour_value : RGB_colour_t that you want set
 	 *
-	 * @param color_brightness : RGB_colour_t brightness
+	 * @param colour_brightness : RGB_colour_t brightness
 	 */
-	void set_led_colour(RGB_colour_t rgb_colour_value, uint8_t color_brightness);
+	void set_led_colour(RGB_colour_t rgb_colour_value,
+			uint8_t colour_brightness);
 
 	// TODO: set various methods for setting LED colour using custom HEX_COLOUR or HSL
 	// Maybe take advantage of Unions, otherwise conversion.cpp is there for us!
@@ -114,36 +99,30 @@ public:
 	/**
 	 * Sets the LED colour brightness
 	 *
-	 * @param color_brightness : RGB_colour_t brightness
+	 * @param colour_brightness : RGB_colour_t brightness
 	 */
 
-	void set_brightness(uint8_t color_brightness);
+	void set_brightness(uint8_t colour_brightness);
 
 private:
-	static constexpr uint8_t output_bitdwidth = 24;	// 24 bits (8 each for R, G, B)
-	static constexpr uint8_t bits_per_colour = 8;
+	static constexpr uint8_t BITS_PER_COLOUR = 8;
+	static constexpr uint8_t BITS_PER_LED = BITS_PER_COLOUR * 3; // R, G, B
 
-	uint8_t *buffer;// Each LED keeps track of the start of it's buffer within a bank
+	uint8_t *buffer; // Each LED keeps track of the start of it's buffer within a bank
 	uint8_t *g_offset;	// Green is first
 	uint8_t *r_offset;	// Then Red
 	uint8_t *b_offset;	// Lastly Blue
 
-	RGB_colour_t colour;	//LED color
-	uint8_t brightness;	//Sets the color brightness as a percentage (0 is 0% and 100 is 100%)
-	CommandMode cmd_mode;
-
-
+	RGB_colour_t colour;	//LED colour
+	uint8_t brightness;	//Sets the colour brightness as a percentage (0 is 0% and 100 is 100%)
 
 	/**
-	 * Writes color data from this->colour to the buffer
+	 * Writes colour data from this->colour to the buffer
 	 *
-	 * @param cocolourlor : RGB_colour_t "colour" to write to the buffer
+	 * @param colour : RGB_colour_t "colour" to write to the buffer
 	 *
 	 */
 	void push_colour_to_output_buffer(RGB_colour_t colour);
-
-
-
 };
 
 #endif /* INC_WS2812_HPP_ */
