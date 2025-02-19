@@ -8,6 +8,8 @@
 #ifndef INC_CONVERSIONS_HPP_
 #define INC_CONVERSIONS_HPP_
 
+#include <stdint.h>
+
 
 typedef struct {
 	uint8_t red;
