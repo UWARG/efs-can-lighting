@@ -437,14 +437,10 @@ int main(void)
 			  NULL);  
 
   canardSetLocalNodeID(&canard, node_id);
-
 	// Starts the 1s pulse asap (no weird user setup calls).
 	// I don't think this changes timing at all but maybe it does.
 	HAL_TIM_Base_Start_IT(&htim6);
-
-	// TODO: Make a call to my source file main()
-	run_lighting_board();
-	uint32_t next_1hz_service_at = HAL_GetTick();
+	uint64_t next_1hz_service_at = HAL_GetTick();
   
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -452,15 +448,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  	const uint64_t ts = HAL_GetTick();
 
-  	if (ts >= next_1hz_service_at){
-  	  next_1hz_service_at += 1000ULL;
-  	  process1HzTasks(ts);
-  	}
+		const uint64_t ts = HAL_GetTick();
 
-  	processCanardTxQueue(&hcan1);
+		if (ts >= next_1hz_service_at){
+		  next_1hz_service_at += 1000ULL;
+		  process1HzTasks(ts);
+		}
 
+		processCanardTxQueue(&hcan1);
 	}
   /* USER CODE END 3 */
 }
@@ -493,7 +489,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  HAL_StatusTypeDef init = HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  __NOP();
+  if (init != HAL_OK)
   {
     Error_Handler();
   }
@@ -509,6 +507,7 @@ void SystemClock_Config(void)
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
+
     Error_Handler();
   }
 }
