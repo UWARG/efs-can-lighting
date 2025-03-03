@@ -8,6 +8,7 @@
 #ifndef INC_CONVERSIONS_HPP_
 #define INC_CONVERSIONS_HPP_
 
+#include <cstdint>
 
 typedef struct {
 	uint8_t red;
