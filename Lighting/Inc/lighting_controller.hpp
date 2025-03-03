@@ -13,23 +13,6 @@
 #include "conversions.hpp"
 #include "ws2812.hpp"
 
-/**
- * @enum ControlDomain
- * Represents the different command mode that an LED might be responsive to.
- *
- * CD_MAIN - default mode for LED's
- * CD_BEACON - beacon lights (red pulse 1x per second), indicates LV ON
- * CD_STROBE - strobe lights (Double white flash 1x per second), indicates HV ON
- *
- *
- * Add other modes as necessary
- */
-enum ControlDomain {
-	CD_MAIN = 0,
-	CD_BEACON = 1,
-	CD_STROBE = 2,
-	CD_LENGTH = 3 // increment this as necessary
-};
 
 // TODO: Make these public
 void run_lighting_board();
