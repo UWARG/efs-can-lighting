@@ -15,7 +15,6 @@
 #include <stdint.h>
 
 #include "tim.h"
-
 #include "lighting_controller.hpp"
 #include "ws2812.hpp"
 #include "conversions.hpp"
@@ -23,10 +22,12 @@
 //#define STARTUP_SEQUENCE_1 // very basic selftest
 
 extern TIM_HandleTypeDef htim7;
+extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim;
 
 // TODO: custom types?
-static constexpr uint8_t NUM_LEDS = 6;
-static constexpr uint8_t NUM_LEDS_PADDING = 6;
+static constexpr uint8_t NUM_LEDS = 10;
+static constexpr uint8_t NUM_LEDS_PADDING = 19;
 static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS
 		+ NUM_LEDS_PADDING * 2) * 24 * 2;		// TODO: remove magic num
 static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS
@@ -37,55 +38,27 @@ uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 
 WS2812 leds[NUM_LEDS]; // TODO: make this work
 
+//list of colours
+RGB_colour_t WHITE = { 255, 255, 255 };
+RGB_colour_t RED = { 255, 0, 0 };
+RGB_colour_t ORANGE = {255, 165, 0};
+RGB_colour_t GREEN = {0, 255, 0};
+RGB_colour_t CYAN = {0, 255, 255};
+RGB_colour_t BROWN = {139, 69, 19};
+RGB_colour_t PURPLE = {255, 0, 255};
+
 // Initial setup call
 LightingController rev4(dma_output_buffer, bank_output_buffer, leds, &htim1, TIM_CHANNEL_2); // TODO: Once we have custom functions registered as callbacks.....
-
-extern TIM_HandleTypeDef htim;
 
 // Temporary (ish) function with exemplar code that allows us to test lighting board functionality without needing CAN commands
 void run_lighting_board() {
 
 	// Call to start lighting control
 	rev4.start_lighting_control();
-
-	// RGB Colour & Brightness control demo setup
-
-	RGB_colour_t my_colour;
-	my_colour.red = 65;
-	my_colour.green = 0;
-	my_colour.blue = 127;
-
-	int red_direction = 1;   // 1 for increasing, -1 for decreasing
-	int green_direction = 1; // 1 for increasing, -1 for decreasing
-	int blue_direction = 1;  // 1 for increasing, -1 for decreasing
-
-	uint8_t brightness_slow = 0;
-	int brightness_direction = 1;
-	uint8_t brightness = 50;
+	HAL_TIM_Base_Start_IT(&htim2);
 
 	// DOMAIN SETUP
 	// TODO: move Control Domain building to special functions
-
-	RGB_colour_t WHITE = { 255, 255, 255 };
-	RGB_colour_t RED = { 255, 0, 0 };
-	RGB_colour_t CYAN = {0, 255, 255};
-	RGB_colour_t BROWN = {139, 69, 19};
-	uint8_t BRIGHTNESS_MAX = 100;
-
-	// build beacon domain
-	rev4.set_domain_colour(CD_BEACON, CYAN);
-	rev4.set_domain_brightness(CD_BEACON, 255);
-	rev4.add_led_to_cd(1, CD_BEACON);
-	rev4.add_led_to_cd(4, CD_BEACON);
-
-	// build strobe domain
-	// comment any of these out to see the effect of adding LED's
-	rev4.set_domain_colour(CD_STROBE, BROWN);
-	rev4.set_domain_brightness(CD_STROBE, 127);
-	rev4.add_led_to_cd(0, CD_STROBE);
-	rev4.add_led_to_cd(2, CD_STROBE);
-	rev4.add_led_to_cd(3, CD_STROBE);
-	rev4.add_led_to_cd(5, CD_STROBE);
 
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
@@ -107,7 +80,10 @@ void run_lighting_board() {
 
 	LC_State_LANDING landing_state;
 	LC_State_GROUND ground_state;
-	rev4.set_lighting_control_state(&landing_state);
+	rev4.set_lighting_control_state(&ground_state);
+	rev4.executeState();
+	uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
+	rev4.activate_domains(allowed_domains);
 
 	while (true) {
 		//Create a "breathing" pattern for when the drone first "turns on."
@@ -134,7 +110,6 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 	this->lighting_controller_tim_channel = timer_channel;
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
-
 	// Initialize all of the internal LED's as well
 	for (int i = 0; i < NUM_LEDS; ++i) {
 		this->leds[i].initialize_led_off(
@@ -192,7 +167,6 @@ void LightingController::recolour_by_index(uint8_t index,
 ////////////////////
 // CONTROL DOMAIN FN
 ////////////////////
-
 void LightingController::add_led_to_cd(uint8_t index, ControlDomain domain) {
 	// set the index in the domain
 	this->domain_leds[domain] |= 1 << index;
@@ -209,7 +183,6 @@ void LightingController::set_domain_colour_and_brightness(ControlDomain domain,
 	this->domain_colours[domain] = colour;
 	this->domain_brightness[domain] = brightness;
 }
-
 
 void LightingController::set_domain_brightness(ControlDomain domain, uint8_t brightness) {
 	this->domain_brightness[domain] = brightness;
@@ -245,7 +218,7 @@ void LightingController::deactivate_domain(ControlDomain domain) {
 		if (this->domain_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
 			for (int j = 0; j < NUM_LEDS; ++j) {
 				if (this->domain_leds[i] & (1 << j)) {
-					this->leds[i].set_led_colour(domain_colours[i],
+					this->leds[j].set_led_colour(domain_colours[i],
 							domain_brightness[i]);
 				}
 			}
@@ -304,7 +277,6 @@ void LightingController::allow_domain(ControlDomain domain) {
 void LightingController::disallow_domain(ControlDomain domain) {
 	this->domain_allowed &= ~(1 << domain);
 }
-
 
 void LightingController::configure_domains(uint8_t allowed_domains) {
 	for (int i = 0; i < CD_LENGTH; ++i) {
@@ -426,13 +398,13 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 
-	uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
-	rev4.activate_domains(allowed_domains);
+//	uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
+//	rev4.activate_domains(allowed_domains);
 }
 
 void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {
 	static uint8_t state_executions_per_100ms = 0;
-	rev4.executeState();
+//	rev4.executeState();
 	state_executions_per_100ms += 1;
 	if (state_executions_per_100ms == 8) {
 		state_executions_per_100ms = 0;
