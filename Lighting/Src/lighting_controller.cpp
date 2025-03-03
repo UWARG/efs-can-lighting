@@ -78,12 +78,11 @@ void run_lighting_board() {
 	uint8_t brightness_direction = 1;
 	uint8_t brightness_max = 50;
 
+	//Instantiate lighting state objects and pass them into the set_lighting_control_state function to enter a lighting state.
 	LC_State_LANDING landing_state;
 	LC_State_GROUND ground_state;
+	LC_State_FLIGHT flight_state;
 	rev4.set_lighting_control_state(&ground_state);
-	rev4.executeState();
-	uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
-	rev4.activate_domains(allowed_domains);
 
 	while (true) {
 		//Create a "breathing" pattern for when the drone first "turns on."
@@ -398,13 +397,13 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 
-//	uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
-//	rev4.activate_domains(allowed_domains);
+	uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
+	rev4.activate_domains(allowed_domains);
 }
 
 void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {
 	static uint8_t state_executions_per_100ms = 0;
-//	rev4.executeState();
+	rev4.executeState();
 	state_executions_per_100ms += 1;
 	if (state_executions_per_100ms == 8) {
 		state_executions_per_100ms = 0;
