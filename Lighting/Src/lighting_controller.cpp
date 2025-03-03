@@ -38,7 +38,7 @@ uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 WS2812 leds[NUM_LEDS]; // TODO: make this work
 
 // Initial setup call
-LightingController rev3(dma_output_buffer, bank_output_buffer, leds, &htim1, TIM_CHANNEL_2); // TODO: Once we have custom functions registered as callbacks.....
+LightingController rev4(dma_output_buffer, bank_output_buffer, leds, &htim1, TIM_CHANNEL_2); // TODO: Once we have custom functions registered as callbacks.....
 
 extern TIM_HandleTypeDef htim;
 
@@ -46,7 +46,7 @@ extern TIM_HandleTypeDef htim;
 void run_lighting_board() {
 
 	// Call to start lighting control
-	rev3.start_lighting_control();
+	rev4.start_lighting_control();
 
 	// RGB Colour & Brightness control demo setup
 
@@ -73,26 +73,26 @@ void run_lighting_board() {
 	uint8_t BRIGHTNESS_MAX = 100;
 
 	// build beacon domain
-	rev3.set_domain_colour(CD_BEACON, CYAN);
-	rev3.set_domain_brightness(CD_BEACON, 255);
-	rev3.add_led_to_cd(1, CD_BEACON);
-	rev3.add_led_to_cd(4, CD_BEACON);
+	rev4.set_domain_colour(CD_BEACON, CYAN);
+	rev4.set_domain_brightness(CD_BEACON, 255);
+	rev4.add_led_to_cd(1, CD_BEACON);
+	rev4.add_led_to_cd(4, CD_BEACON);
 
 	// build strobe domain
 	// comment any of these out to see the effect of adding LED's
-	rev3.set_domain_colour(CD_STROBE, BROWN);
-	rev3.set_domain_brightness(CD_STROBE, 127);
-	rev3.add_led_to_cd(0, CD_STROBE);
-	rev3.add_led_to_cd(2, CD_STROBE);
-	rev3.add_led_to_cd(3, CD_STROBE);
-	rev3.add_led_to_cd(5, CD_STROBE);
+	rev4.set_domain_colour(CD_STROBE, BROWN);
+	rev4.set_domain_brightness(CD_STROBE, 127);
+	rev4.add_led_to_cd(0, CD_STROBE);
+	rev4.add_led_to_cd(2, CD_STROBE);
+	rev4.add_led_to_cd(3, CD_STROBE);
+	rev4.add_led_to_cd(5, CD_STROBE);
 
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
-	rev3.allow_domain(CD_MAIN);
-	rev3.allow_domain(CD_BEACON);
-	rev3.allow_domain(CD_STROBE);
-
+	rev4.allow_domain(CD_MAIN);
+	rev4.allow_domain(CD_BEACON);
+	rev4.allow_domain(CD_STROBE);
+	rev4.activate_domain(CD_MAIN);
 
 	while (true) {
 		// Demo program to update LED colors & show control domain functionality
@@ -143,8 +143,8 @@ void run_lighting_board() {
 		// Add a small delay for smooth transitions
 		HAL_Delay(10); // Adjust this value for faster/slower fading
 
-		rev3.set_domain_colour_and_brightness(CD_MAIN, my_colour, brightness);
-		rev3.activate_domain(CD_MAIN);
+		rev4.set_domain_colour_and_brightness(CD_MAIN, my_colour, brightness);
+		rev4.activate_domain(CD_MAIN);
 	}
 }
 
@@ -153,8 +153,8 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 	this->dma_buffer = dma_output_buffer;
 	this->bank_buffer = bank_output_buffer;
 	this->leds = leds;
-	this->htimx = timer;
-	this->tim_channel_x = timer_channel;
+	this->lighting_controller_tim_handle = timer;
+	this->lighting_controller_tim_channel = timer_channel;
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
 
@@ -164,10 +164,13 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
 		this->domain_leds[CD_MAIN] |= 1 << i;	// this led index is now enabled
 	}
+
+	LC_State_GROUND ground_state;
+	this->lighting_control_state = &ground_state;
 }
 
 void LightingController::start_lighting_control() {
-	HAL_TIMEx_PWMN_Start_DMA(this->htimx, this->tim_channel_x,
+	HAL_TIMEx_PWMN_Start_DMA(this->lighting_controller_tim_handle, this->lighting_controller_tim_channel,
 			(uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
 
 #ifdef STARTUP_SEQUENCE_1
@@ -284,6 +287,57 @@ void LightingController::disallow_domain(ControlDomain domain) {
 	this->domain_allowed &= ~(1 << domain);
 }
 
+
+////////////////////
+// STATE MACHINE FN
+////////////////////
+void LightingController::set_state(LightingStateTransition next_state) {
+	switch (next_state) {
+		case TRANSITION_GROUND:
+		{
+			LC_State_GROUND ground;
+			this->lighting_control_state = &ground;
+		}
+		break;
+		case TRANSITION_TAXI:
+		{
+			LC_State_TAXI taxi;
+			this->lighting_control_state = &taxi;
+		}
+		break;
+		case TRANSITION_TAKEOFF:
+		{
+			LC_State_TAKEOFF takeoff;
+			this->lighting_control_state = &takeoff;
+		}
+		break;
+		case TRANSITION_FLIGHT:
+		{
+			LC_State_FLIGHT flight;
+			this->lighting_control_state = &flight;
+		}
+		break;
+		case TRANSITION_LANDING:
+		{
+			LC_State_LANDING landing;
+			this->lighting_control_state = &landing;
+		}
+		break;
+		case TRANSITION_SEARCH:
+		{
+			LC_State_SEARCH search;
+			this->lighting_control_state = &search;
+		}
+		break;
+		default:
+			break;
+	};
+}
+
+void LightingController::executeState() {
+	this->lighting_control_state->execute(this->domain_leds);
+}
+
 /////////////////
 // Private fn
 /////////////////
@@ -351,29 +405,51 @@ void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
 void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static uint8_t stage = 0;
 	if (stage == 0) { 			// STROBE ON
-		rev3.activate_domain(CD_STROBE);
+		rev4.activate_domain(CD_STROBE);
 		stage = 1;
 	} else if (stage == 1) { 	// STROBE OFF
-		rev3.deactivate_domain(CD_STROBE);
+		rev4.deactivate_domain(CD_STROBE);
 		stage = 2;
 	} else if (stage == 2) {	// STROBE ON
-		rev3.activate_domain(CD_STROBE);
+		rev4.activate_domain(CD_STROBE);
 		stage = 3;
 	} else if (stage == 3) {	// STROBE OFF
-		rev3.deactivate_domain(CD_STROBE);
+		rev4.deactivate_domain(CD_STROBE);
 		stage = 4;
 	} else if (stage == 4) {	// OFF
 		stage = 5;
 	} else if (stage == 5) {	// OFF
 		stage = 6;
 	} else if (stage == 6) {	// BCN ON
-		rev3.activate_domain(CD_BEACON);
+		rev4.activate_domain(CD_BEACON);
+
 		stage = 7;
 	} else if (stage == 7) {	// BCN OFF
-		rev3.deactivate_domain(CD_BEACON);
+
+		rev4.deactivate_domain(CD_BEACON);
+
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
+}
+
+void TIM2_20msCallback(TIM_HandleTypeDef *htim2) {
+	//Create a "breathing" pattern for when the drone first "turns on."
+	static uint8_t brightness = 0;
+	static uint8_t brightness_direction = 1;
+	uint8_t brightness_max = 50;
+
+	if (brightness <= 0) {
+		brightness = 0;
+		brightness_direction = 1;
+	} else if (brightness >= brightness_max) {
+		brightness = brightness_max;
+		brightness_direction = -1;
+	}
+
+	rev4.set_domain_brightness(CD_BEACON, brightness);
+	rev4.activate_domain(CD_BEACON);
+	brightness += brightness_direction;
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {

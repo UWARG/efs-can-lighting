@@ -11,6 +11,7 @@
 #include <cstdint>
 
 #include "conversions.hpp"
+#include "lighting_control_state_classes.hpp"
 #include "ws2812.hpp"
 
 
@@ -106,6 +107,13 @@ public:
 	 */
 	void deactivate_domain(ControlDomain domain);
 
+	/*
+	 * Enables (turns on) a Control Domain
+	 * This enables Control Domains to become active, so LEDs that are part of that control
+	 * domain can shine their domain colours.
+	 *
+	 * @param domain : domain to be disabled
+	 */
 	void allow_domain(ControlDomain domain);
 
 	void disallow_domain(ControlDomain domain);
@@ -139,23 +147,30 @@ public:
 	void set_domain_brightness(ControlDomain domain, uint8_t brightness);
 
 
+	void set_state(LightingStateTransition next_state);
+
+	void executeState();
 
 	// TODO: add function to "recolour domain" (enables & sets colour)
 	// Use this instead of set + enable?
 
 private:
-	static constexpr uint8_t NUM_LEDS = 6;
+	static constexpr uint8_t NUM_LEDS = 10;
+
+	LightingControlStates *lighting_control_state;
+
 	uint8_t *dma_buffer;
 	uint8_t *bank_buffer;
 	WS2812 *leds;
-	uint8_t domain_allowed;					// true when a domain is allowed to be active
-	uint8_t domain_active;					// true when domain is active
-	uint8_t domain_leds[CD_LENGTH];			// Bitmask of LED's which are active in each domain
-	RGB_colour_t domain_colours[CD_LENGTH];	// Domain colour
-	uint8_t domain_brightness[CD_LENGTH];	// Domain brightness
 
-	TIM_HandleTypeDef *htimx;				//timer handle
-	uint16_t tim_channel_x;					//timer channel
+	uint8_t domain_allowed;					// bitfield of which control domains are ALLOWED to be active.
+	uint8_t domain_active;					// bitfield of which control domains are CURRENTLY active.
+	uint16_t domain_leds[CD_LENGTH];		// Bitmask of LED's which are active in each domain
+	RGB_colour_t domain_colours[CD_LENGTH];	// Control domain colour
+	uint8_t domain_brightness[CD_LENGTH];	// Control domain brightness
+
+	TIM_HandleTypeDef *lighting_controller_tim_handle;				//timer handle
+	uint16_t lighting_controller_tim_channel;					//timer channel
 
 	void initialize_bank_buffer_off();
 	void initialize_bank_buffer_on();
