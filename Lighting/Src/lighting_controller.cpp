@@ -89,30 +89,25 @@ void run_lighting_board() {
 
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
-	rev4.allow_domain(CD_MAIN);
-	rev4.allow_domain(CD_TAXI);
-	rev4.allow_domain(CD_LANDING);
-	rev4.allow_domain(CD_NAV);
-	rev4.allow_domain(CD_BEACON);
-	rev4.allow_domain(CD_STROBE);
-	rev4.allow_domain(CD_BRAKE);
-	rev4.allow_domain(CD_SEARCH);
+	uint8_t all_domains_enabled = (1 << 7);
+	rev4.configure_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
 	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
 	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
 	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 15);
-	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15);
+	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
 	rev4.set_domain_colour_and_brightness(CD_STROBE, WHITE, 15);
 	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
+	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 15);
 
 	uint8_t brightness = 0;
 	uint8_t brightness_direction = 1;
 	uint8_t brightness_max = 50;
 
+	LC_State_LANDING landing_state;
 	LC_State_GROUND ground_state;
-	rev4.set_lighting_control_state(&ground_state);
-	rev4.executeState();
+	rev4.set_lighting_control_state(&landing_state);
 
 	while (true) {
 		//Create a "breathing" pattern for when the drone first "turns on."
@@ -258,6 +253,50 @@ void LightingController::deactivate_domain(ControlDomain domain) {
 	}
 }
 
+void LightingController::activate_domain(int domain) {
+	if (this->domain_allowed & domain) {
+		this->domain_active |= domain;	// TODO: have active/disabled booleans
+		for (int i = 0; i < CD_LENGTH; ++i) {
+			if (this->domain_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
+				for (int j = 0; j < NUM_LEDS; ++j) {
+					if (this->domain_leds[i] & (1 << j)) {
+						this->leds[j].set_led_colour(domain_colours[i],
+								domain_brightness[i]);
+					}
+				}
+			}
+		}
+	} else {
+		// Domains should not be active when they are disallowed.
+		// Instead of checking this every time we poll domains, check it on domain activation request.
+		this->domain_active &= ~(1 << domain);
+	}
+}
+
+void LightingController::deactivate_domain(int domain) {
+	this->domain_active &= ~domain;
+	for (int i = 0; i < CD_LENGTH; ++i) {
+		if (this->domain_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
+			for (int j = 0; j < NUM_LEDS; ++j) {
+				if (this->domain_leds[i] & (1 << j)) {
+					this->leds[j].set_led_colour(domain_colours[i],
+							domain_brightness[i]);
+				}
+			}
+		}
+	}
+}
+
+void LightingController::activate_domains(uint8_t active_domains) {
+	for (int i = 0; i < CD_LENGTH; ++i) {
+		if (active_domains & (1 << i)) {	//if this domain should be active.
+			activate_domain(1 << i);
+		} else {
+			deactivate_domain(1 << i);
+		}
+	}
+}
+
 void LightingController::allow_domain(ControlDomain domain) {
 	this->domain_allowed |= 1 << domain;
 }
@@ -267,16 +306,15 @@ void LightingController::disallow_domain(ControlDomain domain) {
 }
 
 
-void LightingController::configure_domains(uint8_t domains) {
+void LightingController::configure_domains(uint8_t allowed_domains) {
 	for (int i = 0; i < CD_LENGTH; ++i) {
-		if (allowed_domains & (1 << i)) {	//if this domain should be active.
-			allow_domain(i);
+		if (allowed_domains & (1 << i)) {	//if this domain should be allowed
+			this->domain_allowed |= (1 << i);
 		} else {
-			disallow_domain(i);
+			this->domain_allowed &= ~(1 << i);
 		}
 	}
 }
-
 ////////////////////
 // STATE MACHINE FN
 ////////////////////
@@ -285,8 +323,13 @@ void LightingController::set_lighting_control_state(LightingControlState *state)
 }
 
 void LightingController::executeState() {
-	uint8_t domain_settings = this->lighting_control_state->execute(this->domain_leds);
-	configure_domains(domain_settings);
+	this->lighting_control_state->execute();
+	this->domain_leds = this->lighting_control_state->get_domain_leds();
+	this->domain_allowed = this->lighting_control_state->get_allowed_domains();
+}
+
+LightingControlState *LightingController::get_lighting_control_state() {
+	return lighting_control_state;
 }
 
 /////////////////
@@ -382,14 +425,18 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
+
+	uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
+	rev4.activate_domains(allowed_domains);
 }
 
 void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {
-	static uint8_t state_checks_per_100ms = 0;
+	static uint8_t state_executions_per_100ms = 0;
 	rev4.executeState();
-	state_checks_per_100ms += 1;
-	if (state_checks_per_100ms == 8) {
-		state_checks_per_100ms = 0;
+	state_executions_per_100ms += 1;
+	if (state_executions_per_100ms == 8) {
+		state_executions_per_100ms = 0;
+		HAL_TIM_Base_Stop_IT(htim2);
 	}
 }
 

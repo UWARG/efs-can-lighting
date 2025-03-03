@@ -107,6 +107,13 @@ public:
 	 */
 	void deactivate_domain(ControlDomain domain);
 
+	void activate_domain(int domain);
+
+	void deactivate_domain(int domain);
+
+
+	void activate_domains(uint8_t active_domains);
+
 	/*
 	 * Enables (turns on) a Control Domain
 	 * This enables Control Domains to become active, so LEDs that are part of that control
@@ -125,11 +132,12 @@ public:
 	 */
 	void disallow_domain(ControlDomain domain);
 
+
 	/*
 	 * Enables/Disables control domains according to the bitfield of domains passed as a parameter.
 	 * @param domain : bitfield of domains to be either allowed or disallowed.
 	 */
-	void configure_domains(uint8_t domains);
+	void configure_domains(uint8_t allowed_domains);
 
 	/**
 	 * Sets the colour & brightness of a Control Domain
@@ -164,6 +172,8 @@ public:
 
 	void executeState();
 
+	LightingControlState *get_lighting_control_state();
+
 	// TODO: add function to "recolour domain" (enables & sets colour)
 	// Use this instead of set + enable?
 
@@ -178,7 +188,7 @@ private:
 
 	uint8_t domain_allowed;					// bitfield of which control domains are ALLOWED to be active.
 	uint8_t domain_active;					// bitfield of which control domains are CURRENTLY active.
-	uint16_t domain_leds[CD_LENGTH];		// Bitmask of LED's which are active in each domain
+	uint16_t *domain_leds;		// Bitmask of LED's which are active in each domain
 	RGB_colour_t domain_colours[CD_LENGTH];	// Control domain colour
 	uint8_t domain_brightness[CD_LENGTH];	// Control domain brightness
 
