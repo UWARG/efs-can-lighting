@@ -90,61 +90,43 @@ void run_lighting_board() {
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
 	rev4.allow_domain(CD_MAIN);
+	rev4.allow_domain(CD_TAXI);
+	rev4.allow_domain(CD_LANDING);
+	rev4.allow_domain(CD_NAV);
 	rev4.allow_domain(CD_BEACON);
 	rev4.allow_domain(CD_STROBE);
-	rev4.activate_domain(CD_MAIN);
+	rev4.allow_domain(CD_BRAKE);
+	rev4.allow_domain(CD_SEARCH);
+
+	//set up the domain colours and brightness
+	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 15);
+	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15);
+	rev4.set_domain_colour_and_brightness(CD_STROBE, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
+
+	uint8_t brightness = 0;
+	uint8_t brightness_direction = 1;
+	uint8_t brightness_max = 50;
+
+	LC_State_GROUND ground_state;
+	rev4.set_lighting_control_state(&ground_state);
+	rev4.executeState();
 
 	while (true) {
-		// Demo program to update LED colors & show control domain functionality
-
-		brightness_slow = brightness_slow + 1;
-		if (brightness_slow >= 20) {
-			brightness += brightness_direction;
-			brightness_slow = 0;
-		}
-		if (brightness >= 50) {
-			brightness = 50;
-			brightness_direction = -1;
-		} else if (brightness <= 0) {
+		//Create a "breathing" pattern for when the drone first "turns on."
+		if (brightness <= 0) {
 			brightness = 0;
 			brightness_direction = 1;
+		} else if (brightness >= brightness_max) {
+			brightness = brightness_max;
+			brightness_direction = -1;
 		}
-
-		// Update red value
-		my_colour.red += red_direction;
-		if (my_colour.red >= 255) {
-			my_colour.red = 255;
-			red_direction = -1; // Start decreasing
-		} else if (my_colour.red <= 0) {
-			my_colour.red = 0;
-			red_direction = 1; // Start increasing
-		}
-
-		// Update green value
-		my_colour.green += green_direction;
-		if (my_colour.green >= 255) {
-			my_colour.green = 255;
-			green_direction = -1; // Start decreasing
-		} else if (my_colour.green <= 0) {
-			my_colour.green = 0;
-			green_direction = 1; // Start increasing
-		}
-
-		// Update blue value
-		my_colour.blue += blue_direction;
-		if (my_colour.blue >= 255) {
-			my_colour.blue = 255;
-			blue_direction = -1; // Start decreasing
-		} else if (my_colour.blue <= 0) {
-			my_colour.blue = 0;
-			blue_direction = 1; // Start increasing
-		}
-
-		// Add a small delay for smooth transitions
-		HAL_Delay(10); // Adjust this value for faster/slower fading
-
-		rev4.set_domain_colour_and_brightness(CD_MAIN, my_colour, brightness);
-		rev4.activate_domain(CD_MAIN);
+		rev4.set_domain_brightness(CD_BEACON, brightness);
+		rev4.activate_domain(CD_BEACON);
+		brightness += brightness_direction;
+		HAL_Delay(20);
 	}
 }
 
@@ -164,9 +146,6 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
 		this->domain_leds[CD_MAIN] |= 1 << i;	// this led index is now enabled
 	}
-
-	LC_State_GROUND ground_state;
-	this->lighting_control_state = &ground_state;
 }
 
 void LightingController::start_lighting_control() {
@@ -288,54 +267,26 @@ void LightingController::disallow_domain(ControlDomain domain) {
 }
 
 
+void LightingController::configure_domains(uint8_t domains) {
+	for (int i = 0; i < CD_LENGTH; ++i) {
+		if (allowed_domains & (1 << i)) {	//if this domain should be active.
+			allow_domain(i);
+		} else {
+			disallow_domain(i);
+		}
+	}
+}
+
 ////////////////////
 // STATE MACHINE FN
 ////////////////////
-void LightingController::set_state(LightingStateTransition next_state) {
-	switch (next_state) {
-		case TRANSITION_GROUND:
-		{
-			LC_State_GROUND ground;
-			this->lighting_control_state = &ground;
-		}
-		break;
-		case TRANSITION_TAXI:
-		{
-			LC_State_TAXI taxi;
-			this->lighting_control_state = &taxi;
-		}
-		break;
-		case TRANSITION_TAKEOFF:
-		{
-			LC_State_TAKEOFF takeoff;
-			this->lighting_control_state = &takeoff;
-		}
-		break;
-		case TRANSITION_FLIGHT:
-		{
-			LC_State_FLIGHT flight;
-			this->lighting_control_state = &flight;
-		}
-		break;
-		case TRANSITION_LANDING:
-		{
-			LC_State_LANDING landing;
-			this->lighting_control_state = &landing;
-		}
-		break;
-		case TRANSITION_SEARCH:
-		{
-			LC_State_SEARCH search;
-			this->lighting_control_state = &search;
-		}
-		break;
-		default:
-			break;
-	};
+void LightingController::set_lighting_control_state(LightingControlState *state) {
+	lighting_control_state = state;
 }
 
 void LightingController::executeState() {
-	this->lighting_control_state->execute(this->domain_leds);
+	uint8_t domain_settings = this->lighting_control_state->execute(this->domain_leds);
+	configure_domains(domain_settings);
 }
 
 /////////////////
@@ -404,6 +355,9 @@ void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
 
 void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static uint8_t stage = 0;
+	static uint8_t led_index = 0;
+	HAL_TIM_Base_Start_IT(&htim2);
+
 	if (stage == 0) { 			// STROBE ON
 		rev4.activate_domain(CD_STROBE);
 		stage = 1;
@@ -422,34 +376,21 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 		stage = 6;
 	} else if (stage == 6) {	// BCN ON
 		rev4.activate_domain(CD_BEACON);
-
 		stage = 7;
 	} else if (stage == 7) {	// BCN OFF
-
 		rev4.deactivate_domain(CD_BEACON);
-
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 }
 
-void TIM2_20msCallback(TIM_HandleTypeDef *htim2) {
-	//Create a "breathing" pattern for when the drone first "turns on."
-	static uint8_t brightness = 0;
-	static uint8_t brightness_direction = 1;
-	uint8_t brightness_max = 50;
-
-	if (brightness <= 0) {
-		brightness = 0;
-		brightness_direction = 1;
-	} else if (brightness >= brightness_max) {
-		brightness = brightness_max;
-		brightness_direction = -1;
+void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {
+	static uint8_t state_checks_per_100ms = 0;
+	rev4.executeState();
+	state_checks_per_100ms += 1;
+	if (state_checks_per_100ms == 8) {
+		state_checks_per_100ms = 0;
 	}
-
-	rev4.set_domain_brightness(CD_BEACON, brightness);
-	rev4.activate_domain(CD_BEACON);
-	brightness += brightness_direction;
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -457,5 +398,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		TIM6_OneSecondCallback(htim);
 	} else if (htim->Instance == TIM7) {
 		TIM7_100msCallback(htim);
+	} else if (htim->Instance == TIM2) {
+		TIM2_10msCallback(htim);
 	}
 }

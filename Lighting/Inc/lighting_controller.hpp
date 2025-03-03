@@ -116,7 +116,20 @@ public:
 	 */
 	void allow_domain(ControlDomain domain);
 
+	/*
+	 * Disables (turns off) a Control Domain
+	 * This prevents multiple a control domains from being active, so that domain LEDs cannot
+	 * shine their domain colour.
+	 *
+	 * @param domain : domain to be disabled
+	 */
 	void disallow_domain(ControlDomain domain);
+
+	/*
+	 * Enables/Disables control domains according to the bitfield of domains passed as a parameter.
+	 * @param domain : bitfield of domains to be either allowed or disallowed.
+	 */
+	void configure_domains(uint8_t domains);
 
 	/**
 	 * Sets the colour & brightness of a Control Domain
@@ -147,7 +160,7 @@ public:
 	void set_domain_brightness(ControlDomain domain, uint8_t brightness);
 
 
-	void set_state(LightingStateTransition next_state);
+	void set_lighting_control_state(LightingControlState *state);
 
 	void executeState();
 
@@ -157,7 +170,7 @@ public:
 private:
 	static constexpr uint8_t NUM_LEDS = 10;
 
-	LightingControlStates *lighting_control_state;
+	LightingControlState *lighting_control_state;
 
 	uint8_t *dma_buffer;
 	uint8_t *bank_buffer;

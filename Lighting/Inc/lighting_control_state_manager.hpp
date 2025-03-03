@@ -13,7 +13,9 @@
 
 class LightingControlState {
 public:
-	virtual uint8_t execute(uint16_t domain_leds[]) = 0;
+	virtual void execute() = 0;
+	virtual uint16_t *get_domain_leds() = 0;
+	virtual volatile uint8_t get_allowed_domains() = 0;
 };
 
 #endif /* INC_LIGHTING_CONTROL_STATE_MANAGER_HPP_ */
