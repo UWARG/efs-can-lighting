@@ -12,7 +12,7 @@ public:
 	LC_State_GROUND(){};
 	void execute() override;
 	uint16_t *get_domain_leds() override;
-	volatile uint8_t get_allowed_domains() override;
+	uint8_t get_allowed_domains() override;
 
 private:
 	uint16_t domain_leds[CD_LENGTH];
@@ -24,7 +24,7 @@ public:
 	LC_State_TAXI(){};
 	void execute() override;
 	uint16_t *get_domain_leds();
-	volatile uint8_t get_allowed_domains();
+	uint8_t get_allowed_domains();
 
 private:
 	uint16_t domain_leds[CD_LENGTH];
@@ -37,7 +37,7 @@ public:
 	LC_State_TAKEOFF(){};
 	void execute() override;
 	uint16_t *get_domain_leds();
-	volatile uint8_t get_allowed_domains();
+	uint8_t get_allowed_domains();
 
 private:
 	uint16_t domain_leds[CD_LENGTH];
@@ -49,7 +49,7 @@ public:
 	LC_State_FLIGHT(){};
 	void execute() override;
 	uint16_t *get_domain_leds();
-	volatile uint8_t get_allowed_domains();
+	uint8_t get_allowed_domains();
 
 private:
 	uint16_t domain_leds[CD_LENGTH];
@@ -62,7 +62,7 @@ public:
 	LC_State_BRAKE(){};
 	void execute() override;
 	uint16_t *get_domain_leds();
-	volatile uint8_t get_allowed_domains();
+	uint8_t get_allowed_domains();
 
 private:
 	uint16_t domain_leds[CD_LENGTH];
@@ -75,7 +75,7 @@ public:
 	LC_State_LANDING(){};
 	void execute() override;
 	uint16_t *get_domain_leds();
-	volatile uint8_t get_allowed_domains();
+	uint8_t get_allowed_domains();
 
 private:
 	uint16_t domain_leds[CD_LENGTH];
@@ -88,7 +88,7 @@ public:
 	LC_State_STANDBY(){};
 	void execute() override;
 	uint16_t *get_domain_leds();
-	volatile uint8_t get_allowed_domains();
+	uint8_t get_allowed_domains();
 
 private:
 	uint16_t domain_leds[CD_LENGTH];
@@ -102,7 +102,7 @@ public:
 	LC_State_SEARCH(){};
 	void execute() override;
 	uint16_t *get_domain_leds();
-	volatile uint8_t get_allowed_domains();
+	uint8_t get_allowed_domains();
 
 private:
 	uint16_t domain_leds[CD_LENGTH];

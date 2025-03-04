@@ -186,9 +186,9 @@ private:
 	uint8_t *bank_buffer;
 	WS2812 *leds;
 
-	uint8_t domain_allowed;					// bitfield of which control domains are ALLOWED to be active.
+	volatile uint8_t domain_allowed;					// bitfield of which control domains are ALLOWED to be active.
 	uint8_t domain_active;					// bitfield of which control domains are CURRENTLY active.
-	uint16_t *domain_leds;		// Bitmask of LED's which are active in each domain
+	volatile uint16_t *domain_leds;		// Bitmask of LED's which are active in each domain
 	RGB_colour_t domain_colours[CD_LENGTH];	// Control domain colour
 	uint8_t domain_brightness[CD_LENGTH];	// Control domain brightness
 

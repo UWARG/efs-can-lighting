@@ -27,7 +27,7 @@ extern TIM_HandleTypeDef htim;
 
 // TODO: custom types?
 static constexpr uint8_t NUM_LEDS = 10;
-static constexpr uint8_t NUM_LEDS_PADDING = 19;
+static constexpr uint8_t NUM_LEDS_PADDING = 10;
 static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS
 		+ NUM_LEDS_PADDING * 2) * 24 * 2;		// TODO: remove magic num
 static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS
@@ -82,6 +82,7 @@ void run_lighting_board() {
 	LC_State_LANDING landing_state;
 	LC_State_GROUND ground_state;
 	LC_State_FLIGHT flight_state;
+
 	rev4.set_lighting_control_state(&ground_state);
 
 	while (true) {

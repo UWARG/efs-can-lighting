@@ -17,7 +17,7 @@ uint16_t *LC_State_GROUND::get_domain_leds() {
 	return domain_leds;
 }
 
-volatile uint8_t LC_State_GROUND::get_allowed_domains() {
+uint8_t LC_State_GROUND::get_allowed_domains() {
 	return allowed_domains;
 }
 
@@ -34,7 +34,7 @@ uint16_t *LC_State_TAXI::get_domain_leds() {
 	return domain_leds;
 }
 
-volatile uint8_t LC_State_TAXI::get_allowed_domains() {
+uint8_t LC_State_TAXI::get_allowed_domains() {
 	return allowed_domains;
 }
 
@@ -50,7 +50,7 @@ uint16_t *LC_State_TAKEOFF::get_domain_leds() {
 	return domain_leds;
 }
 
-volatile uint8_t LC_State_TAKEOFF::get_allowed_domains() {
+uint8_t LC_State_TAKEOFF::get_allowed_domains() {
 	return allowed_domains;
 }
 
@@ -67,7 +67,7 @@ uint16_t *LC_State_FLIGHT::get_domain_leds() {
 	return domain_leds;
 }
 
-volatile uint8_t LC_State_FLIGHT::get_allowed_domains() {
+uint8_t LC_State_FLIGHT::get_allowed_domains() {
 	return allowed_domains;
 }
 
@@ -82,7 +82,7 @@ uint16_t *LC_State_BRAKE::get_domain_leds() {
 	return domain_leds;
 }
 
-volatile uint8_t LC_State_BRAKE::get_allowed_domains() {
+uint8_t LC_State_BRAKE::get_allowed_domains() {
 	return allowed_domains;
 }
 
@@ -100,7 +100,7 @@ uint16_t *LC_State_LANDING::get_domain_leds() {
 	return domain_leds;
 }
 
-volatile uint8_t LC_State_LANDING::get_allowed_domains() {
+uint8_t LC_State_LANDING::get_allowed_domains() {
 	return allowed_domains;
 }
 
@@ -116,7 +116,7 @@ uint16_t *LC_State_STANDBY::get_domain_leds() {
 	return domain_leds;
 }
 
-volatile uint8_t LC_State_STANDBY::get_allowed_domains() {
+uint8_t LC_State_STANDBY::get_allowed_domains() {
 	return allowed_domains;
 }
 
