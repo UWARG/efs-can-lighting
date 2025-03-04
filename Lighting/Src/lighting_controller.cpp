@@ -83,7 +83,7 @@ void run_lighting_board() {
 	LC_State_GROUND ground_state;
 	LC_State_FLIGHT flight_state;
 
-	rev4.set_lighting_control_state(&ground_state);
+	rev4.set_lighting_control_state(&landing_state);
 
 	while (true) {
 		//Create a "breathing" pattern for when the drone first "turns on."
@@ -108,6 +108,7 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 	this->leds = leds;
 	this->lighting_controller_tim_handle = timer;
 	this->lighting_controller_tim_channel = timer_channel;
+	this->lighting_control_state = nullptr;
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
 	// Initialize all of the internal LED's as well
@@ -295,9 +296,11 @@ void LightingController::set_lighting_control_state(LightingControlState *state)
 }
 
 void LightingController::executeState() {
-	this->lighting_control_state->execute();
-	this->domain_leds = this->lighting_control_state->get_domain_leds();
-	this->domain_allowed = this->lighting_control_state->get_allowed_domains();
+	if (this->get_lighting_control_state() != nullptr) { //If a state has been set.
+		this->lighting_control_state->execute();
+		this->domain_leds = this->lighting_control_state->get_domain_leds();
+		this->domain_allowed = this->lighting_control_state->get_allowed_domains();
+	}
 }
 
 LightingControlState *LightingController::get_lighting_control_state() {
@@ -398,8 +401,11 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 
-	uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
-	rev4.activate_domains(allowed_domains);
+	if (rev4.get_lighting_control_state() != nullptr) { //If a state has been SET.
+		uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
+		rev4.activate_domains(allowed_domains);
+	}
+
 }
 
 void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {
