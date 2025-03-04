@@ -387,6 +387,18 @@ void process1HzTasks(uint64_t timestamp_usec) {
     */
     send_NodeStatus();
 }
+
+void process10HzTasks(uint64_t timestamp_usec) {
+	CanardCANFrame tx_frame;
+	tx_frame.id = node_id;
+	tx_frame.data[0] = 1;
+	tx_frame.data[1] = 2;
+	tx_frame.data[2] = 3;
+	tx_frame.data[3] = 4;
+	tx_frame.data_len = 4;
+	tx_frame.iface_id = 11;
+	canardSTM32Transmit(&hcan1, &tx_frame);
+}
 /* USER CODE END 0 */
 
 /**
@@ -441,6 +453,7 @@ int main(void)
 	// I don't think this changes timing at all but maybe it does.
 	HAL_TIM_Base_Start_IT(&htim6);
 	uint64_t next_1hz_service_at = HAL_GetTick();
+	uint64_t next_10hz_service_at = HAL_GetTick();
   
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -454,6 +467,11 @@ int main(void)
 		if (ts >= next_1hz_service_at){
 		  next_1hz_service_at += 1000ULL;
 		  process1HzTasks(ts);
+		}
+
+		if (ts >= next_10hz_service_at) {
+			next_10hz_service_at += 100ULL;
+			process10HzTasks(ts);
 		}
 
 		processCanardTxQueue(&hcan1);
