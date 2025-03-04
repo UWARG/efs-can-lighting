@@ -200,6 +200,29 @@ void handle_NotifyState(CanardInstance *ins, CanardRxTransfer *transfer) {
 
 }
 
+void handle_paramNumericValue(CanardInstance *ins, CanardRxTransfer *transfer) {
+	struct uavcan_protocol_param_NumericValue value;
+
+	if (uavcan_protocol_param_NumericValue_decode(transfer, &value)) {
+		return;
+	}
+
+	switch (value.union_tag) {
+	case UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY: {
+		__NOP();
+		break;
+	}
+	case UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_INTEGER_VALUE: {
+		__NOP();
+		break;
+	}
+	case UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_REAL_VALUE: {
+		__NOP();
+		break;
+	}
+	}
+}
+
 /*
   handle a GetNodeInfo request
 */
@@ -285,6 +308,10 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
                                  CanardTransferType transfer_type,
                                  uint8_t source_node_id)
 {
+	if (data_type_id == 10000) {
+		*out_data_type_signature = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_SIGNATURE;
+		return true;
+	}
 	if (transfer_type == CanardTransferTypeRequest) {
 	// check if we want to handle a specific service request
 		switch (data_type_id) {
@@ -349,6 +376,10 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer) {
 			handle_NotifyState(ins, transfer);
 			break;
 		}
+		case 10000: {
+			handle_paramNumericValue(ins, transfer);
+			break;
+		}
 		}
 	}
 }
@@ -389,15 +420,27 @@ void process1HzTasks(uint64_t timestamp_usec) {
 }
 
 void process10HzTasks(uint64_t timestamp_usec) {
-	CanardCANFrame tx_frame;
-	tx_frame.id = node_id;
-	tx_frame.data[0] = 1;
-	tx_frame.data[1] = 2;
-	tx_frame.data[2] = 3;
-	tx_frame.data[3] = 4;
-	tx_frame.data_len = 4;
-	tx_frame.iface_id = 11;
-	canardSTM32Transmit(&hcan1, &tx_frame);
+    uint8_t buffer[UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_MAX_SIZE];
+
+    struct uavcan_protocol_param_NumericValue value;
+
+    value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_INTEGER_VALUE;
+    value.integer_value = 1234;
+
+    uint32_t len = uavcan_protocol_param_NumericValue_encode(&value, buffer);
+
+    // we need a static variable for the transfer ID. This is
+    // incremeneted on each transfer, allowing for detection of packet
+    // loss
+    static uint8_t transfer_id;
+
+    canardBroadcast(&canard,
+    				UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_SIGNATURE,
+                    10000,
+                    &transfer_id,
+                    CANARD_TRANSFER_PRIORITY_LOW,
+                    buffer,
+                    len);
 }
 /* USER CODE END 0 */
 
@@ -471,7 +514,7 @@ int main(void)
 
 		if (ts >= next_10hz_service_at) {
 			next_10hz_service_at += 100ULL;
-			process10HzTasks(ts);
+			//process10HzTasks(ts);
 		}
 
 		processCanardTxQueue(&hcan1);
