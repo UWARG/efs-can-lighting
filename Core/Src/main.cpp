@@ -33,7 +33,8 @@
 //#define ROTATE_LED
 //#define CYCLE_ONE_LED_ON
 //#define CONSTANT_COLOR
-# include "lighting_controller.hpp"
+
+#include "../../DroneCAN-packets/Inc/lighting_controller.hpp"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
