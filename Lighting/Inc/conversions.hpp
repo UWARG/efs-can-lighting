@@ -52,6 +52,20 @@ enum ControlDomain {
 };
 
 
+typedef enum LedPosition_E {
+	LED_BOTTOM_NW = 0,
+	LED_BOTTOM_W = 1,
+	LED_BOTTOM_SW = 2,
+	LED_BOTTOM_SE = 3,
+	LED_BOTTOM_E = 4,
+	LED_BOTTOM_NE = 5,
+	LED_W_OUTER = 6,
+	LED_W_INNER = 7,
+	LED_E_OUTER = 8,
+	LED_E_INNER = 9
+} LedPosition_E;
+
+
 /* For transitioning to lighting control states
  *
  *
