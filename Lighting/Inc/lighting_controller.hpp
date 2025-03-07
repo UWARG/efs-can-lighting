@@ -180,20 +180,20 @@ public:
 private:
 	static constexpr uint8_t NUM_LEDS = 10;
 
-	LightingControlState *lighting_control_state;
+	LightingControlState	 *lighting_control_state;
 
-	uint8_t *dma_buffer;
-	uint8_t *bank_buffer;
-	WS2812 *leds;
+	uint8_t 				 *dma_buffer;
+	uint8_t 				 *bank_buffer;
+	WS2812 					 *leds;
 
-	volatile uint8_t domain_allowed;					// bitfield of which control domains are ALLOWED to be active.
-	uint8_t domain_active;					// bitfield of which control domains are CURRENTLY active.
-	volatile uint16_t *domain_leds;		// Bitmask of LED's which are active in each domain
-	RGB_colour_t domain_colours[CD_LENGTH];	// Control domain colour
-	uint8_t domain_brightness[CD_LENGTH];	// Control domain brightness
+	volatile uint8_t		 domain_allowed;					// bitfield of which control domains are ALLOWED to be active.
+	volatile uint16_t		 *domain_leds;						// Bitmask of LED's which are active in each domain
+	uint8_t 				 domain_active;						// bitfield of which control domains are CURRENTLY active.
+	uint8_t 				 domain_brightness[CD_LENGTH];		// Control domain brightness
+	RGB_colour_t 			 domain_colours[CD_LENGTH];			// Control domain colour
 
-	TIM_HandleTypeDef *lighting_controller_tim_handle;				//timer handle
-	uint16_t lighting_controller_tim_channel;					//timer channel
+	TIM_HandleTypeDef		 *lighting_controller_tim_handle;	//timer handle
+	uint16_t         		 lighting_controller_tim_channel;	//timer channel
 
 	void initialize_bank_buffer_off();
 	void initialize_bank_buffer_on();
