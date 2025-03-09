@@ -13,7 +13,11 @@
 #include "conversions.hpp"
 #include "lighting_control_state_classes.hpp"
 #include "ws2812.hpp"
+#include "tim.h"
 
+class LightingController;
+
+extern LightingController rev4;
 
 // TODO: Make these public
 void run_lighting_board();
@@ -107,10 +111,6 @@ public:
 	 */
 	void deactivate_domain(ControlDomain domain);
 
-	void activate_domain(int domain);
-
-	void deactivate_domain(int domain);
-
 
 	void activate_domains(uint8_t active_domains);
 
@@ -137,7 +137,13 @@ public:
 	 * Enables/Disables control domains according to the bitfield of domains passed as a parameter.
 	 * @param domain : bitfield of domains to be either allowed or disallowed.
 	 */
-	void configure_domains(uint8_t allowed_domains);
+	void configure_allowed_domains(uint8_t allowed_domains);
+
+	/*
+	 *
+	 */
+
+	void configure_active_domains(uint8_t active_domains);
 
 	/**
 	 * Sets the colour & brightness of a Control Domain
@@ -168,10 +174,29 @@ public:
 	void set_domain_brightness(ControlDomain domain, uint8_t brightness);
 
 
+	/*
+	 * This sets the lighting control state of the board. Each state object has its own lighting
+	 * pattern that represents the state.
+	 *
+	 * @param: pointer to a state object.
+	 */
 	void set_lighting_control_state(LightingControlState *state);
 
-	void executeState();
+	/*
+	 * Turns off all of the LEDs when exiting a state.
+	 */
+	void exit_current_state();
 
+	/*
+	 *  This was function is intended to execute the lighting control state.
+	 *  Right now, it just assigns the allowed domains of a state class
+	 *  to that of the lighting controller.
+	 */
+	void execute_state();
+
+	/*
+	 * Returns the lighting control state
+	 */
 	LightingControlState *get_lighting_control_state();
 
 	// TODO: add function to "recolour domain" (enables & sets colour)
@@ -187,7 +212,6 @@ private:
 	WS2812 					 *leds;
 
 	volatile uint8_t		 domain_allowed;					// bitfield of which control domains are ALLOWED to be active.
-	volatile uint16_t		 *domain_leds;						// Bitmask of LED's which are active in each domain
 	uint8_t 				 domain_active;						// bitfield of which control domains are CURRENTLY active.
 	uint8_t 				 domain_brightness[CD_LENGTH];		// Control domain brightness
 	RGB_colour_t 			 domain_colours[CD_LENGTH];			// Control domain colour
