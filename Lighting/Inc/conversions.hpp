@@ -16,6 +16,16 @@ typedef struct {
 	uint8_t blue;
 } RGB_colour_t;
 
+
+//list of colours
+constexpr RGB_colour_t WHITE = { 255, 255, 255 };
+constexpr RGB_colour_t RED = { 255, 0, 0 };
+constexpr RGB_colour_t ORANGE = {255, 165, 0};
+constexpr RGB_colour_t GREEN = {0, 255, 0};
+constexpr RGB_colour_t CYAN = {0, 255, 255};
+constexpr RGB_colour_t BROWN = {139, 69, 19};
+constexpr RGB_colour_t PURPLE = {255, 0, 255};
+
 typedef struct {
 	uint16_t hue;		// TODO: limit this to 0-360 (degrees)
 	uint8_t saturation;	// TODO: limit this to 0-100 (percentage)
@@ -33,7 +43,7 @@ typedef struct {
  * CD_NAVIGATION - green lights for when the drone is in flight, used for visibility.
  * CD_BEACON - beacon lights (red pulse 1x per second), indicates LV ON
  * CD_STROBE - strobe lights (Double white flash 1x per second), indicates HV ON
- * CD_Brake - ?
+ * CD_Brake - orange lights for when the drone stops.
  * CD_SEARCH - scrolling pattern used for when CAN messages are received but are no longer available.
  * Add other modes as necessary
  */
@@ -66,10 +76,8 @@ typedef enum LedPosition_E {
 } LedPosition_E;
 
 
-/* For transitioning to lighting control states
- *
- *
- *
+/* For transitioning to lighting control states (?):
+ * TODO: Figure out if something should be done with these
  */
 
 enum LightingStateTransition {
