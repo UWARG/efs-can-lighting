@@ -30,10 +30,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-//#define ROTATE_LED
-//#define CYCLE_ONE_LED_ON
-//#define CONSTANT_COLOR
-# include "lighting_controller.hpp"
+#include "lighting_controller.hpp"
+#include "lighting_demos.hpp"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -100,7 +98,8 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim6);
 
 	// TODO: Make a call to my source file main()
-	run_lighting_board();
+//	run_lighting_board();
+	lighting_control_state_demo();
   
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
