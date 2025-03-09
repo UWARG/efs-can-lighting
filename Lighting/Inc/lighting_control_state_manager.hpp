@@ -10,10 +10,8 @@
 
 #include "conversions.hpp"
 
-
 class LightingControlState {
 public:
-	virtual void execute() = 0;
 	virtual uint16_t *get_domain_leds() = 0;
 	virtual uint8_t get_allowed_domains() = 0;
 };
