@@ -12,4 +12,6 @@
 
 void lighting_control_state_demo();
 
+void lighting_control_domain_demo();
+
 #endif /* DEMOS_INC_LIGHTING_DEMOS_HPP_ */

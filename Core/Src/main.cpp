@@ -100,6 +100,7 @@ int main(void)
 	// TODO: Make a call to my source file main()
 //	run_lighting_board();
 	lighting_control_state_demo();
+//	lighting_control_domain_demo();
   
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */

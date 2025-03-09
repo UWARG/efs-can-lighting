@@ -197,12 +197,12 @@ void LightingController::activate_domain(ControlDomain domain) {
 	uint16_t *domain_leds = this->lighting_control_state->get_domain_leds();
 	if (this->domain_allowed & (1 << domain)) {
 		this->domain_active |= 1 << domain;	// TODO: have active/disabled booleans
-		for (int i = 0; i < CD_LENGTH; ++i) {
-			if (this->domain_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
+		for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
+			if (this->domain_active & (1 << cd_idx)) { // IF THIS DOMAIN IS ACTIVE
 				for (int j = 0; j < NUM_LEDS; ++j) {
-					if (domain_leds[i] & (1 << j)) {
-						this->leds[j].set_led_colour(domain_colours[i],
-								domain_brightness[i]);
+					if (domain_leds[cd_idx] & (1 << j)) {
+						this->leds[j].set_led_colour(domain_colours[cd_idx],
+								domain_brightness[cd_idx]);
 					}
 				}
 			}
@@ -220,12 +220,12 @@ void LightingController::deactivate_domain(ControlDomain domain) {
 	}
 	uint16_t *domain_leds = this->lighting_control_state->get_domain_leds();
 	this->domain_active &= ~(1 << domain);
-	for (int i = 0; i < CD_LENGTH; ++i) {
-		if (this->domain_active & (1 << i)) { // IF THIS DOMAIN IS ACTIVE
+	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
+		if (this->domain_active & (1 << cd_idx)) { // IF THIS DOMAIN IS ACTIVE
 			for (int j = 0; j < NUM_LEDS; ++j) {
-				if (domain_leds[i] & (1 << j)) {
-					this->leds[j].set_led_colour(domain_colours[i],
-							domain_brightness[i]);
+				if (domain_leds[cd_idx] & (1 << j)) {
+					this->leds[j].set_led_colour(domain_colours[cd_idx],
+							domain_brightness[cd_idx]);
 				}
 			}
 		}

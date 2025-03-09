@@ -132,7 +132,6 @@ public:
 	 */
 	void disallow_domain(ControlDomain domain);
 
-
 	/*
 	 * Enables/Disables control domains according to the bitfield of domains passed as a parameter.
 	 * @param domain : bitfield of domains to be either allowed or disallowed.
@@ -140,7 +139,8 @@ public:
 	void configure_allowed_domains(uint8_t allowed_domains);
 
 	/*
-	 *
+	 * This activates multiple domains
+	 * @param active_domains : bitfield of domains to be activated.
 	 */
 
 	void configure_active_domains(uint8_t active_domains);

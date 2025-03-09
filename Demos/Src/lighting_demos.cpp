@@ -7,9 +7,87 @@
 
 #include "lighting_demos.hpp"
 
+void lighting_control_domain_demo() {
 
+	HAL_TIM_Base_Start_IT(&htim2);
+	rev4.start_lighting_control(); //start lighting
 
-// Initial setup call
+	// RGB Colour & Brightness control demo setup
+
+	RGB_colour_t my_colour;
+	my_colour.red = 65;
+	my_colour.green = 0;
+	my_colour.blue = 127;
+
+	int red_direction = 1;   // 1 for increasing, -1 for decreasing
+	int green_direction = 1; // 1 for increasing, -1 for decreasing
+	int blue_direction = 1;  // 1 for increasing, -1 for decreasing
+
+	uint8_t brightness_slow = 0;
+	int brightness_direction = 1;
+	uint8_t brightness = 0;
+
+	uint8_t BRIGHTNESS_MAX = 100;
+
+	rev4.allow_domain(CD_MAIN);
+
+	LC_State_STARTUP startup_state;
+	rev4.set_lighting_control_state(&startup_state);
+
+	while (true) {
+		// Demo program to update LED colors & show control domain functionality
+
+		brightness_slow = brightness_slow + 1;
+		if (brightness_slow >= 20) {
+			brightness += brightness_direction;
+			brightness_slow = 0;
+		}
+		if (brightness >= 50) {
+			brightness = 50;
+			brightness_direction = -1;
+		} else if (brightness <= 0) {
+			brightness = 0;
+			brightness_direction = 1;
+		}
+
+		// Update red value
+		my_colour.red += red_direction;
+		if (my_colour.red >= 255) {
+			my_colour.red = 255;
+			red_direction = -1; // Start decreasing
+		} else if (my_colour.red <= 0) {
+			my_colour.red = 0;
+			red_direction = 1; // Start increasing
+		}
+
+		// Update green value
+		my_colour.green += green_direction;
+		if (my_colour.green >= 255) {
+			my_colour.green = 255;
+			green_direction = -1; // Start decreasing
+		} else if (my_colour.green <= 0) {
+			my_colour.green = 0;
+			green_direction = 1; // Start increasing
+		}
+
+		// Update blue value
+		my_colour.blue += blue_direction;
+		if (my_colour.blue >= 255) {
+			my_colour.blue = 255;
+			blue_direction = -1; // Start decreasing
+		} else if (my_colour.blue <= 0) {
+			my_colour.blue = 0;
+			blue_direction = 1; // Start increasing
+		}
+
+		// Add a small delay for smooth transitions
+		HAL_Delay(10); // Adjust this value for faster/slower fading
+
+		rev4.set_domain_colour_and_brightness(CD_MAIN, my_colour, brightness);
+		rev4.activate_domain(CD_MAIN);
+	}
+}
+
 
 void lighting_control_state_demo() {
 
