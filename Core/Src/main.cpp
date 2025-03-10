@@ -30,10 +30,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-//#define ROTATE_LED
-//#define CYCLE_ONE_LED_ON
-//#define CONSTANT_COLOR
-# include "lighting_controller.hpp"
+#include "lighting_controller.hpp"
+#include "lighting_demos.hpp"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -92,6 +90,7 @@ int main(void)
 	MX_TIM1_Init();
 	MX_TIM6_Init();
 	MX_TIM7_Init();
+	MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
 	// Starts the 1s pulse asap (no weird user setup calls).
@@ -99,7 +98,9 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim6);
 
 	// TODO: Make a call to my source file main()
-	run_lighting_board();
+//	run_lighting_board();
+	lighting_control_state_demo();
+//	lighting_control_domain_demo();
   
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */

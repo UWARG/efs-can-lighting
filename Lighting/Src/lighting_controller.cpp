@@ -12,21 +12,17 @@
  */
 
 #include <cstring>
-#include <stdint.h>
-
-#include "tim.h"
-
 #include "lighting_controller.hpp"
-#include "ws2812.hpp"
-#include "conversions.hpp"
 
 //#define STARTUP_SEQUENCE_1 // very basic selftest
 
 extern TIM_HandleTypeDef htim7;
+extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim;
 
 // TODO: custom types?
-static constexpr uint8_t NUM_LEDS = 6;
-static constexpr uint8_t NUM_LEDS_PADDING = 6;
+static constexpr uint8_t NUM_LEDS = 10;
+static constexpr uint8_t NUM_LEDS_PADDING = 10;
 static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS
 		+ NUM_LEDS_PADDING * 2) * 24 * 2;		// TODO: remove magic num
 static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS
@@ -38,121 +34,90 @@ uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 WS2812 leds[NUM_LEDS]; // TODO: make this work
 
 // Initial setup call
-LightingController rev3(dma_output_buffer, bank_output_buffer, leds); // TODO: Once we have custom functions registered as callbacks.....
+LightingController rev4(dma_output_buffer, bank_output_buffer, leds, &htim1, TIM_CHANNEL_2); // TODO: Once we have custom functions registered as callbacks.....
 
-extern TIM_HandleTypeDef htim;
-
+// Temporary (ish) function with exemplar code that allows us to test lighting board functionality without needing CAN commands
 void run_lighting_board() {
 
 	// Call to start lighting control
-	rev3.start_lighting_control();
-
-	// RGB Colour & Brightness control demo setup
-
-	RGB_colour_t my_colour;
-	my_colour.red = 65;
-	my_colour.green = 0;
-	my_colour.blue = 127;
-
-	int red_direction = 1;   // 1 for increasing, -1 for decreasing
-	int green_direction = 1; // 1 for increasing, -1 for decreasing
-	int blue_direction = 1;  // 1 for increasing, -1 for decreasing
-
-	uint8_t brightness_slow = 0;
-	int brightness_direction = 1;
-	uint8_t brightness = 0;
+	rev4.start_lighting_control();
+	HAL_TIM_Base_Start_IT(&htim2);
 
 	// DOMAIN SETUP
 	// TODO: move Control Domain building to special functions
 
-	RGB_colour_t WHITE = { 255, 255, 255 };
-	RGB_colour_t RED = { 255, 0, 0 };
-	uint8_t BRIGHTNESS_MAX = 100;
+	// allow all of our domains
+	// comment any of these out to see the effect of allowing command domains
+	uint8_t all_domains_enabled = (1 << 7);
+	rev4.configure_allowed_domains(all_domains_enabled);
 
-	// build beacon domain
-	rev3.set_domain_colour(CD_BEACON, RED, BRIGHTNESS_MAX);
-	rev3.add_led_to_cd(1, CD_BEACON);
-	rev3.add_led_to_cd(4, CD_BEACON);
+	//set up the domain colours and brightness
+	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
+	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 15);
+	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
+	rev4.set_domain_colour_and_brightness(CD_STROBE, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
+	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 15);
 
-	// build strobe domain
-	rev3.set_domain_colour(CD_STROBE, WHITE, BRIGHTNESS_MAX);
-	rev3.add_led_to_cd(0, CD_STROBE);
-	rev3.add_led_to_cd(2, CD_STROBE);
-	rev3.add_led_to_cd(3, CD_STROBE);
-	rev3.add_led_to_cd(5, CD_STROBE);
+	uint8_t brightness = 0;
+	uint8_t brightness_direction = 1;
+	uint8_t brightness_max = 50;
+
+	//Instantiate lighting state objects and pass them into the set_lighting_control_state function to enter a lighting state.
+	LC_State_LANDING landing_state;
+	LC_State_GROUND ground_state;
+	LC_State_FLIGHT flight_state;
+	LC_State_STARTUP startup_state;
+
+	rev4.set_lighting_control_state(&ground_state);
+
+	int num_loops = 0;
 
 	while (true) {
-		// Demo program to update LED colors & show control domain functionality
-
-		brightness_slow = brightness_slow + 1;
-		if (brightness_slow >= 20) {
+		//Create a "breathing" pattern for when the drone first "turns on."
+		if (rev4.get_lighting_control_state() == &ground_state) {
+			if (brightness <= 0) {
+				brightness = 0;
+				brightness_direction = 1;
+			} else if (brightness >= brightness_max) {
+				brightness = brightness_max;
+				brightness_direction = -1;
+			}
+			rev4.set_domain_brightness(CD_BEACON, brightness);
+			rev4.activate_domain(CD_BEACON);
 			brightness += brightness_direction;
-			brightness_slow = 0;
-		}
-		if (brightness >= 50) {
-			brightness = 50;
-			brightness_direction = -1;
-		} else if (brightness <= 0) {
-			brightness = 0;
-			brightness_direction = 1;
+			HAL_Delay(20);
 		}
 
-		// Update red value
-		my_colour.red += red_direction;
-		if (my_colour.red >= 255) {
-			my_colour.red = 255;
-			red_direction = -1; // Start decreasing
-		} else if (my_colour.red <= 0) {
-			my_colour.red = 0;
-			red_direction = 1; // Start increasing
+		if (num_loops == 50 && rev4.get_lighting_control_state() == &ground_state) {
+			num_loops = 0;
+			rev4.set_lighting_control_state(&landing_state);
 		}
-
-		// Update green value
-		my_colour.green += green_direction;
-		if (my_colour.green >= 255) {
-			my_colour.green = 255;
-			green_direction = -1; // Start decreasing
-		} else if (my_colour.green <= 0) {
-			my_colour.green = 0;
-			green_direction = 1; // Start increasing
-		}
-
-		// Update blue value
-		my_colour.blue += blue_direction;
-		if (my_colour.blue >= 255) {
-			my_colour.blue = 255;
-			blue_direction = -1; // Start decreasing
-		} else if (my_colour.blue <= 0) {
-			my_colour.blue = 0;
-			blue_direction = 1; // Start increasing
-		}
-
-		// Add a small delay for smooth transitions
-		HAL_Delay(10); // Adjust this value for faster/slower fading
-
-		rev3.set_domain_colour(CD_MAIN, my_colour, brightness);
-		rev3.enable_control_domain(CD_MAIN);
+		num_loops += 1;
 	}
 }
 
 LightingController::LightingController(uint8_t *dma_output_buffer,
-		uint8_t *bank_output_buffer, WS2812 *leds) {
+		uint8_t *bank_output_buffer, WS2812 *leds, TIM_HandleTypeDef *timer, uint16_t timer_channel) {
 	this->dma_buffer = dma_output_buffer;
 	this->bank_buffer = bank_output_buffer;
 	this->leds = leds;
+	this->lighting_controller_tim_handle = timer;
+	this->lighting_controller_tim_channel = timer_channel;
+	this->lighting_control_state = nullptr;
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
-
 	// Initialize all of the internal LED's as well
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].initialize_led_on(
+		this->leds[i].initialize_led_off(
 				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
-		this->domain_leds[CD_MAIN] |= 1 << i;	// this led index is now enabled
 	}
 }
 
 void LightingController::start_lighting_control() {
-	HAL_TIMEx_PWMN_Start_DMA(&htim1, TIM_CHANNEL_2,
+	HAL_TIMEx_PWMN_Start_DMA(this->lighting_controller_tim_handle, this->lighting_controller_tim_channel,
 			(uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
 
 #ifdef STARTUP_SEQUENCE_1
@@ -200,50 +165,137 @@ void LightingController::recolour_by_index(uint8_t index,
 ////////////////////
 // CONTROL DOMAIN FN
 ////////////////////
+//void LightingController::add_led_to_cd(uint8_t index, ControlDomain domain) {
+//	// set the index in the domain
+//	this->domain_leds[domain] |= 1 << index;
+//}
+//
+//void LightingController::remove_led_from_cd(uint8_t index,
+//		ControlDomain domain) {
+//	// clear the index from the domain
+//	this->domain_leds[domain] &= ~(1 << index);
+//}
 
-void LightingController::add_led_to_cd(uint8_t index, ControlDomain domain) {
-	// set the index in the domain
-	this->domain_leds[domain] |= 1 << index;
-}
-
-void LightingController::remove_led_from_cd(uint8_t index,
-		ControlDomain domain) {
-	// clear the index from the domain
-	this->domain_leds[domain] &= ~(1 << index);
-}
-
-void LightingController::set_domain_colour(ControlDomain domain,
+void LightingController::set_domain_colour_and_brightness(ControlDomain domain,
 		RGB_colour_t colour, uint8_t brightness) {
 	this->domain_colours[domain] = colour;
 	this->domain_brightness[domain] = brightness;
 }
 
-void LightingController::enable_control_domain(ControlDomain domain) {
-	this->domain_state[domain] = true;	// TODO: have active/disabled booleans
-	for (int i = 0; i < CD_LENGTH; ++i) {
-		if (this->domain_state[i]) { // IF THIS DOMAIN IS ACTIVE
+void LightingController::set_domain_brightness(ControlDomain domain, uint8_t brightness) {
+	this->domain_brightness[domain] = brightness;
+}
+
+void LightingController::set_domain_colour(ControlDomain domain, RGB_colour_t colour) {
+	this->domain_colours[domain] = colour;
+}
+
+void LightingController::activate_domain(ControlDomain domain) {
+	if (this->lighting_control_state == nullptr) {
+		return;
+	}
+	uint16_t *domain_leds = this->lighting_control_state->get_domain_leds();
+	if (this->domain_allowed & (1 << domain)) {
+		this->domain_active |= 1 << domain;	// TODO: have active/disabled booleans
+		for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
+			if (this->domain_active & (1 << cd_idx)) { // IF THIS DOMAIN IS ACTIVE
+				for (int j = 0; j < NUM_LEDS; ++j) {
+					if (domain_leds[cd_idx] & (1 << j)) {
+						this->leds[j].set_led_colour(domain_colours[cd_idx],
+								domain_brightness[cd_idx]);
+					}
+				}
+			}
+		}
+	} else {
+		// Domains should not be active when they are disallowed.
+		// Instead of checking this every time we poll domains, check it on domain activation request.
+		this->domain_active &= ~(1 << domain);
+	}
+}
+
+void LightingController::deactivate_domain(ControlDomain domain) {
+	if (this->lighting_control_state == nullptr) {
+		return;
+	}
+	uint16_t *domain_leds = this->lighting_control_state->get_domain_leds();
+	this->domain_active &= ~(1 << domain);
+	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
+		if (this->domain_active & (1 << cd_idx)) { // IF THIS DOMAIN IS ACTIVE
 			for (int j = 0; j < NUM_LEDS; ++j) {
-				if (this->domain_leds[i] & (1 << j)) {
-					this->leds[j].set_led_colour(domain_colours[i],
-							domain_brightness[i]);
+				if (domain_leds[cd_idx] & (1 << j)) {
+					this->leds[j].set_led_colour(domain_colours[cd_idx],
+							domain_brightness[cd_idx]);
 				}
 			}
 		}
 	}
 }
 
-void LightingController::disable_control_domain(ControlDomain domain) {
-	this->domain_state[domain] = false;
+void LightingController::allow_domain(ControlDomain domain) {
+	this->domain_allowed |= 1 << domain;
+}
+
+void LightingController::disallow_domain(ControlDomain domain) {
+	this->domain_allowed &= ~(1 << domain);
+	this->domain_active &= ~(1 << domain);
+}
+
+void LightingController::configure_allowed_domains(uint8_t allowed_domains) {
 	for (int i = 0; i < CD_LENGTH; ++i) {
-		if (this->domain_state[domain]) { // IF THIS DOMAIN IS ACTIVE
-			for (int j = 0; j < NUM_LEDS; ++j) {
-				if (this->domain_leds[i] & (1 << j)) {
-					this->leds[i].set_led_colour(domain_colours[i],
-							domain_brightness[i]);
+		if (allowed_domains & (1 << i)) {	//if this domain should be allowed
+			this->domain_allowed |= (1 << i);
+		} else {
+			this->domain_allowed &= ~(1 << i);
+		}
+	}
+}
+
+void LightingController::configure_active_domains(uint8_t active_domains) {
+	if (this->lighting_control_state == nullptr) {
+		return;
+	}
+	uint16_t *domain_leds = this->lighting_control_state->get_domain_leds();
+	for (int i = 0; i <= CD_SEARCH; ++i) {
+		ControlDomain domain = static_cast<ControlDomain>(i);
+		if (active_domains & (1 << i)) {
+			activate_domain(domain);
+		}
+	}
+}
+
+////////////////////
+// STATE MACHINE FN
+////////////////////
+void LightingController::exit_current_state() {
+	if (lighting_control_state != nullptr) { 						//clear state
+		uint16_t *domain_leds = this->lighting_control_state->get_domain_leds();
+		for (int i = 0; i < CD_LENGTH; ++i) {
+			if (this->domain_active & (1 << i)) { // If the domain was previously active.
+				for (int j = 0; j < NUM_LEDS; ++j) {
+					if (domain_leds[i] & (1 << j)) {
+						this->leds[j].set_led_colour(domain_colours[i], 0); //"Disable" leds that we don't want during next state.
+					}
 				}
 			}
 		}
 	}
+}
+
+void LightingController::set_lighting_control_state(LightingControlState *state) {
+	exit_current_state();
+	lighting_control_state = state;
+}
+
+
+void LightingController::execute_state() {
+	if (this->get_lighting_control_state() != nullptr) { //If a state has been set.
+		this->domain_allowed = this->lighting_control_state->get_allowed_domains();
+	}
+}
+
+LightingControlState *LightingController::get_lighting_control_state() {
+	return lighting_control_state;
 }
 
 /////////////////
@@ -312,37 +364,56 @@ void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
 
 void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static uint8_t stage = 0;
+	static uint8_t led_index = 0;
+	HAL_TIM_Base_Start_IT(&htim2);
+
 	if (stage == 0) { 			// STROBE ON
-		rev3.enable_control_domain(CD_STROBE);
+		rev4.activate_domain(CD_STROBE);
 		stage = 1;
 	} else if (stage == 1) { 	// STROBE OFF
-		rev3.disable_control_domain(CD_STROBE);
+		rev4.deactivate_domain(CD_STROBE);
 		stage = 2;
 	} else if (stage == 2) {	// STROBE ON
-		rev3.enable_control_domain(CD_STROBE);
+		rev4.activate_domain(CD_STROBE);
 		stage = 3;
 	} else if (stage == 3) {	// STROBE OFF
-		rev3.disable_control_domain(CD_STROBE);
+		rev4.deactivate_domain(CD_STROBE);
 		stage = 4;
 	} else if (stage == 4) {	// OFF
 		stage = 5;
 	} else if (stage == 5) {	// OFF
 		stage = 6;
 	} else if (stage == 6) {	// BCN ON
-		rev3.enable_control_domain(CD_BEACON);
+		rev4.activate_domain(CD_BEACON);
 		stage = 7;
 	} else if (stage == 7) {	// BCN OFF
-		rev3.disable_control_domain(CD_BEACON);
+		rev4.deactivate_domain(CD_BEACON);
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
+	}
+
+	if (rev4.get_lighting_control_state() != nullptr) { //If a state has been SET.
+		uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
+		rev4.configure_active_domains(allowed_domains);
+	}
+}
+
+void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {
+	static uint8_t state_executions_per_100ms = 0;
+	rev4.execute_state();
+	state_executions_per_100ms += 1;
+	if (state_executions_per_100ms == 8) {
+		state_executions_per_100ms = 0;
+		HAL_TIM_Base_Stop_IT(htim2);
 	}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-
 	if (htim->Instance == TIM6) {
 		TIM6_OneSecondCallback(htim);
 	} else if (htim->Instance == TIM7) {
 		TIM7_100msCallback(htim);
+	} else if (htim->Instance == TIM2) {
+		TIM2_10msCallback(htim);
 	}
 }
