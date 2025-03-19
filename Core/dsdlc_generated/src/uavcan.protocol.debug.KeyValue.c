@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.debug.KeyValue.h"
+#include <uavcan.protocol.debug.KeyValue.h>
 
 #include <string.h>
 

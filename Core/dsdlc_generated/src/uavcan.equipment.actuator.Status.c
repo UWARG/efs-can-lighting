@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.actuator.Status.h"
+#include <uavcan.equipment.actuator.Status.h>
 
 #include <string.h>
 

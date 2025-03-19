@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.gnss.Fix2.h"
+#include <uavcan.equipment.gnss.Fix2.h>
 
 #include <string.h>
 

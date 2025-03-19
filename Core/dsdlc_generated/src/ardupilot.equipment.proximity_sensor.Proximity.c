@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.equipment.proximity_sensor.Proximity.h"
+#include <ardupilot.equipment.proximity_sensor.Proximity.h>
 
 #include <string.h>
 

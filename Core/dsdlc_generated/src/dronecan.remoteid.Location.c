@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/dronecan.remoteid.Location.h"
+#include <dronecan.remoteid.Location.h>
 
 #include <string.h>
 

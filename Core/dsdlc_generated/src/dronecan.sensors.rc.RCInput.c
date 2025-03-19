@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/dronecan.sensors.rc.RCInput.h"
+#include <dronecan.sensors.rc.RCInput.h>
 
 #include <string.h>
 

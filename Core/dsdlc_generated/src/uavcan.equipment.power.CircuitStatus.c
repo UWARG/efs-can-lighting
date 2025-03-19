@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.power.CircuitStatus.h"
+#include <uavcan.equipment.power.CircuitStatus.h>
 
 #include <string.h>
 

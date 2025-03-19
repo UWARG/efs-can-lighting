@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.hardpoint.Command.h"
+#include <uavcan.equipment.hardpoint.Command.h>
 
 #include <string.h>
 

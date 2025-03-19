@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.hex.equipment.flow.Measurement.h"
+#include <com.hex.equipment.flow.Measurement.h>
 
 #include <string.h>
 

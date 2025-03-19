@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.gnss.ECEFPositionVelocity.h"
+#include <uavcan.equipment.gnss.ECEFPositionVelocity.h>
 
 #include <string.h>
 

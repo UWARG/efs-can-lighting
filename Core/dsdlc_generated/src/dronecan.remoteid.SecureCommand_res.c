@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/dronecan.remoteid.SecureCommand_res.h"
+#include <dronecan.remoteid.SecureCommand_res.h>
 
 #include <string.h>
 

@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.hobbywing.esc.GetEscID.h"
+#include <com.hobbywing.esc.GetEscID.h>
 
 #include <string.h>
 

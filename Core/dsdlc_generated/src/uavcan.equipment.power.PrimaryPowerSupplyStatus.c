@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.power.PrimaryPowerSupplyStatus.h"
+#include <uavcan.equipment.power.PrimaryPowerSupplyStatus.h>
 
 #include <string.h>
 

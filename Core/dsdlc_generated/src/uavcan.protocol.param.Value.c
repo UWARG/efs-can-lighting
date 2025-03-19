@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.param.Value.h"
+#include <uavcan.protocol.param.Value.h>
 
 #include <string.h>
 

@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.CoarseOrientation.h"
+#include <uavcan.CoarseOrientation.h>
 
 #include <string.h>
 

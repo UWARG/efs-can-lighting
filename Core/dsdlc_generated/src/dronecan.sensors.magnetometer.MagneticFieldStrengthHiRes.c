@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/dronecan.sensors.magnetometer.MagneticFieldStrengthHiRes.h"
+#include <dronecan.sensors.magnetometer.MagneticFieldStrengthHiRes.h>
 
 #include <string.h>
 

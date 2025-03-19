@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.himark.servo.ServoCmd.h"
+#include <com.himark.servo.ServoCmd.h>
 
 #include <string.h>
 

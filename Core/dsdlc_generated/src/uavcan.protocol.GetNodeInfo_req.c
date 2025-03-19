@@ -1,9 +1,9 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.GetNodeInfo_req.h"
+#include <uavcan.protocol.GetNodeInfo_req.h>
 
-#include "../inc/uavcan.protocol.GetNodeInfo_res.h"
+#include <uavcan.protocol.GetNodeInfo_res.h>
 
 #include <string.h>
 

@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.DataTypeKind.h"
+#include <uavcan.protocol.DataTypeKind.h>
 
 #include <string.h>
 

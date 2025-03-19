@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.hobbywing.esc.StatusMsg2.h"
+#include <com.hobbywing.esc.StatusMsg2.h>
 
 #include <string.h>
 

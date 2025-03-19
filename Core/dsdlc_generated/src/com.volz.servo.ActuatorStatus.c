@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.volz.servo.ActuatorStatus.h"
+#include <com.volz.servo.ActuatorStatus.h>
 
 #include <string.h>
 

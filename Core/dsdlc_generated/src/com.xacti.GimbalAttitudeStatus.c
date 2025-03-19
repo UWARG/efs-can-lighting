@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.xacti.GimbalAttitudeStatus.h"
+#include <com.xacti.GimbalAttitudeStatus.h>
 
 #include <string.h>
 

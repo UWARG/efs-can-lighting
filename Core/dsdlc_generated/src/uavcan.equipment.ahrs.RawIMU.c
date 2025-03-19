@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.ahrs.RawIMU.h"
+#include <uavcan.equipment.ahrs.RawIMU.h>
 
 #include <string.h>
 

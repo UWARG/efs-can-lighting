@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.AccessCommandShell_res.h"
+#include <uavcan.protocol.AccessCommandShell_res.h>
 
 #include <string.h>
 

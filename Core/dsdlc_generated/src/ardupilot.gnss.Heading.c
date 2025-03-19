@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.gnss.Heading.h"
+#include <ardupilot.gnss.Heading.h>
 
 #include <string.h>
 

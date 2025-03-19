@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.indication.SingleLightCommand.h"
+#include <uavcan.equipment.indication.SingleLightCommand.h>
 
 #include <string.h>
 

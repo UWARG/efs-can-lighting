@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.esc.RPMCommand.h"
+#include <uavcan.equipment.esc.RPMCommand.h>
 
 #include <string.h>
 

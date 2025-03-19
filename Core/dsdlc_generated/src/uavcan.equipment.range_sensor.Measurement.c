@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.range_sensor.Measurement.h"
+#include <uavcan.equipment.range_sensor.Measurement.h>
 
 #include <string.h>
 

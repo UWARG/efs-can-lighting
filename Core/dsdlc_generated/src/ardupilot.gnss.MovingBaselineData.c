@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.gnss.MovingBaselineData.h"
+#include <ardupilot.gnss.MovingBaselineData.h>
 
 #include <string.h>
 

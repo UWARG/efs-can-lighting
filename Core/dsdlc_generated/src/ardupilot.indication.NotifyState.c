@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.indication.NotifyState.h"
+#include <ardupilot.indication.NotifyState.h>
 
 #include <string.h>
 

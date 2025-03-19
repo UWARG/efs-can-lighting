@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.hobbywing.esc.RawCommand.h"
+#include <com.hobbywing.esc.RawCommand.h>
 
 #include <string.h>
 

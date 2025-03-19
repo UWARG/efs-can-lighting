@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.file.BeginFirmwareUpdate_res.h"
+#include <uavcan.protocol.file.BeginFirmwareUpdate_res.h>
 
 #include <string.h>
 

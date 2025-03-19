@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.tunnel.Targetted.h"
+#include <uavcan.tunnel.Targetted.h>
 
 #include <string.h>
 

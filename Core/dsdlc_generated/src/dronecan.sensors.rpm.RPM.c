@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/dronecan.sensors.rpm.RPM.h"
+#include <dronecan.sensors.rpm.RPM.h>
 
 #include <string.h>
 

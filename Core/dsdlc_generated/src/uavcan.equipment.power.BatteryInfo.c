@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.power.BatteryInfo.h"
+#include <uavcan.equipment.power.BatteryInfo.h>
 
 #include <string.h>
 

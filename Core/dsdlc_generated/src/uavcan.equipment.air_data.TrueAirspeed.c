@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.air_data.TrueAirspeed.h"
+#include <uavcan.equipment.air_data.TrueAirspeed.h>
 
 #include <string.h>
 

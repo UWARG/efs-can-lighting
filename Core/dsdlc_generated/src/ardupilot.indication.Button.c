@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.indication.Button.h"
+#include <ardupilot.indication.Button.h>
 
 #include <string.h>
 

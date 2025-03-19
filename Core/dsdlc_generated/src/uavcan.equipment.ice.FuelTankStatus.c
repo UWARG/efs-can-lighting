@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.ice.FuelTankStatus.h"
+#include <uavcan.equipment.ice.FuelTankStatus.h>
 
 #include <string.h>
 

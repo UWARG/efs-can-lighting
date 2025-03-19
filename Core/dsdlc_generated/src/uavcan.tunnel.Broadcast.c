@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.tunnel.Broadcast.h"
+#include <uavcan.tunnel.Broadcast.h>
 
 #include <string.h>
 

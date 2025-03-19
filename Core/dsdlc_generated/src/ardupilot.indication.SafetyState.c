@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.indication.SafetyState.h"
+#include <ardupilot.indication.SafetyState.h>
 
 #include <string.h>
 

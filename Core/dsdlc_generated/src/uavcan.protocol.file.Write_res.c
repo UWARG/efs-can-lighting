@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.file.Write_res.h"
+#include <uavcan.protocol.file.Write_res.h>
 
 #include <string.h>
 

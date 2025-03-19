@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.ice.reciprocating.CylinderStatus.h"
+#include <uavcan.equipment.ice.reciprocating.CylinderStatus.h>
 
 #include <string.h>
 

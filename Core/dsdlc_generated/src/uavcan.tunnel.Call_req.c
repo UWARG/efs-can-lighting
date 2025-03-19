@@ -1,9 +1,9 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.tunnel.Call_req.h"
+#include <uavcan.tunnel.Call_req.h>
 
-#include "../inc/uavcan.tunnel.Call_res.h"
+#include <uavcan.tunnel.Call_res.h>
 
 #include <string.h>
 

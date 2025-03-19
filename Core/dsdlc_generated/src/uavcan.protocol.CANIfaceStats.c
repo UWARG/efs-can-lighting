@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.CANIfaceStats.h"
+#include <uavcan.protocol.CANIfaceStats.h>
 
 #include <string.h>
 

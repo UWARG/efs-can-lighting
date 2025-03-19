@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.actuator.Command.h"
+#include <uavcan.equipment.actuator.Command.h>
 
 #include <string.h>
 

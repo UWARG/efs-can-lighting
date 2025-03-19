@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.Panic.h"
+#include <uavcan.protocol.Panic.h>
 
 #include <string.h>
 

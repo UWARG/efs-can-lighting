@@ -1,9 +1,9 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.param.GetSet_req.h"
+#include <uavcan.protocol.param.GetSet_req.h>
 
-#include "../inc/uavcan.protocol.param.GetSet_res.h"
+#include <uavcan.protocol.param.GetSet_res.h>
 
 #include <string.h>
 

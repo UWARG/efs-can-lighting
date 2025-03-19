@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.tmotor.esc.PUSHCAN.h"
+#include <com.tmotor.esc.PUSHCAN.h>
 
 #include <string.h>
 

@@ -1,9 +1,9 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.hobbywing.esc.GetMaintenanceInformation_req.h"
+#include <com.hobbywing.esc.GetMaintenanceInformation_req.h>
 
-#include "../inc/com.hobbywing.esc.GetMaintenanceInformation_res.h"
+#include <com.hobbywing.esc.GetMaintenanceInformation_res.h>
 
 #include <string.h>
 

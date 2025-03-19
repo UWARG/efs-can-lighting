@@ -1,9 +1,9 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.dynamic_node_id.server.AppendEntries_req.h"
+#include <uavcan.protocol.dynamic_node_id.server.AppendEntries_req.h>
 
-#include "../inc/uavcan.protocol.dynamic_node_id.server.AppendEntries_res.h"
+#include <uavcan.protocol.dynamic_node_id.server.AppendEntries_res.h>
 
 #include <string.h>
 

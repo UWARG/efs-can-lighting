@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.hobbywing.esc.SelfTest_res.h"
+#include <com.hobbywing.esc.SelfTest_res.h>
 
 #include <string.h>
 

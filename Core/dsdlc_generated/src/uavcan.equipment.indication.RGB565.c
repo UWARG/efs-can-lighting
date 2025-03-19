@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.indication.RGB565.h"
+#include <uavcan.equipment.indication.RGB565.h>
 
 #include <string.h>
 

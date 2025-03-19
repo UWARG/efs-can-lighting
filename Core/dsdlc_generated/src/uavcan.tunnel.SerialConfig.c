@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.tunnel.SerialConfig.h"
+#include <uavcan.tunnel.SerialConfig.h>
 
 #include <string.h>
 

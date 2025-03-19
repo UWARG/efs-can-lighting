@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.gnss.Status.h"
+#include <ardupilot.gnss.Status.h>
 
 #include <string.h>
 

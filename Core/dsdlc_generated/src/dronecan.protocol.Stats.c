@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/dronecan.protocol.Stats.h"
+#include <dronecan.protocol.Stats.h>
 
 #include <string.h>
 

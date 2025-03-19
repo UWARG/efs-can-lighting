@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.xacti.GimbalControlData.h"
+#include <com.xacti.GimbalControlData.h>
 
 #include <string.h>
 

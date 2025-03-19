@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.gnss.RelPosHeading.h"
+#include <ardupilot.gnss.RelPosHeading.h>
 
 #include <string.h>
 

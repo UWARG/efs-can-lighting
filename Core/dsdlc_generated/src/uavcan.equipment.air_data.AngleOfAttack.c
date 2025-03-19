@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.air_data.AngleOfAttack.h"
+#include <uavcan.equipment.air_data.AngleOfAttack.h>
 
 #include <string.h>
 

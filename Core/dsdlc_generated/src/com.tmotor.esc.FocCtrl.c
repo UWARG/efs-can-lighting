@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.tmotor.esc.FocCtrl.h"
+#include <com.tmotor.esc.FocCtrl.h>
 
 #include <string.h>
 

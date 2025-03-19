@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.file.Path.h"
+#include <uavcan.protocol.file.Path.h>
 
 #include <string.h>
 

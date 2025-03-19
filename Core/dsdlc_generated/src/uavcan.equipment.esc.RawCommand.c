@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.esc.RawCommand.h"
+#include <uavcan.equipment.esc.RawCommand.h>
 
 #include <string.h>
 

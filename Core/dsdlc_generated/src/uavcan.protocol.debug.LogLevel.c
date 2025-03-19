@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.debug.LogLevel.h"
+#include <uavcan.protocol.debug.LogLevel.h>
 
 #include <string.h>
 

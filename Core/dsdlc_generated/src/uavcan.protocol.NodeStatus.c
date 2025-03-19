@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.protocol.NodeStatus.h"
+#include <uavcan.protocol.NodeStatus.h>
 
 #include <string.h>
 

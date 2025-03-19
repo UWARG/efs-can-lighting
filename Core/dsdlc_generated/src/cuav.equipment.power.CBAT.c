@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/cuav.equipment.power.CBAT.h"
+#include <cuav.equipment.power.CBAT.h>
 
 #include <string.h>
 

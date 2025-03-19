@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.safety.ArmingStatus.h"
+#include <uavcan.equipment.safety.ArmingStatus.h>
 
 #include <string.h>
 

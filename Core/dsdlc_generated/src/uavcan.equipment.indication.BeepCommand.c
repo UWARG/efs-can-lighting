@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.indication.BeepCommand.h"
+#include <uavcan.equipment.indication.BeepCommand.h>
 
 #include <string.h>
 

@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.equipment.power.BatteryContinuous.h"
+#include <ardupilot.equipment.power.BatteryContinuous.h>
 
 #include <string.h>
 

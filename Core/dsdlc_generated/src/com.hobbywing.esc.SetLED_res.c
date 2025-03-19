@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.hobbywing.esc.SetLED_res.h"
+#include <com.hobbywing.esc.SetLED_res.h>
 
 #include <string.h>
 

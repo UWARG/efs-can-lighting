@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.ahrs.MagneticFieldStrength.h"
+#include <uavcan.equipment.ahrs.MagneticFieldStrength.h>
 
 #include <string.h>
 

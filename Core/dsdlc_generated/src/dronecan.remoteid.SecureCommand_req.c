@@ -1,9 +1,9 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/dronecan.remoteid.SecureCommand_req.h"
+#include <dronecan.remoteid.SecureCommand_req.h>
 
-#include "../inc/dronecan.remoteid.SecureCommand_res.h"
+#include <dronecan.remoteid.SecureCommand_res.h>
 
 #include <string.h>
 

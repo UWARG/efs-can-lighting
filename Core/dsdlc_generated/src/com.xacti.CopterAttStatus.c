@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.xacti.CopterAttStatus.h"
+#include <com.xacti.CopterAttStatus.h>
 
 #include <string.h>
 

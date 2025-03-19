@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/dronecan.sensors.hygrometer.Hygrometer.h"
+#include <dronecan.sensors.hygrometer.Hygrometer.h>
 
 #include <string.h>
 

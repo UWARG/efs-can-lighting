@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.xacti.GnssStatus.h"
+#include <com.xacti.GnssStatus.h>
 
 #include <string.h>
 

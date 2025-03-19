@@ -1,9 +1,9 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.hobbywing.esc.SetID_req.h"
+#include <com.hobbywing.esc.SetID_req.h>
 
-#include "../inc/com.hobbywing.esc.SetID_res.h"
+#include <com.hobbywing.esc.SetID_res.h>
 
 #include <string.h>
 

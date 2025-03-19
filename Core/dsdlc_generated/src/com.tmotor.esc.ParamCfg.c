@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/com.tmotor.esc.ParamCfg.h"
+#include <com.tmotor.esc.ParamCfg.h>
 
 #include <string.h>
 

@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.equipment.trafficmonitor.TrafficReport.h"
+#include <ardupilot.equipment.trafficmonitor.TrafficReport.h>
 
 #include <string.h>
 

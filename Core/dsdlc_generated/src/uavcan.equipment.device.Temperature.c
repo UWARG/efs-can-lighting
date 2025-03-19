@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.device.Temperature.h"
+#include <uavcan.equipment.device.Temperature.h>
 
 #include <string.h>
 

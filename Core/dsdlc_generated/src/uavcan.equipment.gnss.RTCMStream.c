@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.gnss.RTCMStream.h"
+#include <uavcan.equipment.gnss.RTCMStream.h>
 
 #include <string.h>
 

@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/ardupilot.equipment.power.BatteryInfoAux.h"
+#include <ardupilot.equipment.power.BatteryInfoAux.h>
 
 #include <string.h>
 

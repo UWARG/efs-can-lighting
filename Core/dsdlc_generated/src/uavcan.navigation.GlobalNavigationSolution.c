@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.navigation.GlobalNavigationSolution.h"
+#include <uavcan.navigation.GlobalNavigationSolution.h>
 
 #include <string.h>
 

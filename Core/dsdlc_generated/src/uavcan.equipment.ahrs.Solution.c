@@ -1,7 +1,7 @@
 
 
 #define CANARD_DSDLC_INTERNAL
-#include "../inc/uavcan.equipment.ahrs.Solution.h"
+#include <uavcan.equipment.ahrs.Solution.h>
 
 #include <string.h>
 
