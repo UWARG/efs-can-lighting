@@ -9,6 +9,7 @@
 #include <time.h>
 #include <stdio.h>
 #include "../dsdlc_generated/include/dronecan_msgs.h"
+#include <lighting_demos.hpp>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -162,6 +163,8 @@ void process10HzTasks(uint64_t timestamp_usec) {
                     buffer,
                     len);
 }
+extern LightingController rev4;
+
 /* USER CODE END 0 */
 
 /**
@@ -198,6 +201,8 @@ int main(void)
 	MX_TIM1_Init();
 	MX_TIM6_Init();
 	MX_TIM7_Init();
+	MX_TIM2_Init();
+
 	auto set_control_state = [](uint8_t state) {
 		__NOP();
 	};
@@ -210,9 +215,45 @@ int main(void)
 	// Starts the 1s pulse asap (no weird user setup calls).
 	// I don't think this changes timing at all but maybe it does.
 	HAL_TIM_Base_Start_IT(&htim6);
+	HAL_TIM_Base_Start_IT(&htim2);
 	uint64_t next_1hz_service_at = HAL_GetTick();
 	uint64_t next_10hz_service_at = HAL_GetTick();
-  
+
+	//allow all control domains.
+	uint8_t all_domains_enabled = (1 << 7);
+	rev4.configure_allowed_domains(all_domains_enabled);
+
+	//set up the domain colours and brightness
+	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
+	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 15);
+	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
+	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
+	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
+	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 15);
+
+	rev4.configure_active_domains(255);
+
+	//Declare control states
+	LC_State_STARTUP startup_state;
+	LC_State_GROUND ground_state;
+	LC_State_FLIGHT flight_state;
+	LC_State_BRAKE brake_state;
+	LC_State_LANDING landing_state;
+	LC_State_STANDBY standby_state;
+	LC_State_SEARCH search_state;
+
+	LightingControlState *control_states[7];
+	control_states[0] = &startup_state;
+	control_states[1] = &ground_state;
+	control_states[2] = &flight_state;
+	control_states[3] = &brake_state;
+	control_states[4] = &landing_state;
+	control_states[5] = &standby_state;
+	control_states[6] = &search_state;
+
+	rev4.set_lighting_control_state(&ground_state);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -234,6 +275,7 @@ int main(void)
 		}
 
 		processCanardTxQueue(&hcan1);
+
 	}
   /* USER CODE END 3 */
 }
