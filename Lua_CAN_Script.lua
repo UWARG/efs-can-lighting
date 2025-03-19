@@ -7,7 +7,7 @@
 -- CAN_P2_BITRATE = 1000000
 -- CAN_P2_DEBUG = 2
 -- CAN_D1_PROTOCOL = 1
--- Rebout pixhawk
+-- reboot Pixhawk
 -- run can.get_dev(0)
 
 local can_dev = can.get_dev(0)
