@@ -1,27 +1,14 @@
-/* USER CODE BEGIN Header */
-/**
- ******************************************************************************
- * @file           : main.c
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2024 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "can.h"
 #include "dma.h"
 #include "tim.h"
 #include "gpio.h"
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+#include "canard_stm32_driver.h"
+#include <time.h>
+#include <stdio.h>
+#include <dronecan_msgs.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -30,8 +17,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+//#define ROTATE_LED
+//#define CYCLE_ONE_LED_ON
+//#define CONSTANT_COLOR
 #include "lighting_controller.hpp"
-#include "lighting_demos.hpp"
+#include "can_controller.hpp"
+#define CLOCK_MONOTONIC 1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -42,6 +33,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+static CanardInstance canard;
+static uint8_t memory_pool[1024];
+static struct uavcan_protocol_NodeStatus node_status;
+extern TIM_HandleTypeDef htim6;
+static uint32_t node_id;
 
 /* USER CODE END PV */
 
@@ -53,7 +49,119 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-extern TIM_HandleTypeDef htim6;
+void initializeNodeId() {
+	uint8_t buffer[16];
+	getUniqueID(buffer);
+	uint32_t *parts = (uint32_t *)buffer;
+	node_id = parts[0] ^ parts[1] ^ parts[2];
+}
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
+	// Receiving
+	CanardCANFrame rx_frame;
+
+	const uint64_t timestamp = HAL_GetTick() * 1000ULL;
+	const int16_t rx_res = canardSTM32Recieve(hcan, CAN_RX_FIFO0, &rx_frame);
+
+	if (rx_res < 0) {
+		printf("Receive error %d\n", rx_res);
+	}
+	else if (rx_res > 0)        // Success - process the frame
+	{
+		canardHandleRxFrame(&canard, &rx_frame, timestamp);
+	}
+}
+
+// Processes the canard Tx queue and attempts to transmit the messages
+// Call this function very often to check if there are any Tx to process
+// Calling it once every cycle of the while(1) loop is not a bad idea
+void processCanardTxQueue(CAN_HandleTypeDef *hcan) {
+	// Transmitting
+
+	for (const CanardCANFrame *tx_frame ; (tx_frame = canardPeekTxQueue(&canard)) != NULL;) {
+		const int16_t tx_res = canardSTM32Transmit(hcan, tx_frame);
+
+		if (tx_res <= 0) {
+			printf("Transmit error %d\n", tx_res);
+		} else if (tx_res > 0) {
+			printf("Successfully transmitted message\n");
+		}
+
+		// Pop canardTxQueue either way
+		canardPopTxQueue(&canard);
+	}
+}
+
+/*
+  send the 1Hz NodeStatus message. This is what allows a node to show
+  up in the DroneCAN GUI tool and in the flight controller logs
+ */
+void send_NodeStatus(void) {
+    uint8_t buffer[UAVCAN_PROTOCOL_GETNODEINFO_RESPONSE_MAX_SIZE];
+
+    node_status.uptime_sec = HAL_GetTick() / 1000UL;
+    node_status.health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
+    node_status.mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
+    node_status.sub_mode = 0;
+
+    // put whatever you like in here for display in GUI
+    node_status.vendor_specific_status_code = 1234;
+
+    uint32_t len = uavcan_protocol_NodeStatus_encode(&node_status, buffer);
+
+    // we need a static variable for the transfer ID. This is
+    // incremeneted on each transfer, allowing for detection of packet
+    // loss
+    static uint8_t transfer_id;
+
+    canardBroadcast(&canard,
+                    UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
+                    UAVCAN_PROTOCOL_NODESTATUS_ID,
+                    &transfer_id,
+                    CANARD_TRANSFER_PRIORITY_LOW,
+                    buffer,
+                    len);
+}
+
+/*
+  This function is called at 1 Hz rate from the main loop.
+*/
+void process1HzTasks(uint64_t timestamp_usec) {
+    /*
+      Purge transfers that are no longer transmitted. This can free up some memory
+    */
+    canardCleanupStaleTransfers(&canard, timestamp_usec);
+
+    /*
+      Transmit the node status message
+    */
+    send_NodeStatus();
+}
+
+
+
+void process10HzTasks(uint64_t timestamp_usec) {
+    uint8_t buffer[WARG_SETCONTROLSTATE_MAX_SIZE];
+
+    struct warg_SetControlState value;
+
+    value.state = 3;
+
+    uint32_t len = warg_SetControlState_encode(&value, buffer);
+
+    // we need a static variable for the transfer ID. This is
+    // incremeneted on each transfer, allowing for detection of packet
+    // loss
+    static uint8_t transfer_id;
+
+    canardBroadcast(&canard,
+    				WARG_SETCONTROLSTATE_SIGNATURE,
+					WARG_SETCONTROLSTATE_ID,
+                    &transfer_id,
+                    CANARD_TRANSFER_PRIORITY_LOW,
+                    buffer,
+                    len);
+}
 /* USER CODE END 0 */
 
 /**
@@ -84,24 +192,27 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_CAN1_Init();
-  MX_TIM1_Init();
-  MX_TIM6_Init();
-  MX_TIM7_Init();
-  MX_TIM2_Init();
+	MX_GPIO_Init();
+	MX_DMA_Init();
+	MX_CAN1_Init();
+	MX_TIM1_Init();
+	MX_TIM6_Init();
+	MX_TIM7_Init();
+	auto set_control_state = [](uint8_t state) {
+		__NOP();
+	};
   /* USER CODE BEGIN 2 */
-
-  // Starts the 1s pulse asap (no weird user setup calls).
-  // I don't think this changes timing at all but maybe it does.
-  HAL_TIM_Base_Start_IT(&htim6);
-
-  // TODO: Make a call to my source file main()
-  //	run_lighting_board();
-  lighting_control_state_demo();
-  //	lighting_control_domain_demo();
-
+  initializeNodeId();
+  CANController::initialize(
+  	node_id, memory_pool, 1024,
+  	&hcan1, &canard, set_control_state
+  );
+	// Starts the 1s pulse asap (no weird user setup calls).
+	// I don't think this changes timing at all but maybe it does.
+	HAL_TIM_Base_Start_IT(&htim6);
+	uint64_t next_1hz_service_at = HAL_GetTick();
+	uint64_t next_10hz_service_at = HAL_GetTick();
+  
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -109,7 +220,21 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+
+		const uint64_t ts = HAL_GetTick();
+
+		if (ts >= next_1hz_service_at){
+		  next_1hz_service_at += 1000ULL;
+		  process1HzTasks(ts);
+		}
+
+		if (ts >= next_10hz_service_at) {
+			next_10hz_service_at += 100ULL;
+			process10HzTasks(ts);
+		}
+
+		processCanardTxQueue(&hcan1);
+	}
   /* USER CODE END 3 */
 }
 
@@ -126,37 +251,34 @@ void SystemClock_Config(void)
    */
   if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
-    Error_Handler();
+	Error_Handler();
   }
 
   /** Initializes the RCC Oscillators according to the specified parameters
-   * in the RCC_OscInitTypeDef structure.
-   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 1;
-  RCC_OscInitStruct.PLL.PLLN = 12;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+  RCC_OscInitStruct.MSICalibrationValue = 0;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    Error_Handler();
+	Error_Handler();
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+							  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
-    Error_Handler();
+	Error_Handler();
   }
 }
 
