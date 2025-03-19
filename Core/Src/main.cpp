@@ -8,7 +8,7 @@
 #include "canard_stm32_driver.h"
 #include <time.h>
 #include <stdio.h>
-#include <dronecan_msgs.h>
+#include "../dsdlc_generated/include/dronecan_msgs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -145,7 +145,7 @@ void process10HzTasks(uint64_t timestamp_usec) {
 
     struct warg_SetControlState value;
 
-    value.state = 3;
+    value.controlState = 3;
 
     uint32_t len = warg_SetControlState_encode(&value, buffer);
 

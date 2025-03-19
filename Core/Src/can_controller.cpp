@@ -88,7 +88,7 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer) {
     if (!can_controller_initialized) {
     	return;
     }
-    (can_controller.controller.set_control_state_callback)(control_state.state);
+    (can_controller.controller.set_control_state_callback)(control_state.controlState);
   }
 }
 
