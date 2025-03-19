@@ -11,24 +11,13 @@
 #include <cstdint>
 
 #include "conversions.hpp"
+#include "lighting_control_state_classes.hpp"
 #include "ws2812.hpp"
+#include "tim.h"
 
-/**
- * @enum ControlDomain
- * Represents the different command mode that an LED might be responsive to.
- *
- * CD_MAIN - default mode for LED's
- * CD_BEACON - beacon lights (red pulse 1x per second), indicates LV ON
- * CD_STROBE - strobe lights (Double white flash 1x per second), indicates HV ON
- *
- * Add other modes as necessary
- */
-enum ControlDomain {
-	CD_MAIN = 0,
-	CD_BEACON = 1,
-	CD_STROBE = 2,
-	CD_LENGTH = 3 // increment this as necessary
-};
+class LightingController;
+
+extern LightingController rev4;
 
 // TODO: Make these public
 void run_lighting_board();
@@ -39,7 +28,7 @@ public:
 	 * TODO: Initialize lighting controller with a reference to the led bank output
 	 */
 	LightingController(uint8_t *dma_output_buffer, uint8_t *bank_output_buffer,
-			WS2812 *leds);
+			WS2812 *leds, TIM_HandleTypeDef *timer, uint16_t timer_channel);
 
 	/**
 	 * Start sending lighting control data to neopixels.
@@ -110,7 +99,7 @@ public:
 	 *
 	 * @param domain : domain to be enabled.
 	 */
-	void enable_control_domain(ControlDomain domain);
+	void activate_domain(ControlDomain domain);
 
 	/**
 	 * Disables (turn off) a Control Domain
@@ -120,7 +109,41 @@ public:
 	 *
 	 * @param domain : domain to be disabled
 	 */
-	void disable_control_domain(ControlDomain domain);
+	void deactivate_domain(ControlDomain domain);
+
+
+	void activate_domains(uint8_t active_domains);
+
+	/*
+	 * Enables (turns on) a Control Domain
+	 * This enables Control Domains to become active, so LEDs that are part of that control
+	 * domain can shine their domain colours.
+	 *
+	 * @param domain : domain to be disabled
+	 */
+	void allow_domain(ControlDomain domain);
+
+	/*
+	 * Disables (turns off) a Control Domain
+	 * This prevents multiple a control domains from being active, so that domain LEDs cannot
+	 * shine their domain colour.
+	 *
+	 * @param domain : domain to be disabled
+	 */
+	void disallow_domain(ControlDomain domain);
+
+	/*
+	 * Enables/Disables control domains according to the bitfield of domains passed as a parameter.
+	 * @param domain : bitfield of domains to be either allowed or disallowed.
+	 */
+	void configure_allowed_domains(uint8_t allowed_domains);
+
+	/*
+	 * This activates multiple domains
+	 * @param active_domains : bitfield of domains to be activated.
+	 */
+
+	void configure_active_domains(uint8_t active_domains);
 
 	/**
 	 * Sets the colour & brightness of a Control Domain
@@ -131,21 +154,70 @@ public:
 	 * @param colour : desired colour
 	 * @param brightness : desired brightness
 	 */
-	void set_domain_colour(ControlDomain domain, RGB_colour_t colour,
+	void set_domain_colour_and_brightness(ControlDomain domain, RGB_colour_t colour,
 			uint8_t brightness);
+
+	/**
+	 * This will set just the brightness of all the LEDs that are part of a control domain.
+	 *
+	 * @param domain : domain to be modified
+	 * @param colour : desired colour
+	*/
+	void set_domain_colour(ControlDomain domain, RGB_colour_t colour);
+
+	/**
+	 * This will set just the colour of all the LEDs that are part of a control domain.
+	 *
+	 * @param domain : domain to be modified
+	 * @param brightness : desired brightness
+	*/
+	void set_domain_brightness(ControlDomain domain, uint8_t brightness);
+
+
+	/*
+	 * This sets the lighting control state of the board. Each state object has its own lighting
+	 * pattern that represents the state.
+	 *
+	 * @param: pointer to a state object.
+	 */
+	void set_lighting_control_state(LightingControlState *state);
+
+	/*
+	 * Turns off all of the LEDs when exiting a state.
+	 */
+	void exit_current_state();
+
+	/*
+	 *  This was function is intended to execute the lighting control state.
+	 *  Right now, it just assigns the allowed domains of a state class
+	 *  to that of the lighting controller.
+	 */
+	void execute_state();
+
+	/*
+	 * Returns the lighting control state
+	 */
+	LightingControlState *get_lighting_control_state();
 
 	// TODO: add function to "recolour domain" (enables & sets colour)
 	// Use this instead of set + enable?
 
 private:
-	static constexpr uint8_t NUM_LEDS = 6;
-	uint8_t *dma_buffer;
-	uint8_t *bank_buffer;
-	WS2812 *leds;
-	bool domain_state[CD_LENGTH];				// true when domain is active
-	uint8_t domain_leds[CD_LENGTH];	// Bitmask of LED's which are active in each domain
-	RGB_colour_t domain_colours[CD_LENGTH];		// Domain colour
-	uint8_t domain_brightness[CD_LENGTH];		// Domain brightness
+	static constexpr uint8_t NUM_LEDS = 10;
+
+	LightingControlState	 *lighting_control_state;
+
+	uint8_t 				 *dma_buffer;
+	uint8_t 				 *bank_buffer;
+	WS2812 					 *leds;
+
+	volatile uint8_t		 domain_allowed;					// bitfield of which control domains are ALLOWED to be active.
+	uint8_t 				 domain_active;						// bitfield of which control domains are CURRENTLY active.
+	uint8_t 				 domain_brightness[CD_LENGTH];		// Control domain brightness
+	RGB_colour_t 			 domain_colours[CD_LENGTH];			// Control domain colour
+
+	TIM_HandleTypeDef		 *lighting_controller_tim_handle;	//timer handle
+	uint16_t         		 lighting_controller_tim_channel;	//timer channel
 
 	void initialize_bank_buffer_off();
 	void initialize_bank_buffer_on();
