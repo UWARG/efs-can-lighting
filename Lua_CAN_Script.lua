@@ -10,59 +10,51 @@
 -- Rebout pixhawk
 -- run can.get_dev(0)
 
-local can_dev = can.get_dev(0)
+local states = {
+    startup = 0,
+    ground = 1,
+    taxi = 2,
+    takeoff = 3,
+    flight = 4,
+    landing =5
+}
+local drone_state = states.startup --Initialize drone state
 
-local function send_flight_data() --function to get flight data from pixhawk microcontroller
-    local altitude = ahrs:get_altitude() or 0 --if true, returns altitude value, if nil, returns 0 (m)
-    local speed = ahrs:get_speed() or 0 -- returns aircraft speed (m/s)
-    local pitch = ahrs:get_pitch() or 0 --returns pitch heading in radians
-    local yaw = ahrs:get_yaw() or 0 --returns yaw heading in radians
-
-    local alt_int = math.floor(altitude *100) --converting all values to integers, easier to send 
-    local spd_int = math.floor(speed * 100)
-    local pit_int = math.floor(pitch * 100)
-    local yaw_int = math.floor(yaw * 100)
-
-    local flight_data_frame_1 = {
-        (alt_int >> 24) & 0xFF,  -- Converting 32 bit integers into 4 8-bit byte to sent over frame, split into two 8 byte CAN frames
-        (alt_int >> 16) & 0xFF,
-        (alt_int >> 8)  & 0xFF,
-        alt_int & 0xFF,          
-
-        (spd_int >> 24) & 0xFF,
-        (spd_int >> 16) & 0xFF,
-        (spd_int >> 8)  & 0xFF,
-        spd_int & 0xFF,
-    }
-
-    local flight_data_frame_2 = {
-        (pit_int >> 24) & 0xFF,
-        (pit_int >> 16) & 0xFF,
-        (pit_int >> 8)  & 0xFF,
-        pit_int & 0xFF,
-    
-        (yaw_int >> 24) & 0xFF,
-        (yaw_int >> 16) & 0xFF,
-        (yaw_int >> 8)  & 0xFF,
-        yaw_int & 0xFF,    
-    }
-    
-    -- send CAN frame 1 (ID: 0x200)
-    local can_id1 = 0x200 
-    local success1 = can_dev:send(can_id1, false, flight_data_frame_1)
-
-    -- send CAN frame 2 (ID: 0x201)
-    local can_id2 = 0x201 
-    local success2 = can_dev:send(can_id2, false, flight_data_frame_2)
-
-    -- Debug output, reports message if 
-    if success1 and success2 then
-        gcs:send_text(6, string.format("CAN Sent: Alt=%d cm, Vel=%d cm/s, Pitch=%d deci_rad, Yaw=%d deci_rad", alt_int, spd_int, pit_int, yaw_int))
-    else   
-        gcs:send_text(3, "CAN Send Failed!")
-    end
-
-    return send_flight_data, 500 --repeats function every 500 ms
+local device = CAN:get_device(20) --get a can bus device handler
+if device == nil then --sends error message if device not found
+    gcs:send_text(3, "CAN device not found!")
+    return
 end
 
-return send_flight_data() -- executes function
+local can_message_ID = uint32_t(10) --sets CAN ID
+local can_bus = uint32_t(1) -- CAN bus to use
+
+local function get_control_state() --function to get the current control state of the drone
+    if arming:arm() == true and arming:is_armed() == false then --check if drone is ready to arm bus isn't
+        drone_state = states.ground
+    elseif arming:is_armed() == true and motors:get_throttle() == 0 then --check if drone is armed but throttle is 0
+        drone_state = states.taxi
+    elseif motors:get_throttle() ~= 0 and ahrs:altitude() < 5 then --check if drone is below 5m but throttle not 0
+        drone_state = states.takeoff
+    elseif ahrs:altitude() >= 5 and arming:is_armed() == true then --check if drone above 5m
+        drone_state = states.flight
+    elseif vehicle:is_landing() == true then --check if drone is landing
+        drone_state = states.landing
+    else 
+        drone_state = states.startup
+    end
+
+    local message = CANFrame() --Create new CAN frame
+    message:id(can_message_ID) -- Set CAN message ID
+    message:data(0, drone_state) -- Set data for drone state
+
+    if can.send({id = message:id(), ext = false, data = {message:data(0)}}) then --Send CAN frame
+        gcs:send_text(6, string.format("Drone state: %d", drone_state)) -- display drone state
+    else
+        gcs:send_text(3, "CAN Send Failed!")
+    end
+    return get_control_state(), 100
+        
+end
+return get_control_state()
+
