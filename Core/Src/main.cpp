@@ -212,6 +212,7 @@ int main(void)
   	node_id, memory_pool, 1024,
   	&hcan1, &canard, set_control_state
   );
+  /*
 	// Starts the 1s pulse asap (no weird user setup calls).
 	// I don't think this changes timing at all but maybe it does.
 	HAL_TIM_Base_Start_IT(&htim6);
@@ -254,6 +255,8 @@ int main(void)
 	control_states[6] = &search_state;
 
 	rev4.set_lighting_control_state(&ground_state);
+	*/
+  lighting_control_state_demo();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -261,7 +264,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
+/*
 		const uint64_t ts = HAL_GetTick();
 
 		if (ts >= next_1hz_service_at){
@@ -275,6 +278,7 @@ int main(void)
 		}
 
 		processCanardTxQueue(&hcan1);
+		*/
 
 	}
   /* USER CODE END 3 */
