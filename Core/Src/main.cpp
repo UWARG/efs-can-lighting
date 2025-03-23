@@ -218,11 +218,12 @@ int main(void)
   );
 	uint64_t next_1hz_service_at = HAL_GetTick();
 	uint64_t next_10hz_service_at = HAL_GetTick();
+	HAL_TIM_Base_Start_IT(&htim6);
+	HAL_TIM_Base_Start_IT(&htim2);
   /*
 	// Starts the 1s pulse asap (no weird user setup calls).
 	// I don't think this changes timing at all but maybe it does.
-	HAL_TIM_Base_Start_IT(&htim6);
-	HAL_TIM_Base_Start_IT(&htim2);
+
 
 
 	//allow all control domains.
@@ -275,12 +276,12 @@ int main(void)
 
 		if (ts >= next_1hz_service_at){
 		  next_1hz_service_at += 1000ULL;
-		  process1HzTasks(ts);
+		  //process1HzTasks(ts);
 		}
 
 		if (ts >= next_10hz_service_at) {
 			next_10hz_service_at += 100ULL;
-			process10HzTasks(ts);
+			//process10HzTasks(ts);
 		}
 
 		processCanardTxQueue(&hcan1);
