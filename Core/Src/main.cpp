@@ -220,7 +220,7 @@ int main(void)
 	uint64_t next_10hz_service_at = HAL_GetTick();
 	HAL_TIM_Base_Start_IT(&htim6);
 	HAL_TIM_Base_Start_IT(&htim2);
-  /*
+
 	// Starts the 1s pulse asap (no weird user setup calls).
 	// I don't think this changes timing at all but maybe it does.
 
@@ -261,7 +261,7 @@ int main(void)
 	control_states[6] = &search_state;
 
 	rev4.set_lighting_control_state(&ground_state);
-  */
+
 
   //lighting_control_state_demo();
   /* Infinite loop */

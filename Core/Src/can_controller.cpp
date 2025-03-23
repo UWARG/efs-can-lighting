@@ -80,7 +80,8 @@ CANController::CANController(
 }
 
 void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer) {
-  if (transfer->data_type_id == WARG_SETCONTROLSTATE_SIGNATURE) {
+__NOP();
+  if (transfer->data_type_id == WARG_SETCONTROLSTATE_ID) {
     struct warg_SetControlState control_state;
     if (warg_SetControlState_decode(transfer, &control_state)) {
       return;
