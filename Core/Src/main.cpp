@@ -136,7 +136,7 @@ void process1HzTasks(uint64_t timestamp_usec) {
     /*
       Transmit the node status message
     */
-    send_NodeStatus();
+    //send_NodeStatus();
 }
 
 
@@ -162,6 +162,8 @@ void process10HzTasks(uint64_t timestamp_usec) {
                     CANARD_TRANSFER_PRIORITY_LOW,
                     buffer,
                     len);
+
+    send_NodeStatus();
 }
 extern LightingController rev4;
 
@@ -205,7 +207,7 @@ int main(void)
 
 
   /* USER CODE BEGIN 2 */
-	/*
+
 	auto set_control_state = [](uint8_t state) {
 		__NOP();
 	};
@@ -214,14 +216,14 @@ int main(void)
   	node_id, memory_pool, 1024,
   	&hcan1, &canard, set_control_state
   );
-  */
+	uint64_t next_1hz_service_at = HAL_GetTick();
+	uint64_t next_10hz_service_at = HAL_GetTick();
   /*
 	// Starts the 1s pulse asap (no weird user setup calls).
 	// I don't think this changes timing at all but maybe it does.
 	HAL_TIM_Base_Start_IT(&htim6);
 	HAL_TIM_Base_Start_IT(&htim2);
-	uint64_t next_1hz_service_at = HAL_GetTick();
-	uint64_t next_10hz_service_at = HAL_GetTick();
+
 
 	//allow all control domains.
 	uint8_t all_domains_enabled = (1 << 7);
@@ -258,8 +260,9 @@ int main(void)
 	control_states[6] = &search_state;
 
 	rev4.set_lighting_control_state(&ground_state);
-	*/
-  lighting_control_state_demo();
+  */
+
+  //lighting_control_state_demo();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -267,7 +270,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-/*
+
 		const uint64_t ts = HAL_GetTick();
 
 		if (ts >= next_1hz_service_at){
@@ -281,8 +284,6 @@ int main(void)
 		}
 
 		processCanardTxQueue(&hcan1);
-		*/
-
 	}
   /* USER CODE END 3 */
 }
