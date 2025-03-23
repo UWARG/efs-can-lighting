@@ -29,7 +29,7 @@ void CANController::initialize(
   std::size_t memory_pool_size,
   CAN_HandleTypeDef *hcan,
   CanardInstance *canard,
-  void (*set_control_state_callback)(uint8_t)
+  std::function<void(uint8_t)> set_control_state_callback
 ) {
   if (!can_controller_initialized) {
 	  can_controller_initialized = true;
@@ -48,7 +48,7 @@ CANController::CANController(
   std::size_t memory_pool_size,
   CAN_HandleTypeDef *hcan,
   CanardInstance *canard,
-  void (*set_control_state_callback)(uint8_t)
+  std::function<void(uint8_t)> set_control_state_callback
 ): node_id(node_id), memory_pool(memory_pool), set_control_state_callback(set_control_state_callback) {
   CAN_FilterTypeDef filter;
 

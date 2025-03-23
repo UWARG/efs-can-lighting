@@ -12,6 +12,7 @@
 #include "canard.h"
 #include <cstdlib>
 #include "stm32l4xx_hal.h"
+#include <functional>
 
 class CANController {
 public:
@@ -21,7 +22,7 @@ public:
 	std::size_t memory_pool_size,
 	CAN_HandleTypeDef *hcan,
 	CanardInstance *canard,
-	void (*set_control_state_callback)(uint8_t)
+	std::function<void(uint8_t)> set_control_state_callback
   );
 private:
   /// Initializes, sets interrupts and starts HAL_CAN; Initializes and sets the node ID of canard
@@ -31,11 +32,11 @@ private:
 	std::size_t memory_pool_size,
 	CAN_HandleTypeDef *hcan,
 	CanardInstance *canard,
-	void (*set_control_state_callback)(uint8_t)
+	std::function<void(uint8_t)> set_control_state_callback
   );
   uint32_t node_id;
   uint8_t *memory_pool;
-  void (*set_control_state_callback)(uint8_t);
+  std::function<void(uint8_t)> set_control_state_callback;
 
   CanardInstance canard;
 

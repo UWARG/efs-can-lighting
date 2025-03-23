@@ -146,7 +146,7 @@ void process10HzTasks(uint64_t timestamp_usec) {
 
     struct warg_SetControlState value;
 
-    value.controlState = 3;
+    value.controlState = 1;
 
     uint32_t len = warg_SetControlState_encode(&value, buffer);
 
@@ -204,29 +204,14 @@ int main(void)
 	MX_TIM6_Init();
 	MX_TIM7_Init();
 	MX_TIM2_Init();
-
+//here
 
   /* USER CODE BEGIN 2 */
 
-	auto set_control_state = [](uint8_t state) {
-		__NOP();
-	};
-  initializeNodeId();
-  CANController::initialize(
-  	node_id, memory_pool, 1024,
-  	&hcan1, &canard, set_control_state
-  );
-	uint64_t next_1hz_service_at = HAL_GetTick();
-	uint64_t next_10hz_service_at = HAL_GetTick();
 	HAL_TIM_Base_Start_IT(&htim6);
+
 	HAL_TIM_Base_Start_IT(&htim2);
-
-	// Starts the 1s pulse asap (no weird user setup calls).
-	// I don't think this changes timing at all but maybe it does.
-
-
-
-	//allow all control domains.
+	rev4.start_lighting_control(); //start lighting
 	uint8_t all_domains_enabled = (1 << 7);
 	rev4.configure_allowed_domains(all_domains_enabled);
 
@@ -251,19 +236,41 @@ int main(void)
 	LC_State_STANDBY standby_state;
 	LC_State_SEARCH search_state;
 
-	LightingControlState *control_states[7];
-	control_states[0] = &startup_state;
-	control_states[1] = &ground_state;
-	control_states[2] = &flight_state;
-	control_states[3] = &brake_state;
-	control_states[4] = &landing_state;
-	control_states[5] = &standby_state;
-	control_states[6] = &search_state;
 
-	rev4.set_lighting_control_state(&ground_state);
+	auto set_control_state = [&](uint8_t state) {
+		switch (state) {
+		case TRANSITION_GROUND: {
+			rev4.set_lighting_control_state(&ground_state);
+			break;
+		}
+		case TRANSITION_STANDBY: {
+			rev4.set_lighting_control_state(&standby_state);
+			break;
+
+		}
+		default: {
+			break;
+
+		}
+		}
+	};
+  initializeNodeId();
+  CANController::initialize(
+  	node_id, memory_pool, 1024,
+  	&hcan1, &canard, set_control_state
+  );
+	uint64_t next_1hz_service_at = HAL_GetTick();
+	uint64_t next_10hz_service_at = HAL_GetTick();
 
 
-  //lighting_control_state_demo();
+	// Starts the 1s pulse asap (no weird user setup calls).
+	// I don't think this changes timing at all but maybe it does.
+
+
+	//allow all control domains.
+
+
+//  lighting_control_state_demo();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -276,12 +283,12 @@ int main(void)
 
 		if (ts >= next_1hz_service_at){
 		  next_1hz_service_at += 1000ULL;
-		  //process1HzTasks(ts);
+//		  process1HzTasks(ts);
 		}
 
 		if (ts >= next_10hz_service_at) {
 			next_10hz_service_at += 100ULL;
-			//process10HzTasks(ts);
+			process10HzTasks(ts);
 		}
 
 		processCanardTxQueue(&hcan1);
