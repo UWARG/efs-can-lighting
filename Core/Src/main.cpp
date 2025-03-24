@@ -139,14 +139,15 @@ void process1HzTasks(uint64_t timestamp_usec) {
     //send_NodeStatus();
 }
 
-
+static int state = 0;
 
 void process10HzTasks(uint64_t timestamp_usec) {
     uint8_t buffer[WARG_SETCONTROLSTATE_MAX_SIZE];
 
     struct warg_SetControlState value;
 
-    value.controlState = 0;
+    value.controlState = state;
+    state = (state + 1) % 3;
 
     uint32_t len = warg_SetControlState_encode(&value, buffer);
 
@@ -235,8 +236,12 @@ int main(void)
 	LC_State_STANDBY standby_state;
 	LC_State_SEARCH search_state;
 
+	uint8_t old_state = 255;
+
 
 	auto set_control_state = [&](uint8_t state) {
+		if (state == old_state) return;
+		old_state = state;
 		switch (state) {
 		case TRANSITION_GROUND: {
 			rev4.set_lighting_control_state(&ground_state);
@@ -245,7 +250,10 @@ int main(void)
 		case TRANSITION_STANDBY: {
 			rev4.set_lighting_control_state(&standby_state);
 			break;
-
+		}
+		case TRANSITION_TAXI: {
+			rev4.set_lighting_control_state(&flight_state);
+			break;
 		}
 		default: {
 			break;
@@ -286,7 +294,7 @@ int main(void)
 		}
 
 		if (ts >= next_10hz_service_at) {
-			next_10hz_service_at += 100ULL;
+			next_10hz_service_at += 3000ULL;
 			process10HzTasks(ts);
 		}
 
