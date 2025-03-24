@@ -146,7 +146,7 @@ void process10HzTasks(uint64_t timestamp_usec) {
 
     struct warg_SetControlState value;
 
-    value.controlState = 1;
+    value.controlState = 0;
 
     uint32_t len = warg_SetControlState_encode(&value, buffer);
 
@@ -210,7 +210,6 @@ int main(void)
 
 	HAL_TIM_Base_Start_IT(&htim6);
 
-	HAL_TIM_Base_Start_IT(&htim2);
 	rev4.start_lighting_control(); //start lighting
 	uint8_t all_domains_enabled = (1 << 7);
 	rev4.configure_allowed_domains(all_domains_enabled);
@@ -283,7 +282,7 @@ int main(void)
 
 		if (ts >= next_1hz_service_at){
 		  next_1hz_service_at += 1000ULL;
-//		  process1HzTasks(ts);
+		  process1HzTasks(ts);
 		}
 
 		if (ts >= next_10hz_service_at) {
