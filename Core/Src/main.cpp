@@ -295,7 +295,7 @@ int main(void)
 
 		if (ts >= next_10hz_service_at) {
 			next_10hz_service_at += 3000ULL;
-			process10HzTasks(ts);
+			//process10HzTasks(ts);
 		}
 
 		processCanardTxQueue(&hcan1);
