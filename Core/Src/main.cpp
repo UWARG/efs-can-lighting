@@ -230,11 +230,11 @@ int main(void)
 	//Declare control states
 	LC_State_STARTUP startup_state;
 	LC_State_GROUND ground_state;
+	LC_State_TAXI taxi_state;
+	LC_State_TAKEOFF takeoff_state;
 	LC_State_FLIGHT flight_state;
 	LC_State_BRAKE brake_state;
-	LC_State_LANDING landing_state;
-	LC_State_STANDBY standby_state;
-	LC_State_SEARCH search_state;
+	LC_State_LANDING land_state;
 
 	uint8_t old_state = 255;
 
@@ -243,16 +243,28 @@ int main(void)
 		if (state == old_state) return;
 		old_state = state;
 		switch (state) {
+		case TRANSITION_STARTUP: {
+			rev4.set_lighting_control_state(&startup_state);
+			break;
+		}
 		case TRANSITION_GROUND: {
 			rev4.set_lighting_control_state(&ground_state);
 			break;
 		}
-		case TRANSITION_STANDBY: {
-			rev4.set_lighting_control_state(&standby_state);
+		case TRANSITION_TAXI: {
+			rev4.set_lighting_control_state(&taxi_state);
 			break;
 		}
-		case TRANSITION_TAXI: {
+		case TRANSITION_TAKEOFF: {
+			rev4.set_lighting_control_state(&takeoff_state);
+			break;
+		}
+		case TRANSITION_FLIGHT: {
 			rev4.set_lighting_control_state(&flight_state);
+			break;
+		}
+		case TRANSITION_LANDING: {
+			rev4.set_lighting_control_state(&land_state);
 			break;
 		}
 		default: {

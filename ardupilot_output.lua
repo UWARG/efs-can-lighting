@@ -1,3 +1,14 @@
+local states = {
+    startup = 8,
+    ground = 0,
+    taxi = 2,
+    takeoff = 3,
+    flight = 4,
+    landing = 6
+}
+
+local state_list = {states.startup, states.ground, states.taxi, states.takeoff, states.flight, states.landing}
+
 local transfer_id = 0;
 local device = CAN:get_device(5) --get a can bus device handler
 if device == nil then --sends error message if device not found
@@ -25,11 +36,39 @@ local function make_single_frame_tail_byte(id)
     return make_tail_byte(true, true, false, id)
 end
 
-local state = 0
+local state_index = 1
+
+
+--local function calculate_current_state()
+--    state_index = state_index + 1
+--    if state_index > 6 then state_index = 1 end
+--    local state_name = state_list[state_index]
+--
+--    return state_name
+--end
+
+
+local function calculate_current_state()
+    local location = ahrs:get_location()
+    if arming:pre_arm_checks() == false and arming:is_armed() == false then --check if drone is ready to arm bus isn't
+        return states.startup
+    elseif arming:pre_arm_checks() and arming:is_armed() == false then
+        return states.ground
+    elseif arming:is_armed() == true and motors:get_throttle() == 0 then --check if drone is armed but throttle is 0
+        return states.taxi
+    elseif motors:get_throttle() ~= 0 and location ~= nil and location:alt() < 500 then --check if drone is below 5m but throttle not 0
+        return states.takeoff
+    elseif location ~= nil and location:alt() >= 500 and arming:is_armed() == true then --check if drone above 5m
+        return states.flight
+    elseif vehicle:is_landing() == true then --check if drone is landing
+        return states.landing
+    else 
+        return states.startup
+    end
+end
 
 local function get_control_state() --function to get the current control state of the drone
-    state = state + 1
-    if state > 2 then state = 0 end
+    local state = calculate_current_state()
     local message = CANFrame() --Create new CAN frame
     local id = make_id(24, 800, 11)
     gcs:send_text(3, "found id " .. tostring(id))
@@ -43,13 +82,13 @@ local function get_control_state() --function to get the current control state o
 
     if device:write_frame(message, 10000) then
         gcs:send_text(3, 
-            "Lua: sent frame with ID " .. tostring(id)
+            "Lua: sent frame with ID " .. tostring(id) .. " and state name " .. state
         )
     else
         gcs:send_text(3, "Lua: failed to send frame with ID " .. tostring(id))
     end
 
-    return get_control_state, 3000
+    return get_control_state, 5000
         
 end
 return get_control_state()
