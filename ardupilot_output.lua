@@ -72,10 +72,9 @@ local function get_control_state() --function to get the current control state o
     local message = CANFrame() --Create new CAN frame
     local id = make_id(24, 800, 11)
     gcs:send_text(3, "found id " .. tostring(id))
-    message:id(id)
-    message:dlc(2)
+    message:id(5)--d)
+    message:dlc(1)
     message:data(0, state)
-    message:data(1, make_single_frame_tail_byte(transfer_id))
 
     transfer_id = transfer_id + 1
     if transfer_id > 31 then transfer_id = 0 end
@@ -88,7 +87,7 @@ local function get_control_state() --function to get the current control state o
         gcs:send_text(3, "Lua: failed to send frame with ID " .. tostring(id))
     end
 
-    return get_control_state, 5000
+    return get_control_state, 100
         
 end
 return get_control_state()

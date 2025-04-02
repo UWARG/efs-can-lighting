@@ -5,11 +5,11 @@
 #include "gpio.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "canard_stm32_driver.h"
 #include <time.h>
 #include <stdio.h>
-#include "../dsdlc_generated/include/dronecan_msgs.h"
 #include <lighting_demos.hpp>
+#include <string.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -23,7 +23,6 @@
 //#define CONSTANT_COLOR
 #include "lighting_controller.hpp"
 #include "can_controller.hpp"
-#define CLOCK_MONOTONIC 1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -34,9 +33,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-static CanardInstance canard;
-static uint8_t memory_pool[1024];
-static struct uavcan_protocol_NodeStatus node_status;
 extern TIM_HandleTypeDef htim6;
 static uint32_t node_id;
 
@@ -50,6 +46,23 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/**
+  * @brief  Return a unique ID made out of the 96-bit STM32 UID
+  * @param  id an array of size 16 to fill with the unique ID
+  * @retval None
+  */
+void getUniqueID(uint8_t id[16]){
+	uint32_t HALUniqueIDs[4];
+	// Make Unique ID out of the 96-bit STM32 UID
+	memset(id, 0, 16);
+	HALUniqueIDs[0] = HAL_GetUIDw0();
+	HALUniqueIDs[1] = HAL_GetUIDw1();
+	HALUniqueIDs[2] = HAL_GetUIDw2();
+	HALUniqueIDs[3] = HAL_GetUIDw1(); // repeating UIDw1 for this, no specific reason I chose this..
+	memcpy(id, HALUniqueIDs, 16);
+}
+
 void initializeNodeId() {
 	uint8_t buffer[16];
 	getUniqueID(buffer);
@@ -58,86 +71,9 @@ void initializeNodeId() {
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-	// Receiving
-	CanardCANFrame rx_frame;
-
-	const uint64_t timestamp = HAL_GetTick() * 1000ULL;
-	const int16_t rx_res = canardSTM32Recieve(hcan, CAN_RX_FIFO0, &rx_frame);
-
-	if (rx_res < 0) {
-		printf("Receive error %d\n", rx_res);
-	}
-	else if (rx_res > 0)        // Success - process the frame
-	{
-		canardHandleRxFrame(&canard, &rx_frame, timestamp);
-	}
+	CANController::onTransferReceived(hcan, CAN_RX_FIFO0);
 }
-
-// Processes the canard Tx queue and attempts to transmit the messages
-// Call this function very often to check if there are any Tx to process
-// Calling it once every cycle of the while(1) loop is not a bad idea
-void processCanardTxQueue(CAN_HandleTypeDef *hcan) {
-	// Transmitting
-
-	for (const CanardCANFrame *tx_frame ; (tx_frame = canardPeekTxQueue(&canard)) != NULL;) {
-		const int16_t tx_res = canardSTM32Transmit(hcan, tx_frame);
-
-		if (tx_res <= 0) {
-			printf("Transmit error %d\n", tx_res);
-		} else if (tx_res > 0) {
-			printf("Successfully transmitted message\n");
-		}
-
-		// Pop canardTxQueue either way
-		canardPopTxQueue(&canard);
-	}
-}
-
 /*
-  send the 1Hz NodeStatus message. This is what allows a node to show
-  up in the DroneCAN GUI tool and in the flight controller logs
- */
-void send_NodeStatus(void) {
-    uint8_t buffer[UAVCAN_PROTOCOL_GETNODEINFO_RESPONSE_MAX_SIZE];
-
-    node_status.uptime_sec = HAL_GetTick() / 1000UL;
-    node_status.health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
-    node_status.mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
-    node_status.sub_mode = 0;
-
-    // put whatever you like in here for display in GUI
-    node_status.vendor_specific_status_code = 1234;
-
-    uint32_t len = uavcan_protocol_NodeStatus_encode(&node_status, buffer);
-
-    // we need a static variable for the transfer ID. This is
-    // incremeneted on each transfer, allowing for detection of packet
-    // loss
-    static uint8_t transfer_id;
-
-    canardBroadcast(&canard,
-                    UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
-                    UAVCAN_PROTOCOL_NODESTATUS_ID,
-                    &transfer_id,
-                    CANARD_TRANSFER_PRIORITY_LOW,
-                    buffer,
-                    len);
-}
-
-/*
-  This function is called at 1 Hz rate from the main loop.
-*/
-void process1HzTasks(uint64_t timestamp_usec) {
-    /*
-      Purge transfers that are no longer transmitted. This can free up some memory
-    */
-    canardCleanupStaleTransfers(&canard, timestamp_usec);
-
-    /*
-      Transmit the node status message
-    */
-    //send_NodeStatus();
-}
 
 static int state = 0;
 
@@ -166,6 +102,7 @@ void process10HzTasks(uint64_t timestamp_usec) {
 
     send_NodeStatus();
 }
+*/
 extern LightingController rev4;
 
 /* USER CODE END 0 */
@@ -275,8 +212,7 @@ int main(void)
 	};
   initializeNodeId();
   CANController::initialize(
-  	node_id, memory_pool, 1024,
-  	&hcan1, &canard, set_control_state
+  	node_id, &hcan1, set_control_state
   );
 	uint64_t next_1hz_service_at = HAL_GetTick();
 	uint64_t next_10hz_service_at = HAL_GetTick();
@@ -302,7 +238,6 @@ int main(void)
 
 		if (ts >= next_1hz_service_at){
 		  next_1hz_service_at += 1000ULL;
-		  process1HzTasks(ts);
 		}
 
 		if (ts >= next_10hz_service_at) {
@@ -310,7 +245,6 @@ int main(void)
 			//process10HzTasks(ts);
 		}
 
-		processCanardTxQueue(&hcan1);
 	}
   /* USER CODE END 3 */
 }
