@@ -105,6 +105,28 @@ void process10HzTasks(uint64_t timestamp_usec) {
 */
 extern LightingController rev4;
 
+void groundStateBreathe(uint8_t state) {
+	if (state == TRANSITION_GROUND) {
+		static uint8_t brightness = 0;
+		static uint8_t brightness_direction = 1;
+		uint8_t brightness_max = 50;
+
+		if (brightness <= 0) {
+			brightness = 0;
+			brightness_direction = 1;
+		} else if (brightness >= brightness_max) {
+			brightness = brightness_max;
+			brightness_direction = -1;
+		}
+		rev4.set_domain_brightness(CD_BEACON, brightness);
+		rev4.activate_domain(CD_BEACON);
+		brightness += brightness_direction;
+	}
+}
+
+
+
+
 /* USER CODE END 0 */
 
 /**
@@ -156,7 +178,7 @@ int main(void)
 	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
 	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
 	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 15);
+	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 15);
 	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
 	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
 	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
@@ -186,21 +208,26 @@ int main(void)
 		}
 		case TRANSITION_GROUND: {
 			rev4.set_lighting_control_state(&ground_state);
+			rev4.set_domain_colour(CD_BEACON, RED);
 			break;
 		}
 		case TRANSITION_TAXI: {
 			rev4.set_lighting_control_state(&taxi_state);
+			rev4.set_domain_colour(CD_BEACON, RED);
 			break;
 		}
 		case TRANSITION_TAKEOFF: {
+			rev4.set_domain_colour(CD_BEACON, GREEN);
 			rev4.set_lighting_control_state(&takeoff_state);
 			break;
 		}
 		case TRANSITION_FLIGHT: {
+			rev4.set_domain_colour(CD_BEACON, RED);
 			rev4.set_lighting_control_state(&flight_state);
 			break;
 		}
 		case TRANSITION_LANDING: {
+			rev4.set_domain_colour(CD_BEACON, RED);
 			rev4.set_lighting_control_state(&land_state);
 			break;
 		}
@@ -244,6 +271,9 @@ int main(void)
 			next_10hz_service_at += 3000ULL;
 			//process10HzTasks(ts);
 		}
+
+		groundStateBreathe(old_state);
+		HAL_Delay(20);
 
 	}
   /* USER CODE END 3 */
