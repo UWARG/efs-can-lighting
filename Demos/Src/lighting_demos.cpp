@@ -103,7 +103,7 @@ void lighting_control_state_demo() {
 	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
 	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
 	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 15);
+	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 15);
 	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
 	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
 	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
@@ -118,16 +118,18 @@ void lighting_control_state_demo() {
 	LC_State_BRAKE brake_state;
 	LC_State_LANDING landing_state;
 	LC_State_STANDBY standby_state;
+	LC_State_TAKEOFF takeoff_state;
 	LC_State_SEARCH search_state;
 
-	LightingControlState *control_states[7];
+	LightingControlState *control_states[8];
 	control_states[0] = &startup_state;
 	control_states[1] = &ground_state;
-	control_states[2] = &flight_state;
-	control_states[3] = &brake_state;
-	control_states[4] = &landing_state;
-	control_states[5] = &standby_state;
-	control_states[6] = &search_state;
+	control_states[2] = &takeoff_state;
+	control_states[3] = &flight_state;
+	control_states[4] = &brake_state;
+	control_states[5] = &landing_state;
+	control_states[6] = &standby_state;
+	control_states[7] = &search_state;
 
 	rev4.set_lighting_control_state(&startup_state);
 
@@ -136,13 +138,18 @@ void lighting_control_state_demo() {
 	uint8_t brightness_max = 50;
 
 	int ctrl_idx = 0;
-	int num_states = 7;
+	int num_states = 8;
 	int num_loops = 0;
 
 	while (true) {
 
 		if (num_loops == 150) {
 			ctrl_idx = (ctrl_idx + 1) % num_states;
+			if (ctrl_idx == 2) {	//if we're in takeoff, make beacon green
+				rev4.set_domain_colour(CD_BEACON, GREEN);
+			} else {
+				rev4.set_domain_colour(CD_BEACON, RED);
+			}
 			rev4.set_lighting_control_state(control_states[ctrl_idx]);
 			num_loops = 0;
 		}
