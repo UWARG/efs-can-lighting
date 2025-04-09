@@ -258,6 +258,7 @@ int main(void)
 //  lighting_control_state_demo();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	uint8_t state = 8;
   while (1)
   {
     /* USER CODE END WHILE */
@@ -272,7 +273,8 @@ int main(void)
 
 		if (ts >= next_10hz_service_at) {
 			next_10hz_service_at += 3000ULL;
-			//process10HzTasks(ts);
+			//state = 8 - state;
+			//set_control_state(state);
 		}
 
 		groundStateBreathe(old_state);
