@@ -34,14 +34,14 @@ uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 WS2812 leds[NUM_LEDS]; // TODO: make this work
 
 // Initial setup call
-LightingController rev4(dma_output_buffer, bank_output_buffer, leds, &htim1, TIM_CHANNEL_2); // TODO: Once we have custom functions registered as callbacks.....
+LightingController rev4(dma_output_buffer, bank_output_buffer, leds, &htim2, TIM_CHANNEL_1); // TODO: Once we have custom functions registered as callbacks.....
 
 // Temporary (ish) function with exemplar code that allows us to test lighting board functionality without needing CAN commands
 void run_lighting_board() {
 
 	// Call to start lighting control
 	rev4.start_lighting_control();
-	HAL_TIM_Base_Start_IT(&htim2);
+	HAL_TIM_Base_Start_IT(&htim1);
 
 	// DOMAIN SETUP
 	// TODO: move Control Domain building to special functions
@@ -343,14 +343,15 @@ void LightingController::initialize_dma_buffer() {
 // TODO: Register custom callbacks for the timers
 // https://community.st.com/t5/stm32-mcus/how-to-use-register-callbacks-in-stm32/ta-p/580499
 // We should be able to register _class_ functions as callbacks?
-void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
+/*
+void HAL_TIM2_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 	// | BANK 1 | BANK 2 |
 	//          ^ Current location
 	// So update BANK 1
 	std::memcpy(dma_output_buffer, bank_output_buffer, BANK_OUTPUT_BUFFER_SIZE);
 }
 
-void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
+void HAL_TIM2_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 	// | BANK 1 | BANK 2 |
 	//                   ^ Current location
 	// So update BANK 2
@@ -417,3 +418,4 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		TIM2_10msCallback(htim);
 	}
 }
+*/
