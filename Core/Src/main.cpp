@@ -169,6 +169,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 	HAL_TIM_Base_Start_IT(&htim6);
+	HAL_TIM_Base_Start_IT(&htim2);
 
 	rev4.start_lighting_control(); //start lighting
 	uint8_t all_domains_enabled = (1 << 7);
@@ -243,6 +244,8 @@ int main(void)
   );
 	uint64_t next_1hz_service_at = HAL_GetTick();
 	uint64_t next_10hz_service_at = HAL_GetTick();
+
+	set_control_state(TRANSITION_STARTUP);
 
 
 	// Starts the 1s pulse asap (no weird user setup calls).

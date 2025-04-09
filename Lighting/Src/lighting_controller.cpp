@@ -41,7 +41,7 @@ void run_lighting_board() {
 
 	// Call to start lighting control
 	rev4.start_lighting_control();
-	HAL_TIM_Base_Start_IT(&htim1);
+	HAL_TIM_Base_Start_IT(&htim2);
 
 	// DOMAIN SETUP
 	// TODO: move Control Domain building to special functions
@@ -117,7 +117,7 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 }
 
 void LightingController::start_lighting_control() {
-	HAL_TIMEx_PWMN_Start_DMA(this->lighting_controller_tim_handle, this->lighting_controller_tim_channel,
+	HAL_TIM_PWM_Start_DMA(this->lighting_controller_tim_handle, this->lighting_controller_tim_channel,
 			(uint32_t*) dma_output_buffer, DMA_OUTPUT_BUFFER_SIZE);
 
 #ifdef STARTUP_SEQUENCE_1
@@ -343,15 +343,14 @@ void LightingController::initialize_dma_buffer() {
 // TODO: Register custom callbacks for the timers
 // https://community.st.com/t5/stm32-mcus/how-to-use-register-callbacks-in-stm32/ta-p/580499
 // We should be able to register _class_ functions as callbacks?
-/*
-void HAL_TIM2_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
+void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 	// | BANK 1 | BANK 2 |
 	//          ^ Current location
 	// So update BANK 1
 	std::memcpy(dma_output_buffer, bank_output_buffer, BANK_OUTPUT_BUFFER_SIZE);
 }
 
-void HAL_TIM2_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
+void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 	// | BANK 1 | BANK 2 |
 	//                   ^ Current location
 	// So update BANK 2
@@ -418,4 +417,3 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		TIM2_10msCallback(htim);
 	}
 }
-*/

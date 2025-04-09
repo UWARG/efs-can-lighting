@@ -117,7 +117,7 @@ static void setLedBuffer(State_e state)
     memcpy(ledBuffer + LED_DATA_BITS * i, tmpLedBuffer, LED_DATA_BITS * 4);
   }
 }
-
+/*
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 {
   static State_e curState = STATE1;
@@ -130,13 +130,14 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 
   HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_1, ledBuffer, LED_COUNT * LED_DATA_BITS + LED_RSET_BITS);
 }
+*/
 /* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
+int main_(void)
 {
 
   /* USER CODE BEGIN 1 */
@@ -208,7 +209,7 @@ int main(void)
   * @brief System Clock Configuration
   * @retval None
   */
-void SystemClock_Config(void)
+void SystemClock_Config_(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
@@ -260,7 +261,7 @@ void SystemClock_Config(void)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
+void Error_Handler_(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
