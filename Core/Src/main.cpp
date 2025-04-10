@@ -175,14 +175,14 @@ int main(void)
 	rev4.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
-	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 15);
-	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
-	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
-	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
-	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 99);
+	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 99);
+	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 99);
+	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 99);
+	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 99); //CHANGE THIS TO RED.
+	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 99);
+	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 99);
+	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 99);
 
 	rev4.configure_active_domains(255);
 
@@ -243,7 +243,6 @@ int main(void)
   );
 	uint64_t next_1hz_service_at = HAL_GetTick();
 	uint64_t next_10hz_service_at = HAL_GetTick();
-
 
 	// Starts the 1s pulse asap (no weird user setup calls).
 	// I don't think this changes timing at all but maybe it does.
