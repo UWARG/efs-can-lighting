@@ -175,7 +175,7 @@ int main(void)
 	rev4.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
+	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 99);
 	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 99);
 	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 99);
 	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 99);
@@ -200,9 +200,13 @@ int main(void)
 
 	auto set_control_state = [&](uint8_t state) {
 		if (state == old_state) return;
+		if (state != TRANSITION_STARTUP) {
+			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 99);
+		}
 		old_state = state;
 		switch (state) {
 		case TRANSITION_STARTUP: {
+			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
 			rev4.set_lighting_control_state(&startup_state);
 			break;
 		}
