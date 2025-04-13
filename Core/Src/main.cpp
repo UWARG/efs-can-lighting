@@ -175,7 +175,7 @@ int main(void)
 	rev4.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 99);
+	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
 	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 99);
 	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 99);
 	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 99);
@@ -249,6 +249,7 @@ int main(void)
 
 
 	//allow all control domains.
+	set_control_state(TRANSITION_STARTUP);
 
 
 //  lighting_control_state_demo();
