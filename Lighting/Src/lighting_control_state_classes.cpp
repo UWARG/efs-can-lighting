@@ -33,7 +33,7 @@ LC_State_GROUND::LC_State_GROUND() {
 	}
 	domain_leds[CD_MAIN] = LED_BOTTOM_SW | 1 << LED_BOTTOM_E;
 	domain_leds[CD_BEACON] = 1 << LED_BOTTOM_SW | 1 << LED_BOTTOM_NW
-			| 1 << LED_BOTTOM_SE | 1 << LED_BOTTOM_NE;// | 1 << LED_W_OUTER | 1 <<  LED_E_OUTER;
+			| 1 << LED_BOTTOM_SE | 1 << LED_BOTTOM_NE | 1 << LED_W_OUTER | 1 <<  LED_E_OUTER;
 	allowed_domains = 1 << CD_BEACON | 1 << CD_MAIN;
 }
 
@@ -74,9 +74,9 @@ LC_State_TAKEOFF::LC_State_TAKEOFF() {
 	domain_leds[CD_MAIN] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W |  1 << LED_BOTTOM_SW  | 1 << LED_BOTTOM_NE
 			| 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE | 1 << LED_W_OUTER | 1 << LED_E_OUTER
 			| 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_BEACON] = 1 << LED_W_INNER | 1 << LED_E_INNER | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_BOTTOM_W | 1 << LED_BOTTOM_E  | 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_NE | 1 << LED_BOTTOM_SW | 1 << LED_BOTTOM_SE;
-	allowed_domains = 1 << CD_BEACON | 1 << CD_MAIN;
+	domain_leds[CD_NAV] =  1 << LED_BOTTOM_W | 1 << LED_BOTTOM_E  | 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_NE | 1 << LED_BOTTOM_SW | 1 << LED_BOTTOM_SE;
+	domain_leds[CD_STROBE] = 1 << LED_W_INNER | 1 << LED_E_INNER | 1 << LED_W_OUTER | 1 << LED_E_OUTER;
+	allowed_domains = 1 << CD_NAV | 1 << CD_MAIN | 1 << CD_STROBE;
 }
 
 uint16_t *LC_State_TAKEOFF::get_domain_leds() {

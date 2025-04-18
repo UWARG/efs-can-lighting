@@ -204,30 +204,36 @@ int main(void)
 		switch (state) {
 		case TRANSITION_STARTUP: {
 			rev4.set_lighting_control_state(&startup_state);
+			rev4.set_domain_colour(CD_BEACON, WHITE);
 			break;
 		}
 		case TRANSITION_GROUND: {
-			rev4.set_lighting_control_state(&ground_state);
+			rev4.set_domain_colour(CD_NAV, BLUE);
 			rev4.set_domain_colour(CD_BEACON, RED);
+			rev4.set_lighting_control_state(&ground_state);
 			break;
 		}
 		case TRANSITION_TAXI: {
+			rev4.set_domain_colour(CD_NAV, BLUE);
+			rev4.set_domain_colour(CD_BEACON, WHITE);
 			rev4.set_lighting_control_state(&taxi_state);
-			rev4.set_domain_colour(CD_BEACON, RED);
 			break;
 		}
 		case TRANSITION_TAKEOFF: {
-			rev4.set_domain_colour(CD_BEACON, GREEN);
+			rev4.set_domain_colour(CD_NAV, GREEN);
+			rev4.set_domain_colour(CD_BEACON, WHITE);
 			rev4.set_lighting_control_state(&takeoff_state);
 			break;
 		}
 		case TRANSITION_FLIGHT: {
+			rev4.set_domain_colour(CD_NAV, BLUE);
 			rev4.set_domain_colour(CD_BEACON, RED);
 			rev4.set_lighting_control_state(&flight_state);
 			break;
 		}
 		case TRANSITION_LANDING: {
-			rev4.set_domain_colour(CD_BEACON, RED);
+			rev4.set_domain_colour(CD_NAV, BLUE);
+			rev4.set_domain_colour(CD_BEACON, WHITE);
 			rev4.set_lighting_control_state(&land_state);
 			break;
 		}

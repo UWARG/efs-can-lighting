@@ -367,6 +367,11 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static uint8_t led_index = 0;
 	HAL_TIM_Base_Start_IT(&htim2);
 
+	if (rev4.get_lighting_control_state() != nullptr) { //If a state has been SET.
+		uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
+		rev4.configure_active_domains(allowed_domains);
+	}
+
 	if (stage == 0) { 			// STROBE ON
 		rev4.activate_domain(CD_STROBE);
 		stage = 1;
@@ -392,10 +397,6 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 
-	if (rev4.get_lighting_control_state() != nullptr) { //If a state has been SET.
-		uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
-		rev4.configure_active_domains(allowed_domains);
-	}
 }
 
 void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {
