@@ -100,7 +100,7 @@ void lighting_control_state_demo() {
 	rev4.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
+	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
 	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
 	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
 	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 15);
@@ -120,16 +120,15 @@ void lighting_control_state_demo() {
 	LC_State_STANDBY standby_state;
 	LC_State_TAKEOFF takeoff_state;
 	LC_State_SEARCH search_state;
+	LC_State_TAXI taxi_state;
 
 	LightingControlState *control_states[8];
 	control_states[0] = &startup_state;
 	control_states[1] = &ground_state;
-	control_states[2] = &takeoff_state;
-	control_states[3] = &flight_state;
-	control_states[4] = &brake_state;
+	control_states[2] = &taxi_state;
+	control_states[3] = &takeoff_state;
+	control_states[4] = &flight_state;
 	control_states[5] = &landing_state;
-	control_states[6] = &standby_state;
-	control_states[7] = &search_state;
 
 	rev4.set_lighting_control_state(&startup_state);
 
@@ -142,14 +141,27 @@ void lighting_control_state_demo() {
 	int num_loops = 0;
 
 	while (true) {
-
 		if (num_loops == 150) {
 			ctrl_idx = (ctrl_idx + 1) % num_states;
-			if (ctrl_idx == 2) {	//if we're in takeoff, make beacon green
-				rev4.set_domain_colour(CD_BEACON, GREEN);
-			} else {
+			if (ctrl_idx == 0) {
+				rev4.set_domain_colour(CD_BEACON, WHITE);
+			} else if (ctrl_idx == 1) {
+				rev4.set_domain_colour(CD_NAV, BLUE);
 				rev4.set_domain_colour(CD_BEACON, RED);
+			} else if (ctrl_idx == 2) {
+				rev4.set_domain_colour(CD_NAV, GREEN);
+				rev4.set_domain_colour(CD_BEACON, WHITE);
+			} else if (ctrl_idx == 3) {
+				rev4.set_domain_colour(CD_NAV, GREEN);
+				rev4.set_domain_colour(CD_BEACON, WHITE);
+			} else if (ctrl_idx == 4) {
+				rev4.set_domain_colour(CD_NAV, BLUE);
+				rev4.set_domain_colour(CD_BEACON, RED);
+			} else if (ctrl_idx == 5) {
+				rev4.set_domain_colour(CD_NAV, BLUE);
+				rev4.set_domain_colour(CD_BEACON, WHITE);
 			}
+
 			rev4.set_lighting_control_state(control_states[ctrl_idx]);
 			num_loops = 0;
 		}
