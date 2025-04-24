@@ -105,7 +105,7 @@ void lighting_control_state_demo() {
 	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
 	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 15);
 	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
-	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
+	rev4.set_domain_colour_and_brightness(CD_STROBE, WHITE, 15);
 	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
 	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 15);
 
