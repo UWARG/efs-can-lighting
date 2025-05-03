@@ -200,67 +200,66 @@ int main(void)
 	lighting_control_state_demo();
 
 
-//	auto set_control_state = [&](uint8_t state) {
-//		if (state == old_state) return;
-//		old_state = state;
-//		switch (state) {
-//		case TRANSITION_STARTUP: {
-//			rev4.set_lighting_control_state(&startup_state);
-//			rev4.set_domain_colour(CD_BEACON, WHITE);
-//			break;
-//		}
-//		case TRANSITION_GROUND: {
-//			rev4.set_domain_colour(CD_NAV, BLUE);
-//			rev4.set_domain_colour(CD_BEACON, RED);
-//			rev4.set_lighting_control_state(&ground_state);
-//			break;
-//		}
-//		case TRANSITION_TAXI: {
-//			rev4.set_domain_colour(CD_NAV, BLUE);
-//			rev4.set_domain_colour(CD_BEACON, WHITE);
-//			rev4.set_lighting_control_state(&taxi_state);
-//			break;
-//		}
-//		case TRANSITION_TAKEOFF: {
-//			rev4.set_domain_colour(CD_NAV, GREEN);
-//			rev4.set_domain_colour(CD_BEACON, WHITE);
-//			rev4.set_lighting_control_state(&takeoff_state);
-//			break;
-//		}
-//		case TRANSITION_FLIGHT: {
-//			rev4.set_domain_colour(CD_NAV, BLUE);
-//			rev4.set_domain_colour(CD_BEACON, RED);
-//			rev4.set_lighting_control_state(&flight_state);
-//			break;
-//		}
-//		case TRANSITION_LANDING: {
-//			rev4.set_domain_colour(CD_NAV, BLUE);
-//			rev4.set_domain_colour(CD_BEACON, WHITE);
-//			rev4.set_lighting_control_state(&land_state);
-//			break;
-//		}
-//		default: {
-//			break;
-//
-//		}
-//		}
-//	};
-//  initializeNodeId();
-//  CANController::initialize(
-//  	node_id, &hcan1, set_control_state
-//  );
-//	uint64_t next_1hz_service_at = HAL_GetTick();
-//	uint64_t next_10hz_service_at = HAL_GetTick();
-//
-//	// Starts the 1s pulse asap (no weird user setup calls).
-//	// I don't think this changes timing at all but maybe it does.
-//
-//
-//	//allow all control domains.
-//	set_control_state(TRANSITION_STARTUP);
+	auto set_control_state = [&](uint8_t state) {
+		if (state == old_state) return;
+		old_state = state;
+		switch (state) {
+		case TRANSITION_STARTUP: {
+			rev4.set_lighting_control_state(&startup_state);
+			rev4.set_domain_colour(CD_BEACON, WHITE);
+			break;
+		}
+		case TRANSITION_GROUND: {
+			rev4.set_domain_colour(CD_NAV, BLUE);
+			rev4.set_domain_colour(CD_BEACON, RED);
+			rev4.set_lighting_control_state(&ground_state);
+			break;
+		}
+		case TRANSITION_TAXI: {
+			rev4.set_domain_colour(CD_NAV, BLUE);
+			rev4.set_domain_colour(CD_BEACON, WHITE);
+			rev4.set_lighting_control_state(&taxi_state);
+			break;
+		}
+		case TRANSITION_TAKEOFF: {
+			rev4.set_domain_colour(CD_NAV, GREEN);
+			rev4.set_domain_colour(CD_BEACON, WHITE);
+			rev4.set_lighting_control_state(&takeoff_state);
+			break;
+		}
+		case TRANSITION_FLIGHT: {
+			rev4.set_domain_colour(CD_NAV, BLUE);
+			rev4.set_domain_colour(CD_BEACON, RED);
+			rev4.set_lighting_control_state(&flight_state);
+			break;
+		}
+		case TRANSITION_LANDING: {
+			rev4.set_domain_colour(CD_NAV, BLUE);
+			rev4.set_domain_colour(CD_BEACON, WHITE);
+			rev4.set_lighting_control_state(&land_state);
+			break;
+		}
+		default: {
+			break;
+
+		}
+		}
+	};
+  initializeNodeId();
+  CANController::initialize(
+  	node_id, &hcan1, set_control_state
+  );
+	uint64_t next_1hz_service_at = HAL_GetTick();
+	uint64_t next_10hz_service_at = HAL_GetTick();
+
+	// Starts the 1s pulse asap (no weird user setup calls).
+	// I don't think this changes timing at all but maybe it does.
 
 
-//  lighting_control_state_demo();
+	//allow all control domains.
+	set_control_state(TRANSITION_STARTUP);
+
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -269,18 +268,18 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-//		const uint64_t ts = HAL_GetTick();
-//
-//		if (ts >= next_1hz_service_at){
-//		  next_1hz_service_at += 1000ULL;
-//		}
-//
-//		if (ts >= next_10hz_service_at) {
-//			next_10hz_service_at += 3000ULL;
-//			//process10HzTasks(ts);
-//		}
-//
-//		groundStateBreathe(old_state);
+		const uint64_t ts = HAL_GetTick();
+
+		if (ts >= next_1hz_service_at){
+		  next_1hz_service_at += 1000ULL;
+		}
+
+		if (ts >= next_10hz_service_at) {
+			next_10hz_service_at += 3000ULL;
+//			process10HzTasks(ts);
+		}
+
+		groundStateBreathe(old_state);
 		HAL_Delay(20);
 
 	}
