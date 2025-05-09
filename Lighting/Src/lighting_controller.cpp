@@ -367,19 +367,25 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static uint8_t led_index = 0;
 	HAL_TIM_Base_Start_IT(&htim2);
 
+	if (rev4.get_lighting_control_state() != nullptr) { //If a state has been SET.
+		uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
+		rev4.configure_active_domains(allowed_domains);
+	}
+
 	if (stage == 0) { 			// STROBE ON
-		rev4.activate_domain(CD_STROBE);
+		rev4.deactivate_domain(CD_STROBE);
 		stage = 1;
 	} else if (stage == 1) { 	// STROBE OFF
-		rev4.deactivate_domain(CD_STROBE);
+		rev4.activate_domain(CD_STROBE);
 		stage = 2;
 	} else if (stage == 2) {	// STROBE ON
-		rev4.activate_domain(CD_STROBE);
+		rev4.deactivate_domain(CD_STROBE);
 		stage = 3;
 	} else if (stage == 3) {	// STROBE OFF
-		rev4.deactivate_domain(CD_STROBE);
+		rev4.activate_domain(CD_STROBE);
 		stage = 4;
 	} else if (stage == 4) {	// OFF
+		rev4.deactivate_domain(CD_STROBE);
 		stage = 5;
 	} else if (stage == 5) {	// OFF
 		stage = 6;
@@ -392,10 +398,6 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 
-	if (rev4.get_lighting_control_state() != nullptr) { //If a state has been SET.
-		uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
-		rev4.configure_active_domains(allowed_domains);
-	}
 }
 
 void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {

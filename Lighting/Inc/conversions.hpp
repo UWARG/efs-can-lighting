@@ -25,6 +25,7 @@ constexpr RGB_colour_t GREEN = {0, 255, 0};
 constexpr RGB_colour_t CYAN = {0, 255, 255};
 constexpr RGB_colour_t BROWN = {139, 69, 19};
 constexpr RGB_colour_t PURPLE = {255, 0, 255};
+constexpr RGB_colour_t BLUE = {0, 0, 255};
 
 typedef struct {
 	uint16_t hue;		// TODO: limit this to 0-360 (degrees)
@@ -88,7 +89,8 @@ enum LightingStateTransition {
 	TRANSITION_FLIGHT = 4,
 	TRANSITION_BRAKE = 5,
 	TRANSITION_LANDING = 6,
-	TRANSITION_SEARCH = 7
+	TRANSITION_SEARCH = 7,
+	TRANSITION_STARTUP = 8
 };
 
 #endif /* INC_CONVERSIONS_HPP_ */
