@@ -168,6 +168,15 @@ void process1HzTasks(uint64_t timestamp_usec)
     send_NodeStatus();
 }
 
+void init(uint8_t node_id) {
+    canardInit(&canard,
+               memory_pool,
+               sizeof(memory_pool),
+               onTransferReceived,
+               shouldAcceptTransfer,
+               NULL);
+    canardSetLocalNodeID(&canard, node_id);
+}
 
 /*
   Transmits all frames from the TX queue, receives up to one frame.

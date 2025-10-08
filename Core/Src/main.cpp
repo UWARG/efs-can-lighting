@@ -49,7 +49,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 void initializeNodeId() {
-	node_id = 1;
+	node_id = 1; // TODO Hash an 8 bit ID based on 96 bit UID.
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
@@ -207,7 +207,6 @@ int main(void)
 			rev4.set_domain_colour(CD_BEACON, GREEN);
 			rev4.set_lighting_control_state(&takeoff_state);
 			break;
-		}
 		case TRANSITION_FLIGHT: {
 			rev4.set_domain_colour(CD_BEACON, RED);
 			rev4.set_lighting_control_state(&flight_state);
@@ -223,14 +222,12 @@ int main(void)
 
 		}
 		}
+		}
 	};
-  initializeNodeId();
-  canardInit(&canard,
-		  (void*)memory_pool,
-		  sizeof(memory_pool),
-		  onTransferReceived,
-		  shouldAcceptTransfer,
-		  NULL);
+
+	initializeNodeId();
+	init(node_id);
+
 	uint64_t next_1hz_service_at = HAL_GetTick();
 	uint64_t next_10hz_service_at = HAL_GetTick();
 
@@ -247,7 +244,6 @@ int main(void)
 //  lighting_control_state_demo();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	uint8_t state = 8;
   while (1)
   {
     /* USER CODE END WHILE */
