@@ -115,6 +115,10 @@ int16_t canardSTM32Transmit(CAN_HandleTypeDef *hcan, const CanardCANFrame* const
 	return 0;
 }
 
+uint64_t micros64(void) {
+	return ((uint64_t)HAL_GetTick()) * 1000;
+}
+
 /**
   * @brief  Return a unique ID made out of the 96-bit STM32 UID
   * @param  id an array of size 16 to fill with the unique ID

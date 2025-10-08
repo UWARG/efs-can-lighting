@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <lighting_demos.hpp>
 #include <string.h>
+#include <dronecan_node.h>
+#include <canard_stm32_driver.h>
 
 /* USER CODE END Includes */
 
@@ -22,7 +24,6 @@
 //#define CYCLE_ONE_LED_ON
 //#define CONSTANT_COLOR
 #include "lighting_controller.hpp"
-#include "can_controller.hpp"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -34,7 +35,7 @@
 
 /* USER CODE BEGIN PV */
 extern TIM_HandleTypeDef htim6;
-static uint32_t node_id;
+static uint8_t node_id;
 
 /* USER CODE END PV */
 
@@ -47,31 +48,12 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-/**
-  * @brief  Return a unique ID made out of the 96-bit STM32 UID
-  * @param  id an array of size 16 to fill with the unique ID
-  * @retval None
-  */
-void getUniqueID(uint8_t id[16]){
-	uint32_t HALUniqueIDs[4];
-	// Make Unique ID out of the 96-bit STM32 UID
-	memset(id, 0, 16);
-	HALUniqueIDs[0] = HAL_GetUIDw0();
-	HALUniqueIDs[1] = HAL_GetUIDw1();
-	HALUniqueIDs[2] = HAL_GetUIDw2();
-	HALUniqueIDs[3] = HAL_GetUIDw1(); // repeating UIDw1 for this, no specific reason I chose this..
-	memcpy(id, HALUniqueIDs, 16);
-}
-
 void initializeNodeId() {
-	uint8_t buffer[16];
-	getUniqueID(buffer);
-	uint32_t *parts = (uint32_t *)buffer;
-	node_id = parts[0] ^ parts[1] ^ parts[2];
+	node_id = 1;
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-	CANController::onTransferReceived(hcan, CAN_RX_FIFO0);
+    dronecan_on_can_rx(hcan);
 }
 /*
 
@@ -243,9 +225,12 @@ int main(void)
 		}
 	};
   initializeNodeId();
-  CANController::initialize(
-  	node_id, &hcan1, set_control_state
-  );
+  canardInit(&canard,
+		  (void*)memory_pool,
+		  sizeof(memory_pool),
+		  onTransferReceived,
+		  shouldAcceptTransfer,
+		  NULL);
 	uint64_t next_1hz_service_at = HAL_GetTick();
 	uint64_t next_10hz_service_at = HAL_GetTick();
 
@@ -273,6 +258,7 @@ int main(void)
 
 		if (ts >= next_1hz_service_at){
 		  next_1hz_service_at += 1000ULL;
+		  process1HzTasks();
 		}
 
 		if (ts >= next_10hz_service_at) {
