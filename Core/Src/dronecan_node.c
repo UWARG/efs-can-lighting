@@ -5,14 +5,18 @@
  *      Author: micah
  */
 
+#include "can.h"
 #include "canard.h"
 #include "canard_stm32_driver.h"
 #include "dronecan_msgs.h"
 #include "uavcan.protocol.GetNodeInfo_res.h"
 
 
+uint8_t armingStatus;
 CanardInstance canard;
-uint8_t memory_pool[1024];
+uint8_t memory_pool[4096];
+extern uint64_t micros64(void);
+extern CAN_HandleTypeDef hcan1;
 
 struct uavcan_protocol_NodeStatus node_status;
 
@@ -65,7 +69,6 @@ void dronecan_on_can_rx(CAN_HandleTypeDef *hcan) {
 
     if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, data) != HAL_OK)
         return;
-
     frame.id = (rx_header.IDE == CAN_ID_EXT) ? rx_header.ExtId : rx_header.StdId;
     if (rx_header.IDE == CAN_ID_EXT)
         frame.id |= CANARD_CAN_FRAME_EFF;
@@ -88,6 +91,18 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer)
             break;
         }
         }
+    }
+
+    if (transfer->transfer_type == CanardTransferTypeBroadcast) {
+    	switch (transfer->data_type_id) {
+    	case UAVCAN_EQUIPMENT_SAFETY_ARMINGSTATUS_ID: {
+            struct uavcan_equipment_safety_ArmingStatus msg;
+            if (!uavcan_equipment_safety_ArmingStatus_decode(transfer, &msg)) {
+                armingStatus = msg.status;
+            }
+    		break;
+    	}
+    	}
     }
 }
 
@@ -116,6 +131,13 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
         }
         }
     }
+    if (transfer_type == CanardTransferTypeBroadcast) {
+        if (data_type_id == UAVCAN_EQUIPMENT_SAFETY_ARMINGSTATUS_ID) {
+            *out_data_type_signature = UAVCAN_EQUIPMENT_SAFETY_ARMINGSTATUS_SIGNATURE;
+            return true;
+        }
+    }
+
     // we don't want any other messages
     return false;
 }
@@ -141,7 +163,7 @@ void send_NodeStatus(void)
     // we need a static variable for the transfer ID. This is
     // incremeneted on each transfer, allowing for detection of packet
     // loss
-    uint8_t transfer_id;
+    static uint8_t transfer_id = 0;
 
     canardBroadcast(&canard,
                     UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
@@ -155,12 +177,12 @@ void send_NodeStatus(void)
 /*
   This function is called at 1 Hz rate from the main loop.
 */
-void process1HzTasks(uint64_t timestamp_usec)
+void process1HzTasks()
 {
     /*
       Purge transfers that are no longer transmitted. This can free up some memory
     */
-    canardCleanupStaleTransfers(&canard, timestamp_usec);
+    canardCleanupStaleTransfers(&canard, micros64());
 
     /*
      Transmit the node status message
@@ -201,7 +223,7 @@ void processTxRxOnce(CAN_HandleTypeDef *hcan)
 
     // Receiving
     CanardCANFrame rx_frame;
-    const int16_t rx_res = canardSTM32Recieve(&canard, CAN_RX_FIFO0, &rx_frame);
+    const int16_t rx_res = canardSTM32Recieve(&hcan1, CAN_RX_FIFO0, &rx_frame);
     if (rx_res < 0) {
         ;
     }

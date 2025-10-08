@@ -18,6 +18,7 @@ extern "C" {
 extern CanardInstance canard;
 extern uint8_t memory_pool[1024];
 
+void processTxRxOnce(CAN_HandleTypeDef *hcan);
 void init(uint8_t node_id);
 void dronecan_on_can_rx(CAN_HandleTypeDef *hcan);
 void process1HzTasks();

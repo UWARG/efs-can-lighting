@@ -35,7 +35,9 @@
 
 /* USER CODE BEGIN PV */
 extern TIM_HandleTypeDef htim6;
+extern CAN_HandleTypeDef hcan1;
 static uint8_t node_id;
+extern uint8_t armingStatus;
 
 /* USER CODE END PV */
 
@@ -249,8 +251,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
 		const uint64_t ts = HAL_GetTick();
+		processTxRxOnce(&hcan1);
+		if (armingStatus != 0) {
+			set_control_state(TRANSITION_FLIGHT);
+		}
+		else {
+			set_control_state(TRANSITION_STARTUP);
+		}
 
 		if (ts >= next_1hz_service_at){
 		  next_1hz_service_at += 1000ULL;
