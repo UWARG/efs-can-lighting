@@ -37,25 +37,80 @@
 extern TIM_HandleTypeDef htim6;
 extern CAN_HandleTypeDef hcan1;
 static uint8_t node_id;
-extern uint8_t armingStatus;
+extern volatile uint8_t arming_status;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+uint8_t state = TRANSITION_STARTUP;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/*
+ *
+ */
+LC_State_STARTUP startup_state;
+LC_State_GROUND ground_state;
+LC_State_TAXI taxi_state;
+LC_State_TAKEOFF takeoff_state;
+LC_State_FLIGHT flight_state;
+LC_State_BRAKE brake_state;
+LC_State_LANDING land_state;
 
-void initializeNodeId() {
+uint8_t old_state = 255;
+
+void set_control_state(uint8_t state) {
+    if (state == old_state) return;
+    old_state = state;
+
+    switch (state) {
+        case TRANSITION_STARTUP:
+            rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
+            rev4.set_lighting_control_state(&startup_state);
+            break;
+        case TRANSITION_GROUND:
+            rev4.set_lighting_control_state(&ground_state);
+            rev4.set_domain_colour(CD_BEACON, RED);
+            break;
+        case TRANSITION_TAXI:
+            rev4.set_lighting_control_state(&taxi_state);
+            rev4.set_domain_colour(CD_BEACON, RED);
+            break;
+        case TRANSITION_TAKEOFF:
+            rev4.set_domain_colour(CD_BEACON, GREEN);
+            rev4.set_lighting_control_state(&takeoff_state);
+            break;
+        case TRANSITION_FLIGHT:
+            rev4.set_domain_colour(CD_BEACON, RED);
+            rev4.set_lighting_control_state(&flight_state);
+            break;
+        case TRANSITION_LANDING:
+            rev4.set_domain_colour(CD_BEACON, RED);
+            rev4.set_lighting_control_state(&land_state);
+            break;
+        default:
+            break;
+    }
+}
+
+void initializeNodeID() {
 	node_id = 1; // TODO Hash an 8 bit ID based on 96 bit UID.
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
     dronecan_on_can_rx(hcan);
+    // TODO: Insert more robust control state logic
+    if (arming_status == 0) {
+    	state = TRANSITION_STARTUP;
+    }
+    else {
+    	state = TRANSITION_FLIGHT;
+    }
+
+    set_control_state(state);
 }
 /*
 
@@ -171,63 +226,7 @@ int main(void)
 
 	rev4.configure_active_domains(255);
 
-	//Declare control states
-	LC_State_STARTUP startup_state;
-	LC_State_GROUND ground_state;
-	LC_State_TAXI taxi_state;
-	LC_State_TAKEOFF takeoff_state;
-	LC_State_FLIGHT flight_state;
-	LC_State_BRAKE brake_state;
-	LC_State_LANDING land_state;
-
-	uint8_t old_state = 255;
-
-
-	auto set_control_state = [&](uint8_t state) {
-		if (state == old_state) return;
-		if (state != TRANSITION_STARTUP) {
-			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 99);
-		}
-		old_state = state;
-		switch (state) {
-		case TRANSITION_STARTUP: {
-			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
-			rev4.set_lighting_control_state(&startup_state);
-			break;
-		}
-		case TRANSITION_GROUND: {
-			rev4.set_lighting_control_state(&ground_state);
-			rev4.set_domain_colour(CD_BEACON, RED);
-			break;
-		}
-		case TRANSITION_TAXI: {
-			rev4.set_lighting_control_state(&taxi_state);
-			rev4.set_domain_colour(CD_BEACON, RED);
-			break;
-		}
-		case TRANSITION_TAKEOFF: {
-			rev4.set_domain_colour(CD_BEACON, GREEN);
-			rev4.set_lighting_control_state(&takeoff_state);
-			break;
-		case TRANSITION_FLIGHT: {
-			rev4.set_domain_colour(CD_BEACON, RED);
-			rev4.set_lighting_control_state(&flight_state);
-			break;
-		}
-		case TRANSITION_LANDING: {
-			rev4.set_domain_colour(CD_BEACON, RED);
-			rev4.set_lighting_control_state(&land_state);
-			break;
-		}
-		default: {
-			break;
-
-		}
-		}
-		}
-	};
-
-	initializeNodeId();
+	initializeNodeID();
 	init(node_id);
 
 	uint64_t next_1hz_service_at = HAL_GetTick();
@@ -252,13 +251,6 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		const uint64_t ts = HAL_GetTick();
-		processTxRxOnce(&hcan1);
-		if (armingStatus != 0) {
-			set_control_state(TRANSITION_FLIGHT);
-		}
-		else {
-			set_control_state(TRANSITION_STARTUP);
-		}
 
 		if (ts >= next_1hz_service_at){
 		  next_1hz_service_at += 1000ULL;
@@ -272,7 +264,7 @@ int main(void)
 		}
 
 		groundStateBreathe(old_state);
-		HAL_Delay(20);
+		// HAL_Delay(20);
 
 	}
   /* USER CODE END 3 */

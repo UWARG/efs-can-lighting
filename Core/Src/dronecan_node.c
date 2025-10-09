@@ -12,7 +12,7 @@
 #include "uavcan.protocol.GetNodeInfo_res.h"
 
 
-uint8_t armingStatus;
+volatile uint8_t arming_status;
 CanardInstance canard;
 uint8_t memory_pool[4096];
 extern uint64_t micros64(void);
@@ -33,19 +33,18 @@ void handle_GetNodeInfo(CanardInstance *ins, CanardRxTransfer *transfer)
     node_status.uptime_sec = micros64() / 1000000ULL;
     pkt.status = node_status;
 
-    // fill in your major and minor firmware version
     pkt.software_version.major = 1;
     pkt.software_version.minor = 2;
     pkt.software_version.optional_field_flags = 0;
-    pkt.software_version.vcs_commit = 0; // should put git hash in here
+    pkt.software_version.vcs_commit = 0;
 
-    // should fill in hardware version
-    pkt.hardware_version.major = 2;
-    pkt.hardware_version.minor = 3;
+    // REV Board version
+    pkt.hardware_version.major = 4;
+    pkt.hardware_version.minor = 0;
 
     getUniqueID(pkt.hardware_version.unique_id);
 
-    strncpy((char*)pkt.name.data, "SimpleNode", sizeof(pkt.name.data));
+    strncpy((char*)pkt.name.data, "REV_LED", sizeof(pkt.name.data));
     pkt.name.len = strnlen((char*)pkt.name.data, sizeof(pkt.name.data));
 
     uint16_t total_size = uavcan_protocol_GetNodeInfoResponse_encode(&pkt, buffer);
@@ -98,7 +97,10 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer)
     	case UAVCAN_EQUIPMENT_SAFETY_ARMINGSTATUS_ID: {
             struct uavcan_equipment_safety_ArmingStatus msg;
             if (!uavcan_equipment_safety_ArmingStatus_decode(transfer, &msg)) {
-                armingStatus = msg.status;
+                uint8_t new_status = msg.status;
+                if (new_status != arming_status) {
+                    arming_status = new_status;
+                }
             }
     		break;
     	}
@@ -155,14 +157,10 @@ void send_NodeStatus(void)
     node_status.health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
     node_status.mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
     node_status.sub_mode = 0;
-    // put whatever you like in here for display in GUI
     node_status.vendor_specific_status_code = 1234;
 
     uint32_t len = uavcan_protocol_NodeStatus_encode(&node_status, buffer);
 
-    // we need a static variable for the transfer ID. This is
-    // incremeneted on each transfer, allowing for detection of packet
-    // loss
     static uint8_t transfer_id = 0;
 
     canardBroadcast(&canard,

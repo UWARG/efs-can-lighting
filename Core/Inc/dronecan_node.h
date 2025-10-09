@@ -16,7 +16,8 @@ extern "C" {
 #endif
 
 extern CanardInstance canard;
-extern uint8_t memory_pool[1024];
+extern uint8_t memory_pool[4096];
+extern volatile uint8_t arming_status;
 
 void processTxRxOnce(CAN_HandleTypeDef *hcan);
 void init(uint8_t node_id);
