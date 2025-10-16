@@ -3,6 +3,7 @@
 #include "dma.h"
 #include "tim.h"
 #include "gpio.h"
+#include "rtos.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <time.h>
@@ -101,16 +102,62 @@ void initializeNodeID() {
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-    dronecan_on_can_rx(hcan);
+    dronecan_on_can_rx(&hcan1);
     // TODO: Insert more robust control state logic
-    if (arming_status == 0) {
-    	state = TRANSITION_STARTUP;
-    }
-    else {
-    	state = TRANSITION_FLIGHT;
-    }
+}
 
-    set_control_state(state);
+/**
+ * Task function for ground breathe effect.
+ */
+void ground_breathe_task(void) {
+	while (1) {
+		if (state == TRANSITION_GROUND) {
+			static uint8_t brightness = 0;
+			static uint8_t brightness_direction = 1;
+			uint8_t brightness_max = 50;
+
+			if (brightness <= 0) {
+				brightness = 0;
+				brightness_direction = 1;
+			} else if (brightness >= brightness_max) {
+				brightness = brightness_max;
+				brightness_direction = -1;
+			}
+			rev4.set_domain_brightness(CD_BEACON, brightness);
+			rev4.activate_domain(CD_BEACON);
+			brightness += brightness_direction;
+		}
+		rtos_delay(20ULL);
+	}
+}
+
+/**
+ * Task function for processing 1Hz tasks.
+ */
+void process_1hz_task(void) {
+	while (1) {
+		process1HzTasks();
+		rtos_delay(1000ULL);
+	}
+}
+
+void set_control_state_task(void) {
+	while (1) {
+		set_control_state(state);
+		rtos_delay(100ULL);
+	}
+}
+
+void calculate_next_state(void) {
+	while (1) {
+		if (arming_status == 0) {
+			state = TRANSITION_STARTUP;
+		}
+		else {
+			state = TRANSITION_GROUND;
+		}
+		rtos_delay(3000ULL);
+	}
 }
 /*
 
@@ -143,25 +190,6 @@ void process10HzTasks(uint64_t timestamp_usec) {
 }
 */
 extern LightingController rev4;
-
-void groundStateBreathe(uint8_t state) {
-	if (state == TRANSITION_GROUND) {
-		static uint8_t brightness = 0;
-		static uint8_t brightness_direction = 1;
-		uint8_t brightness_max = 50;
-
-		if (brightness <= 0) {
-			brightness = 0;
-			brightness_direction = 1;
-		} else if (brightness >= brightness_max) {
-			brightness = brightness_max;
-			brightness_direction = -1;
-		}
-		rev4.set_domain_brightness(CD_BEACON, brightness);
-		rev4.activate_domain(CD_BEACON);
-		brightness += brightness_direction;
-	}
-}
 
 
 
@@ -219,54 +247,35 @@ int main(void)
 	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 99);
 	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 99);
 	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 99);
-	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 99); //CHANGE THIS TO RED.
+	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 99);
 	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 99);
 	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 99);
 	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 99);
 
 	rev4.configure_active_domains(255);
 
+	// DroneCAN initialization
 	initializeNodeID();
 	init(node_id);
 
-	uint64_t next_1hz_service_at = HAL_GetTick();
-	uint64_t next_10hz_service_at = HAL_GetTick();
-
 	set_control_state(TRANSITION_STARTUP);
 
+	// RTOS initialization
+	rtos_init();
+	// Create tasks
+	rtos_create_task(ground_breathe_task, 1);
+	rtos_create_task(process_1hz_task, 1);
+	rtos_create_task(set_control_state_task, 1);
+	rtos_create_task(calculate_next_state, 1);
 
-	// Starts the 1s pulse asap (no weird user setup calls).
-	// I don't think this changes timing at all but maybe it does.
+	// Start the RTOS scheduler.
+	rtos_start();
 
-
-	//allow all control domains.
 
 
 //  lighting_control_state_demo();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-		const uint64_t ts = HAL_GetTick();
-
-		if (ts >= next_1hz_service_at){
-		  next_1hz_service_at += 1000ULL;
-		  process1HzTasks();
-		}
-
-		if (ts >= next_10hz_service_at) {
-			next_10hz_service_at += 3000ULL;
-			//state = 8 - state;
-			//set_control_state(state);
-		}
-
-		groundStateBreathe(old_state);
-		// HAL_Delay(20);
-
-	}
   /* USER CODE END 3 */
 }
 
