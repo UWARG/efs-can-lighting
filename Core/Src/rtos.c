@@ -126,5 +126,6 @@ void SysTick_Handler(void) {
 		}
 	}
     rtos_tick++;
+    HAL_IncTick();
     schedule();
 }
