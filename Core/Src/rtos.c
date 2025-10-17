@@ -42,7 +42,7 @@ void rtos_init(void) {
         tasks[i].priority = 0;
     }
 
-    rtos_create_task(&rtos_idle_task, RTOS_IDLE_TASK_PRIORITY); // Idle task
+    rtos_create_task(&rtos_idle_task, RTOS_LEAST_PRIORITY); // Idle task
     current_task = 0; // Start with idle task
 }
 
@@ -52,7 +52,7 @@ int rtos_create_task(void (*task_func)(void), uint8_t priority) {
             tasks[i].stack_ptr = &tasks[i].stack[RTOS_STACK_SIZE];
             *(--tasks[i].stack_ptr) = (1U << 24); // xPSR
             *(--tasks[i].stack_ptr) = (uint32_t)task_func; // PC
-            *(--tasks[i].stack_ptr) = 0xFFFFFFFD; // LR
+            *(--tasks[i].stack_ptr) = RTOS_LR; // LR
             for (int j = 0; j < 5; j++) {
                 *(--tasks[i].stack_ptr) = 0; // R12, R3, R2, R1, R0
             }
@@ -98,14 +98,15 @@ static __attribute__((naked)) void context_switch(uint32_t **current_sp, uint32_
 }
 
 static void schedule(void) {
-    int min_priority = 255;
-    int next_task = 0;
-    for (int i = 0; i< RTOS_MAX_TASKS; i++) {
-        if (tasks[i].state == READY && tasks[i].priority < min_priority) {
-            min_priority = tasks[i].priority;
-            next_task = i;
-        }
+    int min_priority = RTOS_LEAST_PRIORITY;
+    int next_task = current_task;
+    for (int i = 1; i <= RTOS_MAX_TASKS; i++) {
+    	if (tasks[(current_task + i) % RTOS_MAX_TASKS].state == READY && tasks[(current_task + i) % RTOS_MAX_TASKS].priority < min_priority) {
+    		min_priority = tasks[(current_task + i) % RTOS_MAX_TASKS].priority;
+			next_task = (current_task + i) % RTOS_MAX_TASKS;
+    	}
     }
+
     if (next_task == current_task) {
     	return; // No other ready tasks
     }

@@ -13,7 +13,8 @@
 #define RTOS_MAX_TASKS 5
 #define RTOS_STACK_SIZE 64
 #define RTOS_TICK_HZ 1000U // 1ms tick
-#define RTOS_IDLE_TASK_PRIORITY 255 // Lowest priority
+#define RTOS_LEAST_PRIORITY 255 // Lowest priority
+#define RTOS_LR 0xFFFFFFFD // EXC_RETURN
 
 #ifdef __cplusplus
 extern "C" {
