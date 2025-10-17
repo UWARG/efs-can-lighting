@@ -129,8 +129,8 @@ static void schedule(void) {
     }
     current_task = next_task;
     tasks[current_task].state = RUNNING;
-    context_switch(&tasks[old_task].stack_ptr, &tasks[current_task].stack_ptr);
     rtos_exit_critical();
+    context_switch(&tasks[old_task].stack_ptr, &tasks[current_task].stack_ptr);
 }
 
 // Interrupt Handlers
