@@ -263,10 +263,10 @@ int main(void)
 	// RTOS initialization
 	rtos_init();
 	// Create tasks
-	rtos_create_task(ground_breathe_task, 1);
-	rtos_create_task(process_1hz_task, 1);
-	rtos_create_task(set_control_state_task, 1);
-	rtos_create_task(calculate_next_state_task, 1);
+	rtos_create_task(ground_breathe_task, 1); // Most important due to visibility
+	rtos_create_task(process_1hz_task, 3); // Can be delayed a bit
+	rtos_create_task(set_control_state_task, 2); // Medium priority
+	rtos_create_task(calculate_next_state_task, 4); // Least important
 
 	// Start the RTOS scheduler.
 	rtos_start();
