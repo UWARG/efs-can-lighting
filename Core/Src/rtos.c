@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "rtos.h"
+#include "stm32l4xx_hal.h"
 
 typedef struct {
     uint32_t *stack_ptr;
@@ -18,7 +19,7 @@ typedef struct {
 } Task;
 
 static Task tasks[RTOS_MAX_TASKS];
-static int current_task;
+static volatile int current_task;
 static volatile uint32_t rtos_tick = 0;
 enum {READY, RUNNING, BLOCKED};
 
@@ -35,11 +36,20 @@ void rtos_idle_task(void) {
 	}
 }
 
+static void rtos_enter_critical(void) {
+	__disable_irq();
+}
+
+static void rtos_exit_critical(void) {
+	__enable_irq();
+}
+
 void rtos_init(void) {
     for (int i = 0; i < RTOS_MAX_TASKS; i++) {
         tasks[i].state = BLOCKED;
         tasks[i].stack_ptr = NULL;
         tasks[i].priority = 0;
+        tasks[i].wake_tick = 0;
     }
 
     rtos_create_task(&rtos_idle_task, RTOS_LEAST_PRIORITY); // Idle task
@@ -68,7 +78,7 @@ int rtos_create_task(void (*task_func)(void), uint8_t priority) {
 }
 
 void rtos_start(void) {
-    SysTick_Handler(); // Initial call to start the first task
+    schedule(); // Initial call to start the first task
 }
 
 uint32_t rtos_get_tick(void) {
@@ -80,8 +90,10 @@ void rtos_set_tick(uint32_t new_tick) {
 }
 
 void rtos_delay(uint32_t ticks) {
+	rtos_enter_critical();
     tasks[current_task].wake_tick = rtos_tick + ticks;
     tasks[current_task].state = BLOCKED;
+    rtos_exit_critical();
     schedule();
 }
 
@@ -98,6 +110,7 @@ static __attribute__((naked)) void context_switch(uint32_t **current_sp, uint32_
 }
 
 static void schedule(void) {
+	rtos_enter_critical();
     int min_priority = RTOS_LEAST_PRIORITY;
     int next_task = current_task;
     for (int i = 1; i <= RTOS_MAX_TASKS; i++) {
@@ -117,16 +130,19 @@ static void schedule(void) {
     current_task = next_task;
     tasks[current_task].state = RUNNING;
     context_switch(&tasks[old_task].stack_ptr, &tasks[current_task].stack_ptr);
+    rtos_exit_critical();
 }
 
 // Interrupt Handlers
 void SysTick_Handler(void) {
+	rtos_enter_critical();
+    rtos_tick++;
+    HAL_IncTick();
 	for (int i = 0; i < RTOS_MAX_TASKS; i++) {
 		if (tasks[i].state == BLOCKED && rtos_tick >= tasks[i].wake_tick) {
 			tasks[i].state = READY;
 		}
 	}
-    rtos_tick++;
-    HAL_IncTick();
     schedule();
+    rtos_exit_critical();
 }
