@@ -137,18 +137,18 @@ void ground_breathe_task(void) {
 void process_1hz_task(void) {
 	while (1) {
 		process1HzTasks();
-		rtos_delay(1000ULL);
+		rtos_delay(RTOS_TICK_HZ);
 	}
 }
 
 void set_control_state_task(void) {
 	while (1) {
 		set_control_state(state);
-		rtos_delay(100ULL);
+		rtos_delay(RTOS_TICK_HZ / 10);
 	}
 }
 
-void calculate_next_state(void) {
+void calculate_next_state_task(void) {
 	while (1) {
 		if (arming_status == 0) {
 			state = TRANSITION_STARTUP;
@@ -156,7 +156,7 @@ void calculate_next_state(void) {
 		else {
 			state = TRANSITION_GROUND;
 		}
-		rtos_delay(3000ULL);
+		rtos_delay(RTOS_TICK_HZ / 2);
 	}
 }
 /*
@@ -266,7 +266,7 @@ int main(void)
 	rtos_create_task(ground_breathe_task, 1);
 	rtos_create_task(process_1hz_task, 1);
 	rtos_create_task(set_control_state_task, 1);
-	rtos_create_task(calculate_next_state, 1);
+	rtos_create_task(calculate_next_state_task, 1);
 
 	// Start the RTOS scheduler.
 	rtos_start();

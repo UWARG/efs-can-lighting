@@ -42,7 +42,7 @@ void rtos_init(void) {
         tasks[i].priority = 0;
     }
 
-    rtos_create_task(&rtos_idle_task, 255); // Idle task
+    rtos_create_task(&rtos_idle_task, RTOS_IDLE_TASK_PRIORITY); // Idle task
     current_task = 0; // Start with idle task
 }
 

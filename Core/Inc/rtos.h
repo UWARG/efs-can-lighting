@@ -10,8 +10,10 @@
 
 #include <stdint.h>
 
-#define RTOS_MAX_TASKS 4
-#define RTOS_STACK_SIZE 32
+#define RTOS_MAX_TASKS 5
+#define RTOS_STACK_SIZE 64
+#define RTOS_TICK_HZ 1000U // 1ms tick
+#define RTOS_IDLE_TASK_PRIORITY 255 // Lowest priority
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,7 +74,7 @@ void set_control_state_task(void);
 /**
  * Calculates the next control state.
  */
-void calculate_next_state(void);
+void calculate_next_state_task(void);
 
 #ifdef __cplusplus
 }
