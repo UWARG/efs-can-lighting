@@ -21,12 +21,15 @@ extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim;
 
 // TODO: custom types?
-static constexpr uint8_t NUM_LEDS = 10;
-static constexpr uint8_t NUM_LEDS_PADDING = 10;
-static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS
-		+ NUM_LEDS_PADDING * 2) * 24 * 2;		// TODO: remove magic num
-static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS
-		+ NUM_LEDS_PADDING * 2) * 24 * 2;	// TODO: remove magic num
+extern constexpr uint8_t NUM_LEDS = 12;
+static constexpr uint8_t NUM_LEDS_PADDING = 8;
+
+// Format: 1 = 24-bit LED, 0 = 32-bit LED (with 8-bit padding)
+static const bool format24leds[NUM_LEDS] = {1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1};
+
+static constexpr uint16_t PACKET_SIZE = 8*32 + 4*24 + NUM_LEDS_PADDING*32;
+static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = PACKET_SIZE*2;
+static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = PACKET_SIZE;
 
 uint8_t dma_output_buffer[DMA_OUTPUT_BUFFER_SIZE];
 uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
@@ -109,10 +112,13 @@ LightingController::LightingController(uint8_t *dma_output_buffer,
 	this->lighting_control_state = nullptr;
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
-	// Initialize all of the internal LED's as well
+	// Initialize all of the internal LED's with cumulative offset
+	int offset = NUM_LEDS_PADDING * 32;
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].initialize_led_off(
-				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
+		this->leds[i].padding = !format24leds[i];
+		this->leds[i].initialize_led_off(bank_output_buffer + offset);
+		if (format24leds[i]) offset += 24;
+		else offset += 32;
 	}
 }
 
@@ -304,8 +310,8 @@ LightingControlState *LightingController::get_lighting_control_state() {
 void LightingController::initialize_bank_buffer_off() {
 	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
 		// Check if the bit is a padding bit or value bit
-		if (i < 24 * NUM_LEDS_PADDING
-				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
+		if (i < 32 * NUM_LEDS_PADDING
+				) {
 			this->bank_buffer[i] = 0;
 		} else {
 			this->bank_buffer[i] = PWM_LO;
@@ -316,8 +322,8 @@ void LightingController::initialize_bank_buffer_off() {
 void LightingController::initialize_bank_buffer_on() {
 	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
 		// Check if the bit is a padding bit or value bit
-		if (i < 24 * NUM_LEDS_PADDING
-				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
+		if (i < 32 * NUM_LEDS_PADDING
+				) {
 			this->bank_buffer[i] = 0;
 		} else {
 			if ((i % 8) > 4) {

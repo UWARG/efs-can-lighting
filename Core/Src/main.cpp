@@ -168,88 +168,90 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
 
-	HAL_TIM_Base_Start_IT(&htim6);
-	HAL_TIM_Base_Start_IT(&htim2);
+	// HAL_TIM_Base_Start_IT(&htim6);
+	// HAL_TIM_Base_Start_IT(&htim2);
 
 	rev4.start_lighting_control(); //start lighting
-	uint8_t all_domains_enabled = (1 << 7);
-	rev4.configure_allowed_domains(all_domains_enabled);
+	HAL_Delay(100);
+	rev4.recolour_all(CYAN, 100);
+// 	uint8_t all_domains_enabled = (1 << 7);
+// 	rev4.configure_allowed_domains(all_domains_enabled);
 
-	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
-	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 99);
-	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 99);
-	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 99);
-	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 99); //CHANGE THIS TO RED.
-	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 99);
-	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 99);
-	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 99);
+// 	//set up the domain colours and brightness
+// 	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
+// 	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 99);
+// 	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 99);
+// 	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 99);
+// 	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 99); //CHANGE THIS TO RED.
+// 	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 99);
+// 	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 99);
+// 	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 99);
 
-	rev4.configure_active_domains(255);
+// 	rev4.configure_active_domains(255);
 
-	//Declare control states
-	LC_State_STARTUP startup_state;
-	LC_State_GROUND ground_state;
-	LC_State_TAXI taxi_state;
-	LC_State_TAKEOFF takeoff_state;
-	LC_State_FLIGHT flight_state;
-	LC_State_BRAKE brake_state;
-	LC_State_LANDING land_state;
+// 	//Declare control states
+// 	LC_State_STARTUP startup_state;
+// 	LC_State_GROUND ground_state;
+// 	LC_State_TAXI taxi_state;
+// 	LC_State_TAKEOFF takeoff_state;
+// 	LC_State_FLIGHT flight_state;
+// 	LC_State_BRAKE brake_state;
+// 	LC_State_LANDING land_state;
 
-	uint8_t old_state = 255;
+// 	uint8_t old_state = 255;
 
 
-	auto set_control_state = [&](uint8_t state) {
-		if (state == old_state) return;
-		if (state != TRANSITION_STARTUP) {
-			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 99);
-		}
-		old_state = state;
-		switch (state) {
-		case TRANSITION_STARTUP: {
-			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
-			rev4.set_lighting_control_state(&startup_state);
-			break;
-		}
-		case TRANSITION_GROUND: {
-			rev4.set_lighting_control_state(&ground_state);
-			rev4.set_domain_colour(CD_BEACON, RED);
-			break;
-		}
-		case TRANSITION_TAXI: {
-			rev4.set_lighting_control_state(&taxi_state);
-			rev4.set_domain_colour(CD_BEACON, RED);
-			break;
-		}
-		case TRANSITION_TAKEOFF: {
-			rev4.set_domain_colour(CD_BEACON, GREEN);
-			rev4.set_lighting_control_state(&takeoff_state);
-			break;
-		}
-		case TRANSITION_FLIGHT: {
-			rev4.set_domain_colour(CD_BEACON, RED);
-			rev4.set_lighting_control_state(&flight_state);
-			break;
-		}
-		case TRANSITION_LANDING: {
-			rev4.set_domain_colour(CD_BEACON, RED);
-			rev4.set_lighting_control_state(&land_state);
-			break;
-		}
-		default: {
-			break;
+// 	auto set_control_state = [&](uint8_t state) {
+// 		if (state == old_state) return;
+// 		if (state != TRANSITION_STARTUP) {
+// 			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 99);
+// 		}
+// 		old_state = state;
+// 		switch (state) {
+// 		case TRANSITION_STARTUP: {
+// 			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
+// 			rev4.set_lighting_control_state(&startup_state);
+// 			break;
+// 		}
+// 		case TRANSITION_GROUND: {
+// 			rev4.set_lighting_control_state(&ground_state);
+// 			rev4.set_domain_colour(CD_BEACON, RED);
+// 			break;
+// 		}
+// 		case TRANSITION_TAXI: {
+// 			rev4.set_lighting_control_state(&taxi_state);
+// 			rev4.set_domain_colour(CD_BEACON, RED);
+// 			break;
+// 		}
+// 		case TRANSITION_TAKEOFF: {
+// 			rev4.set_domain_colour(CD_BEACON, GREEN);
+// 			rev4.set_lighting_control_state(&takeoff_state);
+// 			break;
+// 		}
+// 		case TRANSITION_FLIGHT: {
+// 			rev4.set_domain_colour(CD_BEACON, RED);
+// 			rev4.set_lighting_control_state(&flight_state);
+// 			break;
+// 		}
+// 		case TRANSITION_LANDING: {
+// 			rev4.set_domain_colour(CD_BEACON, RED);
+// 			rev4.set_lighting_control_state(&land_state);
+// 			break;
+// 		}
+// 		default: {
+// 			break;
 
-		}
-		}
-	};
-  initializeNodeId();
-  CANController::initialize(
-  	node_id, &hcan1, set_control_state
-  );
-	uint64_t next_1hz_service_at = HAL_GetTick();
-	uint64_t next_10hz_service_at = HAL_GetTick();
+// 		}
+// 		}
+// 	};
+//   initializeNodeId();
+//   CANController::initialize(
+//   	node_id, &hcan1, set_control_state
+//   );
+// 	uint64_t next_1hz_service_at = HAL_GetTick();
+// 	uint64_t next_10hz_service_at = HAL_GetTick();
 
-	set_control_state(TRANSITION_STARTUP);
+// 	set_control_state(TRANSITION_STARTUP);
 
 
 	// Starts the 1s pulse asap (no weird user setup calls).
@@ -262,7 +264,7 @@ int main(void)
 //  lighting_control_state_demo();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	uint8_t state = 8;
+	// uint8_t state = 8;
   while (1)
   {
     /* USER CODE END WHILE */
@@ -271,17 +273,17 @@ int main(void)
 
 		const uint64_t ts = HAL_GetTick();
 
-		if (ts >= next_1hz_service_at){
-		  next_1hz_service_at += 1000ULL;
-		}
+		// if (ts >= next_1hz_service_at){
+		//   next_1hz_service_at += 1000ULL;
+		// }
 
-		if (ts >= next_10hz_service_at) {
-			next_10hz_service_at += 3000ULL;
-			//state = 8 - state;
-			//set_control_state(state);
-		}
+		// if (ts >= next_10hz_service_at) {
+		// 	next_10hz_service_at += 3000ULL;
+		// 	//state = 8 - state;
+		// 	//set_control_state(state);
+		// }
 
-		groundStateBreathe(old_state);
+		// groundStateBreathe(old_state);
 		HAL_Delay(20);
 
 	}

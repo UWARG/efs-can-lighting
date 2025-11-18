@@ -38,6 +38,7 @@ public:
 	 * @param output_buffer : Pointer to the start of the output buffer
 	 */
 	WS2812(uint8_t *output_buffer);
+	bool padding;
 
 	/**
 	 * Initializes the LED to be full brightness on

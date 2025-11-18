@@ -16,10 +16,12 @@
 //// WS2812 class definition.
 //// This is really just ONE led.
 WS2812::WS2812() {
+	this->padding = false;
 }
 
 WS2812::WS2812(uint8_t *output_buffer) {
 	this->buffer = output_buffer;
+	this->padding = false;
 
 	// TODO: replace these magic numbers
 	this->g_offset = this->buffer;
@@ -27,7 +29,6 @@ WS2812::WS2812(uint8_t *output_buffer) {
 	this->b_offset = this->buffer + 16;
 
 	initialize_led_off();
-
 }
 
 void WS2812::initialize_led_on() {
@@ -36,7 +37,7 @@ void WS2812::initialize_led_on() {
 	this->colour.blue = 255;
 	this->brightness = 100;
 
-	for (int i = 0; i < BITS_PER_LED; ++i) {
+	for (int i = 0; i < BITS_PER_LED + BITS_PER_COLOUR * padding; ++i) {
 		this->buffer[i] = PWM_HI;
 	}
 }
@@ -57,7 +58,7 @@ void WS2812::initialize_led_off() {
 	this->colour.blue = 0;
 	this->brightness = 0;
 
-	for (int i = 0; i < BITS_PER_LED; ++i) {
+	for (int i = 0; i < BITS_PER_LED + BITS_PER_COLOUR * padding; ++i) {
 		this->buffer[i] = PWM_LO;
 	}
 }
@@ -110,7 +111,7 @@ void WS2812::set_brightness(uint8_t colour_brightness) {
 }
 
 void WS2812::push_colour_to_output_buffer(RGB_colour_t colour) {
-	// TODO: remove magic numbers && properly explain this bit offset stuff
+	// Push 24 bits of RGB data
 	for (int i = 0; i < BITS_PER_COLOUR; ++i) {
 		if ((colour.red >> i) & 0x1) {
 			this->r_offset[7 - i] = PWM_HI;
@@ -128,6 +129,14 @@ void WS2812::push_colour_to_output_buffer(RGB_colour_t colour) {
 			this->b_offset[7 - i] = PWM_HI;
 		} else {
 			this->b_offset[7 - i] = PWM_LO;
+		}
+	}
+	
+	// Add 8 padding bits (all zeros) if this LED uses 32-bit format
+	if (padding) {
+		uint8_t *padding_offset = this->b_offset + 8;
+		for (int i = 0; i < 8; ++i) {
+			padding_offset[i] = PWM_LO;
 		}
 	}
 }

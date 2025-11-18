@@ -203,7 +203,7 @@ public:
 	// Use this instead of set + enable?
 
 private:
-	static constexpr uint8_t NUM_LEDS = 10;
+	static constexpr uint8_t NUM_LEDS = 12;
 
 	LightingControlState	 *lighting_control_state;
 
