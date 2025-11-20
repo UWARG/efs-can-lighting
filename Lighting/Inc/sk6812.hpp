@@ -1,12 +1,12 @@
 /*
- * ws2812.hpp
+ * SK6812.hpp
  *
  *  Created on: Nov 21, 2024
  *      Author: Anni
  */
 
-#ifndef INC_WS2812_HPP_
-#define INC_WS2812_HPP_
+#ifndef INC_SK6812_HPP_
+#define INC_SK6812_HPP_
 
 #include <stdint.h>
 
@@ -16,14 +16,14 @@
 
 
 /**
- * @class WS2812
- * @brief A class representing a single WS2812 LED
+ * @class SK6812
+ * @brief A class representing a single SK6812 LED
  *
- * This class manages the state of a single WS2812 LED by directly manipulating
+ * This class manages the state of a single SK6812 LED by directly manipulating
  * the memory buffer associated with it's output data. When you set an LED,
  * it will store state (RGB), and immediately set LED colour.
  */
-class WS2812 : public LED {
+class SK6812 : public LED {
 public:
 	
 	/**
@@ -31,18 +31,18 @@ public:
 	 *
 	 * You must then call `initialize_<>()` with a pointer to the output buffer
 	 */
-	WS2812();
+	SK6812();
 	/**
-	 * Constructs a WS2812 object
+	 * Constructs a SK6812 object
 	 *
 	 * @param output_buffer : Pointer to the start of the output buffer
 	 */
-	WS2812(uint8_t *output_buffer);
+	SK6812(uint8_t *output_buffer);
 
 	static constexpr uint8_t PWM_LO = 19;
 	static constexpr uint8_t PWM_HI = 38;
 
-	static constexpr uint8_t MESSAGE_FORMAT_SIZE = 24;
+	static constexpr uint8_t MESSAGE_FORMAT_SIZE = 32;
 	static constexpr uint8_t BITS_PER_COLOUR = 8;
 
 	uint8_t get_message_format_size() const override {
@@ -72,17 +72,17 @@ public:
 	void set_brightness(uint8_t colour_brightness) override;
 
 private:
-	enum ColourIndex {
+    enum ColourIndex {
         GREEN = 0,
         RED = 1,
-        BLUE = 2
+        BLUE = 2,
+        WHITE = 3
     };
-
 	void convert_colour_to_value() override;
 
-	static constexpr uint8_t NUM_CHANNELS = 3;
+	static constexpr uint8_t NUM_CHANNELS = 4;
 	uint8_t colour_offsets[NUM_CHANNELS];
 	uint8_t values_to_write[NUM_CHANNELS*BITS_PER_COLOUR];
 };
 
-#endif /* INC_WS2812_HPP_ */
+#endif /* INC_SK6812_HPP_ */

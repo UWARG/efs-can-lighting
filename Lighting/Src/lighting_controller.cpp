@@ -13,6 +13,9 @@
 
 #include <cstring>
 #include "lighting_controller.hpp"
+#include "sk6812.hpp"
+#include "ws2812.hpp"
+#include "new"
 
 //#define STARTUP_SEQUENCE_1 // very basic selftest
 
@@ -20,18 +23,52 @@ extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim;
 
+alignas(WS2812) uint8_t LED0Storage[sizeof(WS2812)];
+
+alignas(SK6812) uint8_t LED1Storage[sizeof(SK6812)];
+alignas(SK6812) uint8_t LED2Storage[sizeof(SK6812)];
+alignas(SK6812) uint8_t LED3Storage[sizeof(SK6812)];
+alignas(SK6812) uint8_t LED4Storage[sizeof(SK6812)];
+
+alignas(WS2812) uint8_t LED5Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED6Storage[sizeof(WS2812)];
+
+alignas(SK6812) uint8_t LED7Storage[sizeof(SK6812)];
+alignas(SK6812) uint8_t LED8Storage[sizeof(SK6812)];
+alignas(SK6812) uint8_t LED9Storage[sizeof(SK6812)];
+alignas(SK6812) uint8_t LED10Storage[sizeof(SK6812)];
+
+alignas(WS2812) uint8_t LED11Storage[sizeof(WS2812)];
+
+
 // TODO: custom types?
-static constexpr uint8_t NUM_LEDS = 10;
+static constexpr uint8_t NUM_LEDS = 12;
 static constexpr uint8_t NUM_LEDS_PADDING = 10;
-static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS
-		+ NUM_LEDS_PADDING * 2) * 24 * 2;		// TODO: remove magic num
-static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS
-		+ NUM_LEDS_PADDING * 2) * 24 * 2;	// TODO: remove magic num
+static constexpr uint8_t PADDING_SIZE = NUM_LEDS_PADDING * 32;
+static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = BANK_OUTPUT_BUFFER_SIZE * 2;
+static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = 4*WS2812::MESSAGE_FORMAT_SIZE + 8*SK6812::MESSAGE_FORMAT_SIZE + NUM_LEDS_PADDING*32;
 
 uint8_t dma_output_buffer[DMA_OUTPUT_BUFFER_SIZE];
 uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 
-WS2812 leds[NUM_LEDS]; // TODO: make this work
+LED *leds[NUM_LEDS];
+
+
+
+void initialize_leds(LED **leds) {
+	leds[0] = new (&LED0Storage) WS2812();
+	leds[1] = new (&LED1Storage) SK6812();
+	leds[2] = new (&LED2Storage) SK6812();
+	leds[3] = new (&LED3Storage) SK6812();
+	leds[4] = new (&LED4Storage) SK6812();
+	leds[5] = new (&LED5Storage) WS2812();
+	leds[6] = new (&LED6Storage) WS2812();
+	leds[7] = new (&LED7Storage) SK6812();
+	leds[8] = new (&LED8Storage) SK6812();
+	leds[9] = new (&LED9Storage) SK6812();
+	leds[10] = new (&LED10Storage) SK6812();
+	leds[11] = new (&LED11Storage) WS2812();
+}
 
 // Initial setup call
 LightingController rev4(dma_output_buffer, bank_output_buffer, leds, &htim2, TIM_CHANNEL_1); // TODO: Once we have custom functions registered as callbacks.....
@@ -100,19 +137,26 @@ void run_lighting_board() {
 }
 
 LightingController::LightingController(uint8_t *dma_output_buffer,
-		uint8_t *bank_output_buffer, WS2812 *leds, TIM_HandleTypeDef *timer, uint16_t timer_channel) {
+		uint8_t *bank_output_buffer, uint8_t num_leds, LED **leds, TIM_HandleTypeDef *timer, uint16_t timer_channel, void (*initLeds)(LED**)) {
+
 	this->dma_buffer = dma_output_buffer;
 	this->bank_buffer = bank_output_buffer;
 	this->leds = leds;
 	this->lighting_controller_tim_handle = timer;
 	this->lighting_controller_tim_channel = timer_channel;
 	this->lighting_control_state = nullptr;
+	this->NUM_LEDS = num_leds;
+
+	initLeds(leds);
+
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
 	// Initialize all of the internal LED's as well
+	int curr = 0;
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].initialize_led_off(
-				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
+		this->leds[i]->initialize_led_off(
+				bank_output_buffer + PADDING_SIZE + curr);
+		curr += leds[i]->get_message_format_size();
 	}
 }
 
@@ -124,7 +168,7 @@ void LightingController::start_lighting_control() {
 	HAL_Delay(1000);
 	// Average startup selftest moment
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].initialize_led_off();
+		this->leds[i]->initialize_led_off();
 		HAL_Delay(1000);
 	}
 
@@ -133,7 +177,7 @@ void LightingController::start_lighting_control() {
 		my_colour.red = (i % 3 == 0) ? 80 : 0;
 		my_colour.green = (i % 3 == 1) ? 80 : 0;
 		my_colour.blue = (i % 3 == 2) ? 80 : 0;
-		this->leds[i].set_led_colour(my_colour);
+		this->leds[i]->set_led_colour(my_colour);
 		HAL_Delay(1000);
 	}
 #endif
@@ -141,25 +185,25 @@ void LightingController::start_lighting_control() {
 
 void LightingController::recolour_all(RGB_colour_t desired_colour) {
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].set_led_colour(desired_colour);
+		this->leds[i]->set_led_colour(desired_colour);
 	}
 }
 
 void LightingController::recolour_all(RGB_colour_t desired_colour,
 		uint8_t brightness) {
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].set_led_colour(desired_colour, brightness);
+		this->leds[i]->set_led_colour(desired_colour, brightness);
 	}
 }
 
 void LightingController::recolour_by_index(uint8_t index,
 		RGB_colour_t desired_colour) {
-	this->leds[index].set_led_colour(desired_colour);
+	this->leds[index]->set_led_colour(desired_colour);
 }
 
 void LightingController::recolour_by_index(uint8_t index,
 		RGB_colour_t desired_colour, uint8_t brightness) {
-	this->leds[index].set_led_colour(desired_colour, brightness);
+	this->leds[index]->set_led_colour(desired_colour, brightness);
 }
 
 ////////////////////
@@ -201,7 +245,7 @@ void LightingController::activate_domain(ControlDomain domain) {
 			if (this->domain_active & (1 << cd_idx)) { // IF THIS DOMAIN IS ACTIVE
 				for (int j = 0; j < NUM_LEDS; ++j) {
 					if (domain_leds[cd_idx] & (1 << j)) {
-						this->leds[j].set_led_colour(domain_colours[cd_idx],
+						this->leds[j]->set_led_colour(domain_colours[cd_idx],
 								domain_brightness[cd_idx]);
 					}
 				}
@@ -224,7 +268,7 @@ void LightingController::deactivate_domain(ControlDomain domain) {
 		if (this->domain_active & (1 << cd_idx)) { // IF THIS DOMAIN IS ACTIVE
 			for (int j = 0; j < NUM_LEDS; ++j) {
 				if (domain_leds[cd_idx] & (1 << j)) {
-					this->leds[j].set_led_colour(domain_colours[cd_idx],
+					this->leds[j]->set_led_colour(domain_colours[cd_idx],
 							domain_brightness[cd_idx]);
 				}
 			}
@@ -274,7 +318,7 @@ void LightingController::exit_current_state() {
 			if (this->domain_active & (1 << i)) { // If the domain was previously active.
 				for (int j = 0; j < NUM_LEDS; ++j) {
 					if (domain_leds[i] & (1 << j)) {
-						this->leds[j].set_led_colour(domain_colours[i], 0); //"Disable" leds that we don't want during next state.
+						this->leds[j]->set_led_colour(domain_colours[i], 0); //"Disable" leds that we don't want during next state.
 					}
 				}
 			}
@@ -304,8 +348,7 @@ LightingControlState *LightingController::get_lighting_control_state() {
 void LightingController::initialize_bank_buffer_off() {
 	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
 		// Check if the bit is a padding bit or value bit
-		if (i < 24 * NUM_LEDS_PADDING
-				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
+		if (i < PADDING_SIZE) {
 			this->bank_buffer[i] = 0;
 		} else {
 			this->bank_buffer[i] = PWM_LO;
@@ -316,8 +359,7 @@ void LightingController::initialize_bank_buffer_off() {
 void LightingController::initialize_bank_buffer_on() {
 	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
 		// Check if the bit is a padding bit or value bit
-		if (i < 24 * NUM_LEDS_PADDING
-				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
+		if (i < PADDING_SIZE) {
 			this->bank_buffer[i] = 0;
 		} else {
 			if ((i % 8) > 4) {

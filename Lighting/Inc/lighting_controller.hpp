@@ -12,7 +12,7 @@
 
 #include "conversions.hpp"
 #include "lighting_control_state_classes.hpp"
-#include "ws2812.hpp"
+#include "led.hpp"
 #include "tim.h"
 
 class LightingController;
@@ -24,11 +24,14 @@ void run_lighting_board();
 
 class LightingController {
 public:
+	uint8_t NUM_LEDS;
+
 	/**
 	 * TODO: Initialize lighting controller with a reference to the led bank output
 	 */
 	LightingController(uint8_t *dma_output_buffer, uint8_t *bank_output_buffer,
-			WS2812 *leds, TIM_HandleTypeDef *timer, uint16_t timer_channel);
+			uint8_t num_leds, LED **leds, TIM_HandleTypeDef *timer, uint16_t timer_channel, void (*initLeds)(LED**));
+
 
 	/**
 	 * Start sending lighting control data to neopixels.
@@ -203,13 +206,14 @@ public:
 	// Use this instead of set + enable?
 
 private:
-	static constexpr uint8_t NUM_LEDS = 10;
+	static constexpr uint8_t PWM_LO = 19;
+	static constexpr uint8_t PWM_HI = 39;
 
 	LightingControlState	 *lighting_control_state;
 
 	uint8_t 				 *dma_buffer;
 	uint8_t 				 *bank_buffer;
-	WS2812 					 *leds;
+	LED 					 **leds;
 
 	volatile uint8_t		 domain_allowed;					// bitfield of which control domains are ALLOWED to be active.
 	uint8_t 				 domain_active;						// bitfield of which control domains are CURRENTLY active.
