@@ -1,5 +1,9 @@
+#ifndef INC_LED_HPP
+#define INC_LED_HPP
+
 #include <stdint.h>
 #include "conversions.hpp"
+
 
 class LED {
     public:
@@ -98,3 +102,5 @@ class LED {
     void set_colour_offsets(uint8_t *colour_offsets);
 
 };
+
+#endif

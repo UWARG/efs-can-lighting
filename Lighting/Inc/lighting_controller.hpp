@@ -29,8 +29,15 @@ public:
 	/**
 	 * TODO: Initialize lighting controller with a reference to the led bank output
 	 */
-	LightingController(uint8_t *dma_output_buffer, uint8_t *bank_output_buffer,
-			uint8_t num_leds, LED **leds, TIM_HandleTypeDef *timer, uint16_t timer_channel, void (*initLeds)(LED**));
+	LightingController(
+		uint8_t *dma_output_buffer, 
+		uint8_t *bank_output_buffer,
+		uint8_t num_leds, 
+		LED **leds, 
+		TIM_HandleTypeDef *timer, 
+		uint16_t timer_channel, 
+		void (*initLeds)(LED**)
+	);
 
 
 	/**

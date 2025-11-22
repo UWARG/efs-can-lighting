@@ -45,8 +45,8 @@ alignas(WS2812) uint8_t LED11Storage[sizeof(WS2812)];
 static constexpr uint8_t NUM_LEDS = 12;
 static constexpr uint8_t NUM_LEDS_PADDING = 10;
 static constexpr uint8_t PADDING_SIZE = NUM_LEDS_PADDING * 32;
+static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = 4*24 + 8*32 + NUM_LEDS_PADDING*32;
 static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = BANK_OUTPUT_BUFFER_SIZE * 2;
-static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = 4*WS2812::MESSAGE_FORMAT_SIZE + 8*SK6812::MESSAGE_FORMAT_SIZE + NUM_LEDS_PADDING*32;
 
 uint8_t dma_output_buffer[DMA_OUTPUT_BUFFER_SIZE];
 uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
@@ -71,7 +71,15 @@ void initialize_leds(LED **leds) {
 }
 
 // Initial setup call
-LightingController rev4(dma_output_buffer, bank_output_buffer, leds, &htim2, TIM_CHANNEL_1); // TODO: Once we have custom functions registered as callbacks.....
+LightingController rev4(
+	dma_output_buffer, 
+	bank_output_buffer, 
+	NUM_LEDS, 
+	leds, 
+	&htim2, 
+	TIM_CHANNEL_1,
+	*initialize_leds
+); // TODO: Once we have custom functions registered as callbacks.....
 
 // Temporary (ish) function with exemplar code that allows us to test lighting board functionality without needing CAN commands
 void run_lighting_board() {
@@ -136,8 +144,15 @@ void run_lighting_board() {
 	}
 }
 
-LightingController::LightingController(uint8_t *dma_output_buffer,
-		uint8_t *bank_output_buffer, uint8_t num_leds, LED **leds, TIM_HandleTypeDef *timer, uint16_t timer_channel, void (*initLeds)(LED**)) {
+LightingController::LightingController(
+	uint8_t *dma_output_buffer,
+	uint8_t *bank_output_buffer, 
+	uint8_t num_leds, 
+	LED **leds, 
+	TIM_HandleTypeDef *timer, 
+	uint16_t timer_channel, 
+	void (*initLeds)(LED**)
+) {
 
 	this->dma_buffer = dma_output_buffer;
 	this->bank_buffer = bank_output_buffer;
