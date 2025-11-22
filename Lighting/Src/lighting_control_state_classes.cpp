@@ -12,9 +12,9 @@ LC_State_STARTUP::LC_State_STARTUP() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W |  1 << LED_BOTTOM_SW  | 1 << LED_BOTTOM_NE
-			| 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_W_INNER | 1 << LED_E_INNER;
+	domain_leds[CD_MAIN] = 1 << LED_SIDE_NW | 1 << LED_OUTER_NW |  1 << LED_INNER_NW  | 1 << LED_SIDE_SW
+			| 1 << LED_OUTER_SW | 1 << LED_INNER_SW | 1 << LED_SIDE_SE | 1 << LED_INNER_SE
+			| 1 << LED_OUTER_SE | 1 << LED_INNER_NE | 1 << LED_OUTER_NE | 1 << LED_SIDE_NE;
 	allowed_domains = 1 << CD_MAIN;
 }
 
@@ -31,9 +31,10 @@ LC_State_GROUND::LC_State_GROUND() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = LED_BOTTOM_SW | 1 << LED_BOTTOM_E;
-	domain_leds[CD_BEACON] = 1 << LED_BOTTOM_SW | 1 << LED_BOTTOM_NW
-			| 1 << LED_BOTTOM_SE | 1 << LED_BOTTOM_NE;// | 1 << LED_W_OUTER | 1 <<  LED_E_OUTER;
+	domain_leds[CD_MAIN] = LED_INNER_NW | 1 << LED_INNER_SW | 1 << LED_INNER_SE | 1 << LED_INNER_NE;
+	domain_leds[CD_BEACON] = 1 << LED_OUTER_NW | 1 << LED_OUTER_NE
+			| 1 << LED_OUTER_SE | 1 << LED_OUTER_SW | 1 << LED_SIDE_NE
+			| 1 << LED_SIDE_NW | 1 << LED_SIDE_SE | 1 << LED_SIDE_SW;// | 1 << LED_SIDE_SE | 1 <<  LED_INNER_SE;
 	allowed_domains = 1 << CD_BEACON | 1 << CD_MAIN;
 }
 
@@ -50,12 +51,12 @@ LC_State_TAXI::LC_State_TAXI() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W |  1 << LED_BOTTOM_SW  | 1 << LED_BOTTOM_NE
-			| 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_TAXI] = 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_BEACON] = 1 << LED_W_OUTER | 1 << LED_E_OUTER;
-	domain_leds[CD_BRAKE] = 1 << LED_BOTTOM_W | 1 << LED_BOTTOM_E;
+	domain_leds[CD_MAIN] = 1 << LED_SIDE_NW | 1 << LED_OUTER_NW |  1 << LED_INNER_NW  | 1 << LED_SIDE_SW
+			| 1 << LED_OUTER_SW | 1 << LED_INNER_SW | 1 << LED_SIDE_SE | 1 << LED_INNER_SE
+			| 1 << LED_OUTER_SE | 1 << LED_INNER_NE | 1 << LED_OUTER_NE | 1 << LED_SIDE_NE;
+	domain_leds[CD_TAXI] = 1 << LED_SIDE_NE | 1 << LED_SIDE_NW | 1 << LED_SIDE_SE | 1 << LED_SIDE_SW;
+	domain_leds[CD_BEACON] = 1 << LED_OUTER_NE | 1 << LED_OUTER_NW | 1 << LED_OUTER_SE | 1 << LED_OUTER_SW;
+	domain_leds[CD_BRAKE] = 1 << LED_INNER_NW | 1 << LED_INNER_SW | 1 << LED_INNER_NE | 1 << LED_INNER_SE;
 	allowed_domains = 1 << CD_TAXI | 1 << CD_BEACON | 1 << CD_BRAKE | 1 << CD_MAIN;
 }
 
@@ -71,11 +72,12 @@ LC_State_TAKEOFF::LC_State_TAKEOFF() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W |  1 << LED_BOTTOM_SW  | 1 << LED_BOTTOM_NE
-			| 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_BEACON] = 1 << LED_W_INNER | 1 << LED_E_INNER | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_BOTTOM_W | 1 << LED_BOTTOM_E  | 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_NE | 1 << LED_BOTTOM_SW | 1 << LED_BOTTOM_SE;
+	domain_leds[CD_MAIN] = 1 << LED_SIDE_NW | 1 << LED_OUTER_NW |  1 << LED_INNER_NW  | 1 << LED_SIDE_SW
+			| 1 << LED_OUTER_SW | 1 << LED_INNER_SW | 1 << LED_SIDE_SE | 1 << LED_INNER_SE
+			| 1 << LED_OUTER_SE | 1 << LED_INNER_NE | 1 << LED_OUTER_NE | 1 << LED_SIDE_NE;
+	domain_leds[CD_BEACON] = 1 << LED_OUTER_SE | 1 << LED_INNER_SE | 1 << LED_OUTER_NE | 1 << LED_INNER_NE
+			| 1 << LED_OUTER_NW | 1 << LED_OUTER_SW  | 1 << LED_INNER_NW | 1 << LED_INNER_SW 
+			| 1 << LED_SIDE_NE | 1 << LED_SIDE_NW | 1 << LED_SIDE_SE | 1 << LED_SIDE_SW;
 	allowed_domains = 1 << CD_BEACON | 1 << CD_MAIN;
 }
 
@@ -92,13 +94,13 @@ LC_State_FLIGHT::LC_State_FLIGHT() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W |  1 << LED_BOTTOM_SW  | 1 << LED_BOTTOM_NE
-			| 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_BEACON] = 1 << LED_W_OUTER | 1 << LED_E_OUTER;
-	domain_leds[CD_STROBE] = 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_NAV] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W | 1 << LED_BOTTOM_SW
-			| 1 << LED_BOTTOM_NE | 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE;
+	domain_leds[CD_MAIN] = 1 << LED_SIDE_NW | 1 << LED_OUTER_NW |  1 << LED_INNER_NW  | 1 << LED_SIDE_SW
+			| 1 << LED_OUTER_SW | 1 << LED_INNER_SW | 1 << LED_SIDE_SE | 1 << LED_INNER_SE
+			| 1 << LED_OUTER_SE | 1 << LED_INNER_NE | 1 << LED_OUTER_NE | 1 << LED_SIDE_NE;
+	domain_leds[CD_BEACON] = 1 << LED_OUTER_SE | 1 << LED_OUTER_NE | 1 << LED_OUTER_SW | 1 << LED_OUTER_NW;
+	domain_leds[CD_STROBE] = 1 << LED_INNER_SE | 1 << LED_INNER_NE | 1 << LED_INNER_NW | 1 << LED_INNER_SW;
+	domain_leds[CD_NAV] = 1 << LED_SIDE_NW | 1 << LED_SIDE_SW | 1 << LED_SIDE_NE
+			| 1 << LED_SIDE_SE;
 	allowed_domains = 1 << CD_BEACON | 1 << CD_STROBE | 1 << CD_NAV | 1 << CD_MAIN;
 }
 
@@ -115,10 +117,10 @@ LC_State_BRAKE::LC_State_BRAKE() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W |  1 << LED_BOTTOM_SW  | 1 << LED_BOTTOM_NE
-			| 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_BRAKE] = 1 << LED_BOTTOM_W | 1 << LED_BOTTOM_E;
+	domain_leds[CD_MAIN] = 1 << LED_SIDE_NW | 1 << LED_OUTER_NW |  1 << LED_INNER_NW  | 1 << LED_SIDE_SW
+			| 1 << LED_OUTER_SW | 1 << LED_INNER_SW | 1 << LED_SIDE_SE | 1 << LED_INNER_SE
+			| 1 << LED_OUTER_SE | 1 << LED_INNER_NE | 1 << LED_OUTER_NE | 1 << LED_SIDE_NE;
+	domain_leds[CD_BRAKE] = 1 << LED_INNER_NW | 1 << LED_INNER_SW | 1 << LED_INNER_NE | 1 << LED_INNER_SE;
 	allowed_domains = 1 << CD_BRAKE | 1 << CD_MAIN;
 }
 
@@ -135,13 +137,13 @@ LC_State_LANDING::LC_State_LANDING() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W |  1 << LED_BOTTOM_SW  | 1 << LED_BOTTOM_NE
-			| 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_BEACON] = 1 << LED_W_OUTER | 1 << LED_E_OUTER;
-	domain_leds[CD_STROBE] = 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_NAV] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_NE;
-	domain_leds[CD_LANDING] = 1 << LED_BOTTOM_W | 1 << LED_BOTTOM_SW | 1 << LED_BOTTOM_SE | 1 << LED_BOTTOM_E;
+	domain_leds[CD_MAIN] = 1 << LED_SIDE_NW | 1 << LED_OUTER_NW |  1 << LED_INNER_NW  | 1 << LED_SIDE_SW
+			| 1 << LED_OUTER_SW | 1 << LED_INNER_SW | 1 << LED_SIDE_SE | 1 << LED_INNER_SE
+			| 1 << LED_OUTER_SE | 1 << LED_INNER_NE | 1 << LED_OUTER_NE | 1 << LED_SIDE_NE;
+	domain_leds[CD_BEACON] = 1 << LED_INNER_NE | 1 << LED_INNER_NW;
+	domain_leds[CD_STROBE] = 1 << LED_INNER_SE | 1 << LED_INNER_SW;
+	domain_leds[CD_NAV] = 1 << LED_SIDE_NW | 1 << LED_SIDE_NE | 1 << LED_SIDE_SE | 1 << LED_SIDE_SW;
+	domain_leds[CD_LANDING] = 1 << LED_OUTER_NW | 1 << LED_OUTER_NE | 1 << LED_OUTER_SE | 1 << LED_OUTER_SW;
 	allowed_domains = 1 << CD_BEACON | 1 << CD_STROBE | 1 << CD_NAV | 1 << CD_LANDING | 1 << CD_MAIN;
 }
 
@@ -158,11 +160,11 @@ LC_State_STANDBY::LC_State_STANDBY() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W |  1 << LED_BOTTOM_SW  | 1 << LED_BOTTOM_NE
-			| 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_STROBE] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_SW | 1 << LED_BOTTOM_SE | 1 << LED_BOTTOM_NE;
-	domain_leds[CD_BEACON] = 1 << LED_BOTTOM_W | 1 << LED_BOTTOM_E;
+	domain_leds[CD_MAIN] = 1 << LED_SIDE_NW | 1 << LED_OUTER_NW |  1 << LED_INNER_NW  | 1 << LED_SIDE_SW
+			| 1 << LED_OUTER_SW | 1 << LED_INNER_SW | 1 << LED_SIDE_SE | 1 << LED_INNER_SE
+			| 1 << LED_OUTER_SE | 1 << LED_INNER_NE | 1 << LED_OUTER_NE | 1 << LED_SIDE_NE;
+	domain_leds[CD_STROBE] = 1 << LED_INNER_SE | 1 << LED_INNER_NE | 1 << LED_INNER_NW | 1 << LED_INNER_SW;
+	domain_leds[CD_BEACON] = 1 << LED_OUTER_SE | 1 << LED_OUTER_NE | 1 << LED_OUTER_SW | 1 << LED_OUTER_NW;
 	allowed_domains = 1 << CD_BEACON | 1 << CD_STROBE | 1 << CD_MAIN;
 }
 
@@ -179,10 +181,10 @@ LC_State_SEARCH::LC_State_SEARCH() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_W |  1 << LED_BOTTOM_SW  | 1 << LED_BOTTOM_NE
-			| 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SE | 1 << LED_W_OUTER | 1 << LED_E_OUTER
-			| 1 << LED_W_INNER | 1 << LED_E_INNER;
-	domain_leds[CD_SEARCH] = 1 << LED_BOTTOM_NW | 1 << LED_BOTTOM_E | 1 << LED_BOTTOM_SW;
+	domain_leds[CD_MAIN] = 1 << LED_SIDE_NW | 1 << LED_OUTER_NW |  1 << LED_INNER_NW  | 1 << LED_SIDE_SW
+			| 1 << LED_OUTER_SW | 1 << LED_INNER_SW | 1 << LED_SIDE_SE | 1 << LED_INNER_SE
+			| 1 << LED_OUTER_SE | 1 << LED_INNER_NE | 1 << LED_OUTER_NE | 1 << LED_SIDE_NE;
+	domain_leds[CD_SEARCH] = 1 << LED_INNER_NW | 1 << LED_INNER_SW | 1 << LED_INNER_NW | 1 << LED_INNER_SE;
 	allowed_domains = 1 << CD_SEARCH | 1 << CD_MAIN;
 }
 

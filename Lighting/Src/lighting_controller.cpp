@@ -93,7 +93,7 @@ void run_lighting_board() {
 
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
-	uint8_t all_domains_enabled = (1 << 7);
+	uint8_t all_domains_enabled = 0xFF;
 	rev4.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness

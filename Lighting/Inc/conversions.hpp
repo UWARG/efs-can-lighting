@@ -64,16 +64,19 @@ enum ControlDomain {
 
 
 typedef enum LedPosition_E {
-	LED_BOTTOM_NW = 0,
-	LED_BOTTOM_W = 1,
-	LED_BOTTOM_SW = 2,
-	LED_BOTTOM_SE = 3,
-	LED_BOTTOM_E = 4,
-	LED_BOTTOM_NE = 5,
-	LED_W_OUTER = 6,
-	LED_W_INNER = 7,
-	LED_E_OUTER = 8,
-	LED_E_INNER = 9
+	LED_SIDE_NW = 0,
+	LED_OUTER_NW = 1,
+	LED_INNER_NW = 2,
+	LED_INNER_SW = 3,
+	LED_OUTER_SW = 4,
+	LED_SIDE_SW = 5,
+	LED_SIDE_SE = 6,
+	LED_OUTER_SE = 7,
+	LED_INNER_SE = 8,
+	LED_INNER_NE = 9,
+	LED_OUTER_NE = 10,
+	LED_SIDE_NE = 11,
+
 } LedPosition_E;
 
 
