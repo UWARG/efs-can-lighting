@@ -1,20 +1,10 @@
-/*
- * SK6812.cpp
- *
- * The actual class definition for one node in the lighting board.
- *
- *  Created on: Nov 21, 2024
- *      Author: Anni
- */
 
 #include <cstdint>
 #include <cstring>
 
 #include "sk6812.hpp"
 
-//
-//// SK6812 class definition.
-//// This is really just ONE led.
+
 SK6812::SK6812() : LED(colour_offsets, values_to_write, NUM_CHANNELS) {
 	// GRBW
 	colour_offsets[GREEN] = 0;

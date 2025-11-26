@@ -71,7 +71,7 @@ void initialize_leds(LED **leds) {
 }
 
 // Initial setup call
-LightingController rev4(
+LightingController board(
 	dma_output_buffer, 
 	bank_output_buffer, 
 	NUM_LEDS, 
@@ -85,7 +85,7 @@ LightingController rev4(
 void run_lighting_board() {
 
 	// Call to start lighting control
-	rev4.start_lighting_control();
+	board.start_lighting_control();
 	HAL_TIM_Base_Start_IT(&htim2);
 
 	// DOMAIN SETUP
@@ -94,17 +94,17 @@ void run_lighting_board() {
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
 	uint8_t all_domains_enabled = 0xFF;
-	rev4.configure_allowed_domains(all_domains_enabled);
+	board.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, CYAN, 100);
-	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 100);
-	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 100);
-	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 100);
-	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 100);
-	rev4.set_domain_colour_and_brightness(CD_STROBE, WHITE, 100);
-	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 100);
-	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 100);
+	board.set_domain_colour_and_brightness(CD_MAIN, CYAN, 100);
+	board.set_domain_colour_and_brightness(CD_TAXI, WHITE, 100);
+	board.set_domain_colour_and_brightness(CD_LANDING, WHITE, 100);
+	board.set_domain_colour_and_brightness(CD_NAV, GREEN, 100);
+	board.set_domain_colour_and_brightness(CD_BEACON, RED, 100);
+	board.set_domain_colour_and_brightness(CD_STROBE, WHITE, 100);
+	board.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 100);
+	board.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 100);
 
 	uint8_t brightness = 0;
 	uint8_t brightness_direction = 1;
@@ -116,13 +116,13 @@ void run_lighting_board() {
 	LC_State_FLIGHT flight_state;
 	LC_State_STARTUP startup_state;
 
-	rev4.set_lighting_control_state(&ground_state);
+	board.set_lighting_control_state(&ground_state);
 
 	int num_loops = 0;
 
 	while (true) {
 		//Create a "breathing" pattern for when the drone first "turns on."
-		if (rev4.get_lighting_control_state() == &ground_state) {
+		if (board.get_lighting_control_state() == &ground_state) {
 			if (brightness <= 0) {
 				brightness = 0;
 				brightness_direction = 1;
@@ -130,15 +130,15 @@ void run_lighting_board() {
 				brightness = brightness_max;
 				brightness_direction = -1;
 			}
-			rev4.set_domain_brightness(CD_BEACON, brightness);
-			rev4.activate_domain(CD_BEACON);
+			board.set_domain_brightness(CD_BEACON, brightness);
+			board.activate_domain(CD_BEACON);
 			brightness += brightness_direction;
 			HAL_Delay(20);
 		}
 
-		if (num_loops == 50 && rev4.get_lighting_control_state() == &ground_state) {
+		if (num_loops == 50 && board.get_lighting_control_state() == &ground_state) {
 			num_loops = 0;
-			rev4.set_lighting_control_state(&landing_state);
+			board.set_lighting_control_state(&landing_state);
 		}
 		num_loops += 1;
 	}
@@ -425,39 +425,39 @@ void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	HAL_TIM_Base_Start_IT(&htim2);
 
 	if (stage == 0) { 			// STROBE ON
-		rev4.activate_domain(CD_STROBE);
+		board.activate_domain(CD_STROBE);
 		stage = 1;
 	} else if (stage == 1) { 	// STROBE OFF
-		rev4.deactivate_domain(CD_STROBE);
+		board.deactivate_domain(CD_STROBE);
 		stage = 2;
 	} else if (stage == 2) {	// STROBE ON
-		rev4.activate_domain(CD_STROBE);
+		board.activate_domain(CD_STROBE);
 		stage = 3;
 	} else if (stage == 3) {	// STROBE OFF
-		rev4.deactivate_domain(CD_STROBE);
+		board.deactivate_domain(CD_STROBE);
 		stage = 4;
 	} else if (stage == 4) {	// OFF
 		stage = 5;
 	} else if (stage == 5) {	// OFF
 		stage = 6;
 	} else if (stage == 6) {	// BCN ON
-		rev4.activate_domain(CD_BEACON);
+		board.activate_domain(CD_BEACON);
 		stage = 7;
 	} else if (stage == 7) {	// BCN OFF
-		rev4.deactivate_domain(CD_BEACON);
+		board.deactivate_domain(CD_BEACON);
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 
-	if (rev4.get_lighting_control_state() != nullptr) { //If a state has been SET.
-		uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
-		rev4.configure_active_domains(allowed_domains);
+	if (board.get_lighting_control_state() != nullptr) { //If a state has been SET.
+		uint8_t allowed_domains = board.get_lighting_control_state()->get_allowed_domains();
+		board.configure_active_domains(allowed_domains);
 	}
 }
 
 void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {
 	static uint8_t state_executions_per_100ms = 0;
-	rev4.execute_state();
+	board.execute_state();
 	state_executions_per_100ms += 1;
 	if (state_executions_per_100ms == 8) {
 		state_executions_per_100ms = 0;

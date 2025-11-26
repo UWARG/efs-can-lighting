@@ -1,9 +1,3 @@
-/*
- * SK6812.hpp
- *
- *  Created on: Nov 21, 2024
- *      Author: Anni
- */
 
 #ifndef INC_SK6812_HPP_
 #define INC_SK6812_HPP_

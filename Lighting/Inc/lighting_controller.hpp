@@ -17,7 +17,7 @@
 
 class LightingController;
 
-extern LightingController rev4;
+extern LightingController board;
 
 // TODO: Make these public
 void run_lighting_board();

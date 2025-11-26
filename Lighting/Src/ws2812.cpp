@@ -1,20 +1,10 @@
-/*
- * ws2812.cpp
- *
- * The actual class definition for one node in the lighting board.
- *
- *  Created on: Nov 21, 2024
- *      Author: Anni
- */
 
 #include <cstdint>
 #include <cstring>
 
 #include "ws2812.hpp"
 
-//
-//// WS2812 class definition.
-//// This is really just ONE led.
+
 WS2812::WS2812() : LED(colour_offsets, values_to_write, NUM_CHANNELS) {
 	// GRB
 	colour_offsets[GREEN] = 0;
