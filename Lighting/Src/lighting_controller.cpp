@@ -97,14 +97,14 @@ void run_lighting_board() {
 	rev4.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
-	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 15);
-	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
-	rev4.set_domain_colour_and_brightness(CD_STROBE, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
-	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 15);
+	rev4.set_domain_colour_and_brightness(CD_MAIN, CYAN, 100);
+	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 100);
+	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 100);
+	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 100);
+	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 100);
+	rev4.set_domain_colour_and_brightness(CD_STROBE, WHITE, 100);
+	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 100);
+	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 100);
 
 	uint8_t brightness = 0;
 	uint8_t brightness_direction = 1;

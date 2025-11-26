@@ -172,6 +172,8 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim2);
 
 	rev4.start_lighting_control(); //start lighting
+	uint8_t all_domains_enabled = (1 << 7);
+	rev4.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
 	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
@@ -200,12 +202,12 @@ int main(void)
 	auto set_control_state = [&](uint8_t state) {
 		if (state == old_state) return;
 		if (state != TRANSITION_STARTUP) {
-			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 99);
+			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 100);
 		}
 		old_state = state;
 		switch (state) {
 		case TRANSITION_STARTUP: {
-			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
+			rev4.set_domain_colour_and_brightness(CD_MAIN, CYAN, 100);
 			rev4.set_lighting_control_state(&startup_state);
 			break;
 		}
@@ -244,14 +246,10 @@ int main(void)
   CANController::initialize(
   	node_id, &hcan1, set_control_state
   );
-  
 	uint64_t next_1hz_service_at = HAL_GetTick();
 	uint64_t next_10hz_service_at = HAL_GetTick();
 
 	set_control_state(TRANSITION_STARTUP);
-  
-	uint8_t all_domains_enabled = 0xFF;
-	rev4.configure_allowed_domains(all_domains_enabled);
 
 
 	// Starts the 1s pulse asap (no weird user setup calls).

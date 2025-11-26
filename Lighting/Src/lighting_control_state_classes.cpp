@@ -31,7 +31,7 @@ LC_State_GROUND::LC_State_GROUND() {
 	for (int cd_idx = 0; cd_idx < CD_LENGTH; ++cd_idx) {
 		domain_leds[cd_idx] = 0;
 	}
-	domain_leds[CD_MAIN] = LED_INNER_NW | 1 << LED_INNER_SW | 1 << LED_INNER_SE | 1 << LED_INNER_NE;
+	domain_leds[CD_MAIN] = 1 << LED_INNER_NW | 1 << LED_INNER_SW | 1 << LED_INNER_SE | 1 << LED_INNER_NE;
 	domain_leds[CD_BEACON] = 1 << LED_OUTER_NW | 1 << LED_OUTER_NE
 			| 1 << LED_OUTER_SE | 1 << LED_OUTER_SW | 1 << LED_SIDE_NE
 			| 1 << LED_SIDE_NW | 1 << LED_SIDE_SE | 1 << LED_SIDE_SW;// | 1 << LED_SIDE_SE | 1 <<  LED_INNER_SE;
