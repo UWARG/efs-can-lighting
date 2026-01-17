@@ -5,7 +5,7 @@
  *      Author: folafatola
  */
 
-#include <lighting_control_state_classes.hpp>
+#include <rev5_lighting_control_state_classes.hpp>
 
 
 LC_State_STARTUP::LC_State_STARTUP() {

@@ -23,6 +23,8 @@ extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim;
 
+
+#ifdef REV5
 alignas(SK6812) uint8_t LED0Storage[sizeof(SK6812)];
 
 alignas(WS2812) uint8_t LED1Storage[sizeof(WS2812)];
@@ -40,22 +42,38 @@ alignas(WS2812) uint8_t LED10Storage[sizeof(WS2812)];
 
 alignas(SK6812) uint8_t LED11Storage[sizeof(SK6812)];
 
-
-// TODO: custom types?
 static constexpr uint8_t NUM_LEDS = 12;
 static constexpr uint8_t NUM_LEDS_PADDING = 10;
-static constexpr uint8_t PADDING_SIZE = NUM_LEDS_PADDING * 32;
+static constexpr uint16_t PADDING_SIZE = NUM_LEDS_PADDING * 32U;
 static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = 4*24 + 8*32 + NUM_LEDS_PADDING*32;
 static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = BANK_OUTPUT_BUFFER_SIZE * 2;
+
+#elifdef REV4
+alignas(WS2812) uint8_t LED0Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED1Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED2Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED3Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED4Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED5Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED6Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED7Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED8Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED9Storage[sizeof(WS2812)];
+
+static constexpr uint8_t NUM_LEDS = 10;
+static constexpr uint8_t NUM_LEDS_PADDING = 10;
+static constexpr uint16_t PADDING_SIZE = NUM_LEDS_PADDING * 32;
+static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = 10*24 + NUM_LEDS_PADDING*32;
+static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = BANK_OUTPUT_BUFFER_SIZE * 2;
+#endif
 
 uint8_t dma_output_buffer[DMA_OUTPUT_BUFFER_SIZE];
 uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 
 LED *leds[NUM_LEDS];
 
-
-
 void initialize_leds(LED **leds) {
+	#ifdef REV5
 	leds[0] = new (&LED0Storage) SK6812();
 	leds[1] = new (&LED1Storage) WS2812();
 	leds[2] = new (&LED2Storage) WS2812();
@@ -68,6 +86,18 @@ void initialize_leds(LED **leds) {
 	leds[9] = new (&LED9Storage) WS2812();
 	leds[10] = new (&LED10Storage) WS2812();
 	leds[11] = new (&LED11Storage) SK6812();
+	#elifdef REV4
+	leds[0] = new (&LED0Storage) WS2812();
+	leds[1] = new (&LED1Storage) WS2812();
+	leds[2] = new (&LED2Storage) WS2812();
+	leds[3] = new (&LED3Storage) WS2812();
+	leds[4] = new (&LED4Storage) WS2812();
+	leds[5] = new (&LED5Storage) WS2812();
+	leds[6] = new (&LED6Storage) WS2812();
+	leds[7] = new (&LED7Storage) WS2812();
+	leds[8] = new (&LED8Storage) WS2812();
+	leds[9] = new (&LED9Storage) WS2812();
+	#endif
 }
 
 // Initial setup call
@@ -314,7 +344,7 @@ void LightingController::configure_active_domains(uint8_t active_domains) {
 	if (this->lighting_control_state == nullptr) {
 		return;
 	}
-	uint16_t *domain_leds = this->lighting_control_state->get_domain_leds();
+
 	for (int i = 0; i <= CD_SEARCH; ++i) {
 		ControlDomain domain = static_cast<ControlDomain>(i);
 		if (active_domains & (1 << i)) {
@@ -421,7 +451,6 @@ void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
 
 void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static uint8_t stage = 0;
-	static uint8_t led_index = 0;
 	HAL_TIM_Base_Start_IT(&htim2);
 
 	if (stage == 0) { 			// STROBE ON

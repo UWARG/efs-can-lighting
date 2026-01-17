@@ -27,8 +27,6 @@ void lighting_control_domain_demo() {
 	int brightness_direction = 1;
 	uint8_t brightness = 0;
 
-	uint8_t BRIGHTNESS_MAX = 100;
-
 	board.allow_domain(CD_MAIN);
 
 	LC_State_STARTUP startup_state;

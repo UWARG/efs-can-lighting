@@ -11,9 +11,14 @@
 #include <cstdint>
 
 #include "conversions.hpp"
-#include "lighting_control_state_classes.hpp"
 #include "led.hpp"
 #include "tim.h"
+
+#ifdef REV5
+#include "rev5_lighting_control_state_classes.hpp"
+#elifdef REV4
+#include "rev4_lighting_control_state_classes.hpp"
+#endif
 
 class LightingController;
 

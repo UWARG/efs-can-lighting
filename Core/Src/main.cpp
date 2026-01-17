@@ -231,7 +231,7 @@ int main(void)
 //  lighting_control_state_demo();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	uint8_t state = 8;
+
   while (1)
   {
     /* USER CODE END WHILE */

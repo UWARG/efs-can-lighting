@@ -77,16 +77,12 @@ class LED {
     virtual uint8_t get_message_format_size() const = 0;
 
     protected:
-        uint8_t NUM_CHANNELS;
-        
-        uint8_t *buffer;
-
+        uint8_t *COLOUR_OFFSETS = 0;
+        uint8_t *values_to_write = 0;
+        uint8_t NUM_CHANNELS = 0;
+        uint8_t *buffer = 0;
         // Size of colour_offsets = Size of values_to_write
-        uint8_t *COLOUR_OFFSETS;
-        uint8_t *values_to_write;
-        
         RGB_colour_t colour;
-        
         uint8_t brightness;
 
         /**
