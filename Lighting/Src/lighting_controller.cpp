@@ -3,7 +3,7 @@
  *
  * This file handles all of the higher level logic / interfacing to the can board. This might be a class as well.
  *
- * It creates 6 instances of the WS2812 LED's
+ * It creates 6 instances of the SK6812 LED's
  *
  * It handles the final output buffer that is sent to DMA, as well as DMA transfer half complete callback
  *
@@ -23,22 +23,22 @@ extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim;
 
-alignas(WS2812) uint8_t LED0Storage[sizeof(WS2812)];
+alignas(SK6812) uint8_t LED0Storage[sizeof(SK6812)];
 
-alignas(SK6812) uint8_t LED1Storage[sizeof(SK6812)];
-alignas(SK6812) uint8_t LED2Storage[sizeof(SK6812)];
-alignas(SK6812) uint8_t LED3Storage[sizeof(SK6812)];
-alignas(SK6812) uint8_t LED4Storage[sizeof(SK6812)];
+alignas(WS2812) uint8_t LED1Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED2Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED3Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED4Storage[sizeof(WS2812)];
 
-alignas(WS2812) uint8_t LED5Storage[sizeof(WS2812)];
-alignas(WS2812) uint8_t LED6Storage[sizeof(WS2812)];
+alignas(SK6812) uint8_t LED5Storage[sizeof(SK6812)];
+alignas(SK6812) uint8_t LED6Storage[sizeof(SK6812)];
 
-alignas(SK6812) uint8_t LED7Storage[sizeof(SK6812)];
-alignas(SK6812) uint8_t LED8Storage[sizeof(SK6812)];
-alignas(SK6812) uint8_t LED9Storage[sizeof(SK6812)];
-alignas(SK6812) uint8_t LED10Storage[sizeof(SK6812)];
+alignas(WS2812) uint8_t LED7Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED8Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED9Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED10Storage[sizeof(WS2812)];
 
-alignas(WS2812) uint8_t LED11Storage[sizeof(WS2812)];
+alignas(SK6812) uint8_t LED11Storage[sizeof(SK6812)];
 
 
 // TODO: custom types?
@@ -56,18 +56,18 @@ LED *leds[NUM_LEDS];
 
 
 void initialize_leds(LED **leds) {
-	leds[0] = new (&LED0Storage) WS2812();
-	leds[1] = new (&LED1Storage) SK6812();
-	leds[2] = new (&LED2Storage) SK6812();
-	leds[3] = new (&LED3Storage) SK6812();
-	leds[4] = new (&LED4Storage) SK6812();
-	leds[5] = new (&LED5Storage) WS2812();
-	leds[6] = new (&LED6Storage) WS2812();
-	leds[7] = new (&LED7Storage) SK6812();
-	leds[8] = new (&LED8Storage) SK6812();
-	leds[9] = new (&LED9Storage) SK6812();
-	leds[10] = new (&LED10Storage) SK6812();
-	leds[11] = new (&LED11Storage) WS2812();
+	leds[0] = new (&LED0Storage) SK6812();
+	leds[1] = new (&LED1Storage) WS2812();
+	leds[2] = new (&LED2Storage) WS2812();
+	leds[3] = new (&LED3Storage) WS2812();
+	leds[4] = new (&LED4Storage) WS2812();
+	leds[5] = new (&LED5Storage) SK6812();
+	leds[6] = new (&LED6Storage) SK6812();
+	leds[7] = new (&LED7Storage) WS2812();
+	leds[8] = new (&LED8Storage) WS2812();
+	leds[9] = new (&LED9Storage) WS2812();
+	leds[10] = new (&LED10Storage) WS2812();
+	leds[11] = new (&LED11Storage) SK6812();
 }
 
 // Initial setup call

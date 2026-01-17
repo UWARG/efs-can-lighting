@@ -6,11 +6,10 @@
 
 
 SK6812::SK6812() : LED(colour_offsets, values_to_write, NUM_CHANNELS) {
-	// GRBW
+	// GRB
 	colour_offsets[GREEN] = 0;
 	colour_offsets[RED] = 8;
 	colour_offsets[BLUE] = 16;
-	colour_offsets[WHITE] = 24;
 }
 
 SK6812::SK6812(uint8_t *output_buffer) : SK6812() {
@@ -35,6 +34,7 @@ void SK6812::set_led_colour(RGB_colour_t rgb_colour_value) {
     this->colour = rgb_colour_value;
 }
 
+
 void SK6812::set_brightness(uint8_t colour_brightness) {
 	this->brightness = colour_brightness;
 	RGB_colour_t rgb_compensated_colour = this->colour;
@@ -57,38 +57,23 @@ void SK6812::set_brightness(uint8_t colour_brightness) {
 
 
 void SK6812::convert_colour_to_value() {
-	uint8_t r = colour.red;
-    uint8_t g = colour.green;
-    uint8_t b = colour.blue;
-
-    uint8_t w = (r < g) ? (r < b ? r : b) : (g < b ? g : b);
-    r -= w;
-    g -= w;
-    b -= w;
-    
-    for (int i = 0; i < BITS_PER_COLOUR; ++i) {
-		if ((g >> i) & 0x1) {
+	for (int i = 0; i < BITS_PER_COLOUR; ++i) {
+		if ((colour.green >> i) & 0x1) {
 			values_to_write[colour_offsets[GREEN] - i + BITS_PER_COLOUR - 1] = PWM_HI;
 		} else {
 			values_to_write[colour_offsets[GREEN] - i + BITS_PER_COLOUR - 1] = PWM_LO;
 		}
 
-		if ((r >> i) & 0x1) {
+		if ((colour.red >> i) & 0x1) {
 			values_to_write[colour_offsets[RED] - i + BITS_PER_COLOUR - 1] = PWM_HI;
 		} else {
 			values_to_write[colour_offsets[RED] - i + BITS_PER_COLOUR - 1] = PWM_LO;
 		}
 
-		if ((b >> i) & 0x1) {
+		if ((colour.blue >> i) & 0x1) {
 			values_to_write[colour_offsets[BLUE] - i + BITS_PER_COLOUR - 1] = PWM_HI;
 		} else {
 			values_to_write[colour_offsets[BLUE] - i + BITS_PER_COLOUR - 1] = PWM_LO;
-		}
-
-		if ((w >> i) & 0x1) {
-			values_to_write[colour_offsets[WHITE] - i + BITS_PER_COLOUR - 1] = PWM_HI;
-		} else {
-			values_to_write[colour_offsets[WHITE] - i + BITS_PER_COLOUR - 1] = PWM_LO;
 		}
 	}
 }

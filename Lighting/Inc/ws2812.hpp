@@ -1,6 +1,6 @@
 
-#ifndef INC_WS2812_HPP_
-#define INC_WS2812_HPP_
+#ifndef INC_SK6812_HPP_
+#define INC_SK6812_HPP_
 
 #include <stdint.h>
 
@@ -36,7 +36,7 @@ public:
 	static constexpr uint8_t PWM_LO = 19;
 	static constexpr uint8_t PWM_HI = 38;
 
-	static constexpr uint8_t MESSAGE_FORMAT_SIZE = 24;
+	static constexpr uint8_t MESSAGE_FORMAT_SIZE = 32;
 	static constexpr uint8_t BITS_PER_COLOUR = 8;
 
 	uint8_t get_message_format_size() const override {
@@ -66,17 +66,17 @@ public:
 	void set_brightness(uint8_t colour_brightness) override;
 
 private:
-	enum ColourIndex {
+    enum ColourIndex {
         GREEN = 0,
         RED = 1,
-        BLUE = 2
+        BLUE = 2,
+        WHITE = 3
     };
-
 	void convert_colour_to_value() override;
 
-	static constexpr uint8_t NUM_CHANNELS = 3;
+	static constexpr uint8_t NUM_CHANNELS = 4;
 	uint8_t colour_offsets[NUM_CHANNELS];
 	uint8_t values_to_write[NUM_CHANNELS*BITS_PER_COLOUR];
 };
 
-#endif /* INC_WS2812_HPP_ */
+#endif /* INC_SK6812_HPP_ */
