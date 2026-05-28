@@ -1,6 +1,12 @@
 # Metadata
 .metadata/
+.vscode/
 
 Debug/
 .Debug/
 Release/
+
+REV5 Debug/
+REV5 Release/
+REV4 Debug/
+REV4 Release/

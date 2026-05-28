@@ -7,6 +7,18 @@
 
 #include "lighting_control_state_manager.hpp"
 
+typedef enum LedPosition_E {
+	LED_NW = 0,
+	LED_W = 1,
+	LED_SW = 2,
+	LED_SE = 3,
+	LED_E = 4,
+	LED_NE = 5,
+	LED_SIDE_NE = 6,
+	LED_SIDE_SE = 7,
+	LED_SIDE_SW = 8,
+	LED_SIDE_NW = 9,
+} LedPosition_E;
 
 class LC_State_STARTUP: public LightingControlState {
 public:

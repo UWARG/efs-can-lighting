@@ -3,7 +3,7 @@
  *
  * This file handles all of the higher level logic / interfacing to the can board. This might be a class as well.
  *
- * It creates 6 instances of the WS2812 LED's
+ * It creates 6 instances of the SK6812 LED's
  *
  * It handles the final output buffer that is sent to DMA, as well as DMA transfer half complete callback
  *
@@ -13,6 +13,9 @@
 
 #include <cstring>
 #include "lighting_controller.hpp"
+#include "sk6812.hpp"
+#include "ws2812.hpp"
+#include "new"
 
 //#define STARTUP_SEQUENCE_1 // very basic selftest
 
@@ -20,27 +23,99 @@ extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim;
 
-// TODO: custom types?
+
+#ifdef REV5
+alignas(SK6812) uint8_t LED0Storage[sizeof(SK6812)];
+
+alignas(WS2812) uint8_t LED1Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED2Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED3Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED4Storage[sizeof(WS2812)];
+
+alignas(SK6812) uint8_t LED5Storage[sizeof(SK6812)];
+alignas(SK6812) uint8_t LED6Storage[sizeof(SK6812)];
+
+alignas(WS2812) uint8_t LED7Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED8Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED9Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED10Storage[sizeof(WS2812)];
+
+alignas(SK6812) uint8_t LED11Storage[sizeof(SK6812)];
+
+static constexpr uint8_t NUM_LEDS = 12;
+static constexpr uint8_t NUM_LEDS_PADDING = 10;
+static constexpr uint16_t PADDING_SIZE = NUM_LEDS_PADDING * 32U;
+static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = 4*24 + 8*32 + NUM_LEDS_PADDING*32;
+static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = BANK_OUTPUT_BUFFER_SIZE * 2;
+
+#elifdef REV4
+alignas(WS2812) uint8_t LED0Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED1Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED2Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED3Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED4Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED5Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED6Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED7Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED8Storage[sizeof(WS2812)];
+alignas(WS2812) uint8_t LED9Storage[sizeof(WS2812)];
+
 static constexpr uint8_t NUM_LEDS = 10;
 static constexpr uint8_t NUM_LEDS_PADDING = 10;
-static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = (NUM_LEDS
-		+ NUM_LEDS_PADDING * 2) * 24 * 2;		// TODO: remove magic num
-static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = (NUM_LEDS
-		+ NUM_LEDS_PADDING * 2) * 24 * 2;	// TODO: remove magic num
+static constexpr uint16_t PADDING_SIZE = NUM_LEDS_PADDING * 32;
+static constexpr uint16_t BANK_OUTPUT_BUFFER_SIZE = 10*24 + NUM_LEDS_PADDING*32;
+static constexpr uint16_t DMA_OUTPUT_BUFFER_SIZE = BANK_OUTPUT_BUFFER_SIZE * 2;
+#endif
 
 uint8_t dma_output_buffer[DMA_OUTPUT_BUFFER_SIZE];
 uint8_t bank_output_buffer[BANK_OUTPUT_BUFFER_SIZE];
 
-WS2812 leds[NUM_LEDS]; // TODO: make this work
+LED *leds[NUM_LEDS];
+
+void initialize_leds(LED **leds) {
+	#ifdef REV5
+	leds[0] = new (&LED0Storage) SK6812();
+	leds[1] = new (&LED1Storage) WS2812();
+	leds[2] = new (&LED2Storage) WS2812();
+	leds[3] = new (&LED3Storage) WS2812();
+	leds[4] = new (&LED4Storage) WS2812();
+	leds[5] = new (&LED5Storage) SK6812();
+	leds[6] = new (&LED6Storage) SK6812();
+	leds[7] = new (&LED7Storage) WS2812();
+	leds[8] = new (&LED8Storage) WS2812();
+	leds[9] = new (&LED9Storage) WS2812();
+	leds[10] = new (&LED10Storage) WS2812();
+	leds[11] = new (&LED11Storage) SK6812();
+	#elifdef REV4
+	leds[0] = new (&LED0Storage) WS2812();
+	leds[1] = new (&LED1Storage) WS2812();
+	leds[2] = new (&LED2Storage) WS2812();
+	leds[3] = new (&LED3Storage) WS2812();
+	leds[4] = new (&LED4Storage) WS2812();
+	leds[5] = new (&LED5Storage) WS2812();
+	leds[6] = new (&LED6Storage) WS2812();
+	leds[7] = new (&LED7Storage) WS2812();
+	leds[8] = new (&LED8Storage) WS2812();
+	leds[9] = new (&LED9Storage) WS2812();
+	#endif
+}
 
 // Initial setup call
-LightingController rev4(dma_output_buffer, bank_output_buffer, leds, &htim2, TIM_CHANNEL_1); // TODO: Once we have custom functions registered as callbacks.....
+LightingController board(
+	dma_output_buffer, 
+	bank_output_buffer, 
+	NUM_LEDS, 
+	leds, 
+	&htim2, 
+	TIM_CHANNEL_1,
+	*initialize_leds
+); // TODO: Once we have custom functions registered as callbacks.....
 
 // Temporary (ish) function with exemplar code that allows us to test lighting board functionality without needing CAN commands
 void run_lighting_board() {
 
 	// Call to start lighting control
-	rev4.start_lighting_control();
+	board.start_lighting_control();
 	HAL_TIM_Base_Start_IT(&htim2);
 
 	// DOMAIN SETUP
@@ -48,18 +123,18 @@ void run_lighting_board() {
 
 	// allow all of our domains
 	// comment any of these out to see the effect of allowing command domains
-	uint8_t all_domains_enabled = (1 << 7);
-	rev4.configure_allowed_domains(all_domains_enabled);
+	uint8_t all_domains_enabled = 0xFF;
+	board.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
-	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_NAV, GREEN, 15);
-	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
-	rev4.set_domain_colour_and_brightness(CD_STROBE, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
-	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 15);
+	board.set_domain_colour_and_brightness(CD_MAIN, CYAN, 100);
+	board.set_domain_colour_and_brightness(CD_TAXI, WHITE, 100);
+	board.set_domain_colour_and_brightness(CD_LANDING, WHITE, 100);
+	board.set_domain_colour_and_brightness(CD_NAV, GREEN, 100);
+	board.set_domain_colour_and_brightness(CD_BEACON, RED, 100);
+	board.set_domain_colour_and_brightness(CD_STROBE, WHITE, 100);
+	board.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 100);
+	board.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 100);
 
 	uint8_t brightness = 0;
 	uint8_t brightness_direction = 1;
@@ -71,13 +146,13 @@ void run_lighting_board() {
 	LC_State_FLIGHT flight_state;
 	LC_State_STARTUP startup_state;
 
-	rev4.set_lighting_control_state(&ground_state);
+	board.set_lighting_control_state(&ground_state);
 
 	int num_loops = 0;
 
 	while (true) {
 		//Create a "breathing" pattern for when the drone first "turns on."
-		if (rev4.get_lighting_control_state() == &ground_state) {
+		if (board.get_lighting_control_state() == &ground_state) {
 			if (brightness <= 0) {
 				brightness = 0;
 				brightness_direction = 1;
@@ -85,34 +160,48 @@ void run_lighting_board() {
 				brightness = brightness_max;
 				brightness_direction = -1;
 			}
-			rev4.set_domain_brightness(CD_BEACON, brightness);
-			rev4.activate_domain(CD_BEACON);
+			board.set_domain_brightness(CD_BEACON, brightness);
+			board.activate_domain(CD_BEACON);
 			brightness += brightness_direction;
 			HAL_Delay(20);
 		}
 
-		if (num_loops == 50 && rev4.get_lighting_control_state() == &ground_state) {
+		if (num_loops == 50 && board.get_lighting_control_state() == &ground_state) {
 			num_loops = 0;
-			rev4.set_lighting_control_state(&landing_state);
+			board.set_lighting_control_state(&landing_state);
 		}
 		num_loops += 1;
 	}
 }
 
-LightingController::LightingController(uint8_t *dma_output_buffer,
-		uint8_t *bank_output_buffer, WS2812 *leds, TIM_HandleTypeDef *timer, uint16_t timer_channel) {
+LightingController::LightingController(
+	uint8_t *dma_output_buffer,
+	uint8_t *bank_output_buffer, 
+	uint8_t num_leds, 
+	LED **leds, 
+	TIM_HandleTypeDef *timer, 
+	uint16_t timer_channel, 
+	void (*initLeds)(LED**)
+) {
+
 	this->dma_buffer = dma_output_buffer;
 	this->bank_buffer = bank_output_buffer;
 	this->leds = leds;
 	this->lighting_controller_tim_handle = timer;
 	this->lighting_controller_tim_channel = timer_channel;
 	this->lighting_control_state = nullptr;
+	this->NUM_LEDS = num_leds;
+
+	initLeds(leds);
+
 	initialize_bank_buffer_on();
 	initialize_dma_buffer();
 	// Initialize all of the internal LED's as well
+	int curr = 0;
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].initialize_led_off(
-				bank_output_buffer + NUM_LEDS_PADDING * 24 + 24 * i);
+		this->leds[i]->initialize_led_off(
+				bank_output_buffer + PADDING_SIZE + curr);
+		curr += leds[i]->get_message_format_size();
 	}
 }
 
@@ -124,7 +213,7 @@ void LightingController::start_lighting_control() {
 	HAL_Delay(1000);
 	// Average startup selftest moment
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].initialize_led_off();
+		this->leds[i]->initialize_led_off();
 		HAL_Delay(1000);
 	}
 
@@ -133,7 +222,7 @@ void LightingController::start_lighting_control() {
 		my_colour.red = (i % 3 == 0) ? 80 : 0;
 		my_colour.green = (i % 3 == 1) ? 80 : 0;
 		my_colour.blue = (i % 3 == 2) ? 80 : 0;
-		this->leds[i].set_led_colour(my_colour);
+		this->leds[i]->set_led_colour(my_colour);
 		HAL_Delay(1000);
 	}
 #endif
@@ -141,25 +230,25 @@ void LightingController::start_lighting_control() {
 
 void LightingController::recolour_all(RGB_colour_t desired_colour) {
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].set_led_colour(desired_colour);
+		this->leds[i]->set_led_colour(desired_colour);
 	}
 }
 
 void LightingController::recolour_all(RGB_colour_t desired_colour,
 		uint8_t brightness) {
 	for (int i = 0; i < NUM_LEDS; ++i) {
-		this->leds[i].set_led_colour(desired_colour, brightness);
+		this->leds[i]->set_led_colour(desired_colour, brightness);
 	}
 }
 
 void LightingController::recolour_by_index(uint8_t index,
 		RGB_colour_t desired_colour) {
-	this->leds[index].set_led_colour(desired_colour);
+	this->leds[index]->set_led_colour(desired_colour);
 }
 
 void LightingController::recolour_by_index(uint8_t index,
 		RGB_colour_t desired_colour, uint8_t brightness) {
-	this->leds[index].set_led_colour(desired_colour, brightness);
+	this->leds[index]->set_led_colour(desired_colour, brightness);
 }
 
 ////////////////////
@@ -201,7 +290,7 @@ void LightingController::activate_domain(ControlDomain domain) {
 			if (this->domain_active & (1 << cd_idx)) { // IF THIS DOMAIN IS ACTIVE
 				for (int j = 0; j < NUM_LEDS; ++j) {
 					if (domain_leds[cd_idx] & (1 << j)) {
-						this->leds[j].set_led_colour(domain_colours[cd_idx],
+						this->leds[j]->set_led_colour(domain_colours[cd_idx],
 								domain_brightness[cd_idx]);
 					}
 				}
@@ -224,7 +313,7 @@ void LightingController::deactivate_domain(ControlDomain domain) {
 		if (this->domain_active & (1 << cd_idx)) { // IF THIS DOMAIN IS ACTIVE
 			for (int j = 0; j < NUM_LEDS; ++j) {
 				if (domain_leds[cd_idx] & (1 << j)) {
-					this->leds[j].set_led_colour(domain_colours[cd_idx],
+					this->leds[j]->set_led_colour(domain_colours[cd_idx],
 							domain_brightness[cd_idx]);
 				}
 			}
@@ -255,7 +344,7 @@ void LightingController::configure_active_domains(uint8_t active_domains) {
 	if (this->lighting_control_state == nullptr) {
 		return;
 	}
-	uint16_t *domain_leds = this->lighting_control_state->get_domain_leds();
+
 	for (int i = 0; i <= CD_SEARCH; ++i) {
 		ControlDomain domain = static_cast<ControlDomain>(i);
 		if (active_domains & (1 << i)) {
@@ -274,7 +363,7 @@ void LightingController::exit_current_state() {
 			if (this->domain_active & (1 << i)) { // If the domain was previously active.
 				for (int j = 0; j < NUM_LEDS; ++j) {
 					if (domain_leds[i] & (1 << j)) {
-						this->leds[j].set_led_colour(domain_colours[i], 0); //"Disable" leds that we don't want during next state.
+						this->leds[j]->set_led_colour(domain_colours[i], 0); //"Disable" leds that we don't want during next state.
 					}
 				}
 			}
@@ -304,8 +393,7 @@ LightingControlState *LightingController::get_lighting_control_state() {
 void LightingController::initialize_bank_buffer_off() {
 	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
 		// Check if the bit is a padding bit or value bit
-		if (i < 24 * NUM_LEDS_PADDING
-				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
+		if (i < PADDING_SIZE) {
 			this->bank_buffer[i] = 0;
 		} else {
 			this->bank_buffer[i] = PWM_LO;
@@ -316,8 +404,7 @@ void LightingController::initialize_bank_buffer_off() {
 void LightingController::initialize_bank_buffer_on() {
 	for (int i = 0; i < BANK_OUTPUT_BUFFER_SIZE; ++i) {
 		// Check if the bit is a padding bit or value bit
-		if (i < 24 * NUM_LEDS_PADDING
-				|| i >= (BANK_OUTPUT_BUFFER_SIZE - 24 * NUM_LEDS_PADDING)) {
+		if (i < PADDING_SIZE) {
 			this->bank_buffer[i] = 0;
 		} else {
 			if ((i % 8) > 4) {
@@ -364,43 +451,42 @@ void TIM6_OneSecondCallback(TIM_HandleTypeDef *htim) {
 
 void TIM7_100msCallback(TIM_HandleTypeDef *htim7) {
 	static uint8_t stage = 0;
-	static uint8_t led_index = 0;
 	HAL_TIM_Base_Start_IT(&htim2);
 
 	if (stage == 0) { 			// STROBE ON
-		rev4.activate_domain(CD_STROBE);
+		board.activate_domain(CD_STROBE);
 		stage = 1;
 	} else if (stage == 1) { 	// STROBE OFF
-		rev4.deactivate_domain(CD_STROBE);
+		board.deactivate_domain(CD_STROBE);
 		stage = 2;
 	} else if (stage == 2) {	// STROBE ON
-		rev4.activate_domain(CD_STROBE);
+		board.activate_domain(CD_STROBE);
 		stage = 3;
 	} else if (stage == 3) {	// STROBE OFF
-		rev4.deactivate_domain(CD_STROBE);
+		board.deactivate_domain(CD_STROBE);
 		stage = 4;
 	} else if (stage == 4) {	// OFF
 		stage = 5;
 	} else if (stage == 5) {	// OFF
 		stage = 6;
 	} else if (stage == 6) {	// BCN ON
-		rev4.activate_domain(CD_BEACON);
+		board.activate_domain(CD_BEACON);
 		stage = 7;
 	} else if (stage == 7) {	// BCN OFF
-		rev4.deactivate_domain(CD_BEACON);
+		board.deactivate_domain(CD_BEACON);
 		stage = 0;
 		HAL_TIM_Base_Stop_IT(htim7);
 	}
 
-	if (rev4.get_lighting_control_state() != nullptr) { //If a state has been SET.
-		uint8_t allowed_domains = rev4.get_lighting_control_state()->get_allowed_domains();
-		rev4.configure_active_domains(allowed_domains);
+	if (board.get_lighting_control_state() != nullptr) { //If a state has been SET.
+		uint8_t allowed_domains = board.get_lighting_control_state()->get_allowed_domains();
+		board.configure_active_domains(allowed_domains);
 	}
 }
 
 void TIM2_10msCallback(TIM_HandleTypeDef *htim2) {
 	static uint8_t state_executions_per_100ms = 0;
-	rev4.execute_state();
+	board.execute_state();
 	state_executions_per_100ms += 1;
 	if (state_executions_per_100ms == 8) {
 		state_executions_per_100ms = 0;

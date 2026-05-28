@@ -73,37 +73,8 @@ void initializeNodeId() {
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 	CANController::onTransferReceived(hcan, CAN_RX_FIFO0);
 }
-/*
 
-static int state = 0;
-
-void process10HzTasks(uint64_t timestamp_usec) {
-    uint8_t buffer[WARG_SETCONTROLSTATE_MAX_SIZE];
-
-    struct warg_SetControlState value;
-
-    value.controlState = state;
-    state = (state + 1) % 3;
-
-    uint32_t len = warg_SetControlState_encode(&value, buffer);
-
-    // we need a static variable for the transfer ID. This is
-    // incremeneted on each transfer, allowing for detection of packet
-    // loss
-    static uint8_t transfer_id;
-
-    canardBroadcast(&canard,
-    				WARG_SETCONTROLSTATE_SIGNATURE,
-					WARG_SETCONTROLSTATE_ID,
-                    &transfer_id,
-                    CANARD_TRANSFER_PRIORITY_LOW,
-                    buffer,
-                    len);
-
-    send_NodeStatus();
-}
-*/
-extern LightingController rev4;
+extern LightingController board;
 
 void groundStateBreathe(uint8_t state) {
 	if (state == TRANSITION_GROUND) {
@@ -118,13 +89,11 @@ void groundStateBreathe(uint8_t state) {
 			brightness = brightness_max;
 			brightness_direction = -1;
 		}
-		rev4.set_domain_brightness(CD_BEACON, brightness);
-		rev4.activate_domain(CD_BEACON);
+		board.set_domain_brightness(CD_BEACON, brightness);
+		board.activate_domain(CD_BEACON);
 		brightness += brightness_direction;
 	}
 }
-
-
 
 
 /* USER CODE END 0 */
@@ -171,21 +140,21 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim6);
 	HAL_TIM_Base_Start_IT(&htim2);
 
-	rev4.start_lighting_control(); //start lighting
+	board.start_lighting_control(); //start lighting
 	uint8_t all_domains_enabled = (1 << 7);
-	rev4.configure_allowed_domains(all_domains_enabled);
+	board.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
-	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 99);
-	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 99);
-	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 99);
-	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 99); //CHANGE THIS TO RED.
-	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 99);
-	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 99);
-	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 99);
+	board.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
+	board.set_domain_colour_and_brightness(CD_TAXI, WHITE, 99);
+	board.set_domain_colour_and_brightness(CD_LANDING, WHITE, 99);
+	board.set_domain_colour_and_brightness(CD_NAV, BLUE, 99);
+	board.set_domain_colour_and_brightness(CD_BEACON, RED, 99);
+	board.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 99);
+	board.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 99);
+	board.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 99);
 
-	rev4.configure_active_domains(255);
+	board.configure_active_domains(255);
 
 	//Declare control states
 	LC_State_STARTUP startup_state;
@@ -202,38 +171,38 @@ int main(void)
 	auto set_control_state = [&](uint8_t state) {
 		if (state == old_state) return;
 		if (state != TRANSITION_STARTUP) {
-			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 99);
+			board.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 100);
 		}
 		old_state = state;
 		switch (state) {
 		case TRANSITION_STARTUP: {
-			rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 5);
-			rev4.set_lighting_control_state(&startup_state);
+			board.set_domain_colour_and_brightness(CD_MAIN, CYAN, 100);
+			board.set_lighting_control_state(&startup_state);
 			break;
 		}
 		case TRANSITION_GROUND: {
-			rev4.set_lighting_control_state(&ground_state);
-			rev4.set_domain_colour(CD_BEACON, RED);
+			board.set_lighting_control_state(&ground_state);
+			board.set_domain_colour(CD_BEACON, RED);
 			break;
 		}
 		case TRANSITION_TAXI: {
-			rev4.set_lighting_control_state(&taxi_state);
-			rev4.set_domain_colour(CD_BEACON, RED);
+			board.set_lighting_control_state(&taxi_state);
+			board.set_domain_colour(CD_BEACON, RED);
 			break;
 		}
 		case TRANSITION_TAKEOFF: {
-			rev4.set_domain_colour(CD_BEACON, GREEN);
-			rev4.set_lighting_control_state(&takeoff_state);
+			board.set_domain_colour(CD_BEACON, GREEN);
+			board.set_lighting_control_state(&takeoff_state);
 			break;
 		}
 		case TRANSITION_FLIGHT: {
-			rev4.set_domain_colour(CD_BEACON, RED);
-			rev4.set_lighting_control_state(&flight_state);
+			board.set_domain_colour(CD_BEACON, RED);
+			board.set_lighting_control_state(&flight_state);
 			break;
 		}
 		case TRANSITION_LANDING: {
-			rev4.set_domain_colour(CD_BEACON, RED);
-			rev4.set_lighting_control_state(&land_state);
+			board.set_domain_colour(CD_BEACON, RED);
+			board.set_lighting_control_state(&land_state);
 			break;
 		}
 		default: {
@@ -262,7 +231,7 @@ int main(void)
 //  lighting_control_state_demo();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	uint8_t state = 8;
+
   while (1)
   {
     /* USER CODE END WHILE */

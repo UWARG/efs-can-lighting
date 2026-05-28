@@ -10,7 +10,7 @@
 void lighting_control_domain_demo() {
 
 	HAL_TIM_Base_Start_IT(&htim2);
-	rev4.start_lighting_control(); //start lighting
+	board.start_lighting_control(); //start lighting
 
 	// RGB Colour & Brightness control demo setup
 
@@ -27,12 +27,10 @@ void lighting_control_domain_demo() {
 	int brightness_direction = 1;
 	uint8_t brightness = 0;
 
-	uint8_t BRIGHTNESS_MAX = 100;
-
-	rev4.allow_domain(CD_MAIN);
+	board.allow_domain(CD_MAIN);
 
 	LC_State_STARTUP startup_state;
-	rev4.set_lighting_control_state(&startup_state);
+	board.set_lighting_control_state(&startup_state);
 
 	while (true) {
 		// Demo program to update LED colors & show control domain functionality
@@ -83,8 +81,8 @@ void lighting_control_domain_demo() {
 		// Add a small delay for smooth transitions
 		HAL_Delay(10); // Adjust this value for faster/slower fading
 
-		rev4.set_domain_colour_and_brightness(CD_MAIN, my_colour, brightness);
-		rev4.activate_domain(CD_MAIN);
+		board.set_domain_colour_and_brightness(CD_MAIN, my_colour, brightness);
+		board.activate_domain(CD_MAIN);
 	}
 }
 
@@ -93,23 +91,23 @@ void lighting_control_state_demo() {
 
 	//Domain colours
 	HAL_TIM_Base_Start_IT(&htim2);
-	rev4.start_lighting_control(); //start lighting
+	board.start_lighting_control(); //start lighting
 
 	//allow all control domains.
 	uint8_t all_domains_enabled = (1 << 7);
-	rev4.configure_allowed_domains(all_domains_enabled);
+	board.configure_allowed_domains(all_domains_enabled);
 
 	//set up the domain colours and brightness
-	rev4.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
-	rev4.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
-	rev4.set_domain_colour_and_brightness(CD_NAV, BLUE, 15);
-	rev4.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
-	rev4.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
-	rev4.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
-	rev4.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 15);
+	board.set_domain_colour_and_brightness(CD_MAIN, PURPLE, 15);
+	board.set_domain_colour_and_brightness(CD_TAXI, WHITE, 15);
+	board.set_domain_colour_and_brightness(CD_LANDING, WHITE, 15);
+	board.set_domain_colour_and_brightness(CD_NAV, BLUE, 15);
+	board.set_domain_colour_and_brightness(CD_BEACON, RED, 15); //CHANGE THIS TO RED.
+	board.set_domain_colour_and_brightness(CD_STROBE, ORANGE, 15);
+	board.set_domain_colour_and_brightness(CD_BRAKE, ORANGE, 15);
+	board.set_domain_colour_and_brightness(CD_SEARCH, WHITE, 15);
 
-	rev4.configure_active_domains(255);
+	board.configure_active_domains(255);
 
 	//Declare control states
 	LC_State_STARTUP startup_state;
@@ -131,7 +129,7 @@ void lighting_control_state_demo() {
 	control_states[6] = &standby_state;
 	control_states[7] = &search_state;
 
-	rev4.set_lighting_control_state(&startup_state);
+	board.set_lighting_control_state(&startup_state);
 
 	uint8_t brightness = 0;
 	uint8_t brightness_direction = 1;
@@ -146,11 +144,11 @@ void lighting_control_state_demo() {
 		if (num_loops == 150) {
 			ctrl_idx = (ctrl_idx + 1) % num_states;
 			if (ctrl_idx == 2) {	//if we're in takeoff, make beacon green
-				rev4.set_domain_colour(CD_BEACON, GREEN);
+				board.set_domain_colour(CD_BEACON, GREEN);
 			} else {
-				rev4.set_domain_colour(CD_BEACON, RED);
+				board.set_domain_colour(CD_BEACON, RED);
 			}
-			rev4.set_lighting_control_state(control_states[ctrl_idx]);
+			board.set_lighting_control_state(control_states[ctrl_idx]);
 			num_loops = 0;
 		}
 
@@ -163,8 +161,8 @@ void lighting_control_state_demo() {
 				brightness = brightness_max;
 				brightness_direction = -1;
 			}
-			rev4.set_domain_brightness(CD_BEACON, brightness);
-			rev4.activate_domain(CD_BEACON);
+			board.set_domain_brightness(CD_BEACON, brightness);
+			board.activate_domain(CD_BEACON);
 			brightness += brightness_direction;
 		}
 		HAL_Delay(20);
